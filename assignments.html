@@ -332,7 +332,7 @@ body.is-focus-switching #view-root { animation: focus-switch 420ms var(--ease-ou
 .btn-primary { background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 88%, #fff), var(--accent)); border-color: transparent; color: #fff; box-shadow: 0 6px 18px rgba(124, 58, 237, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.18); }
 .btn-primary:hover { background: var(--accent-strong); box-shadow: 0 8px 22px rgba(124, 58, 237, 0.38); }
 .btn-ok { background: var(--ok); border-color: transparent; color: var(--text-inverse); }
-.btn-ok:hover { filter: brightness(1.08); }
+.btn-ok:hover { background: var(--ok); border-color: transparent; color: var(--text-inverse); filter: brightness(1.08); }
 .btn-danger { background: var(--danger-soft); border-color: transparent; color: var(--danger); }
 .btn-danger:hover { background: var(--danger); color: #fff; }
 .btn-ghost { background: transparent; border-color: transparent; color: var(--text-2); }
@@ -893,6 +893,8 @@ body.focus-mode .lanes { grid-template-columns: 1fr; }
   .wk-od-title { max-width: 200px; }
   .wk-now-label { right: 2px; padding: 1px 4px; font-size: 10px; }
 }
+.wk-dh-log { margin-left: auto; border: 0; background: var(--surface-3); border-radius: 999px; padding: 1px 6px; font-size: 12px; line-height: 1.5; cursor: pointer; transition: transform var(--dur) var(--ease); }
+.wk-dh-log:hover { transform: scale(1.08); }
 /* === VIEW:WEEK:CSS:END === */
 
 /* === VIEW:BOARD:CSS:START === */
@@ -2097,6 +2099,7 @@ body:has(#pomo-chip) .toasts { bottom: calc(80px + var(--safe-b)); }
   .modal-foot { padding-bottom: calc(14px + var(--safe-b)); }
   .footer { padding-bottom: calc(var(--nav-h) + 40px + var(--safe-b)); }
   .toasts { bottom: calc(var(--nav-h) + 18px + var(--safe-b)); }
+  body:has(#modal-root .modal, #panel-root .panel, .sym-pop:not([hidden]), #filter-pop:not([hidden])) .toasts { top: calc(12px + env(safe-area-inset-top, 0px)); bottom: auto; }
   .tab { font-size: 13px; padding: 9px 4px; gap: 5px; }
   .tab .tab-long, .tab .tab-tag { display: none; }
   .tab .tab-short { display: inline; }
@@ -2161,7 +2164,7 @@ body:has(#pomo-chip) .toasts { bottom: calc(80px + var(--safe-b)); }
       <button class="nav-btn" data-view="log" title="Daily log (7)"><svg class="nav-ico" aria-hidden="true"><use href="#i-log"/></svg><span class="nav-label">Log</span></button>
     </nav>
     <div class="topbar-actions">
-      <div id="streak-widget" class="streak" title="Days in a row with at least one completion" aria-live="polite"></div>
+      <div id="streak-widget" class="streak" title="Done streak: days in a row you finished at least one assignment" aria-live="polite"></div>
       <button class="btn btn-ghost topbar-import" id="btn-import" title="Import from Google (I)"><svg><use href="#i-upload"/></svg><span class="ti-label">Import</span></button>
       <button class="btn btn-icon btn-ghost" id="btn-focus" title="Focus mode (F)" aria-label="Toggle focus mode" aria-pressed="false"><svg><use href="#i-focus"/></svg></button>
       <button class="btn btn-icon btn-ghost" id="btn-theme" title="Toggle theme" aria-label="Toggle light or dark theme"><svg><use href="#i-moon"/></svg></button>
@@ -4080,7 +4083,15 @@ const App = (function () {
         continue;
       }
       state.settings.hiddenCalendars = state.settings.hiddenCalendars.filter(x => x !== calName);
-      const cls = ensureClass(calName, { source: 'ics' });
+      /* A class picked from the catalog ("AP Biology") is the same class as the
+         Classroom calendar "AP Biology - Period 3": reuse it instead of duplicating. */
+      let cls = state.classes.find(c => c.sourceName && C.normalizeName(c.sourceName) === C.normalizeName(calName)) || null;
+      if (!cls && C.parseTodoPaste && C.parseTodoPaste.matchClass) {
+        const mid = C.parseTodoPaste.matchClass(calName, state.classes.filter(c => !c.sourceName && !String(c.id).startsWith('c_demo_')));
+        cls = mid ? getClass(mid) : null;
+        if (cls) cls.sourceName = calName;
+      }
+      if (!cls) cls = ensureClass(calName, { source: 'ics' });
       let kept = 0;
       /* Every event id in this calendar file, so assignments the teacher deleted can be dropped. */
       if (parsed.events.length) {
@@ -4170,7 +4181,7 @@ const App = (function () {
     if (!data || typeof data !== 'object' || !Array.isArray(data.assignments)) { toast('That file does not look like an Assignments backup.', 'err'); return false; }
     const inc = migrate(data);
     /* Merging into an empty browser is a restore: take settings and view state too. */
-    if (mode !== 'replace' && !state.assignments.length && !state.classes.length) mode = 'replace';
+    if (mode !== 'replace' && !state.assignments.length && !state.classes.length && !Object.keys(state.log.days).length) mode = 'replace';
     if (mode === 'replace') {
       state = inc;
     } else {
@@ -4264,7 +4275,7 @@ const App = (function () {
     backdrop.addEventListener('mousedown', e => { if (e.target === backdrop) closeModal(); });
     modalOnClose = opts.onClose || null;
     const modal = backdrop.firstElementChild;
-    const first = modal.querySelector('.modal-body input:not([type=hidden]):not([disabled]), .modal-body select, .modal-body textarea, .modal-body button, .modal-foot button');
+    const first = modal.querySelector('.modal-body input:not([type=hidden]):not([disabled]), .modal-body select, .modal-body textarea, .modal-body button, .modal-foot button') || modal.querySelector('.modal-head button');
     if (first) setTimeout(() => { if (modal.isConnected && !modal.contains(document.activeElement)) first.focus(); }, 30);
     return modal;
   }
@@ -5118,7 +5129,7 @@ const App = (function () {
         ${days.map(d => {
           const pct = Math.min(100, Math.round(d.est / budget * 100));
           return html`<div class="wk-dh ${d.isToday ? 'is-today' : ''} ${d.isPast ? 'is-past' : ''}" data-day="${d.key}">
-            <div class="wk-dh-top"><span class="wk-dh-dow">${C.WEEKDAYS[d.d.getDay()]}</span><span class="wk-dh-date">${d.d.getDate()}</span>${d.isToday ? html`<span class="sr-only">, today</span>` : ''}</div>
+            <div class="wk-dh-top"><span class="wk-dh-dow">${C.WEEKDAYS[d.d.getDay()]}</span><span class="wk-dh-date">${d.d.getDate()}</span>${d.isToday ? html`<span class="sr-only">, today</span>` : ''}${(() => { const lg = logDay(d.key); if (!lg || (!lg.events.length && !lg.mood)) return ''; const mood = lg.mood ? C.MOODS.find(m => m.key === lg.mood) : null; return html`<button type="button" class="wk-dh-log" data-action="wk-open-log" data-day="${d.key}" title="${[mood ? mood.label : '', ...lg.events.map(e => (e.label || C.eventPreset(e.type).label) + (e.time ? ' ' + e.time : ''))].filter(Boolean).join(' · ') + ' · open daily log'}" aria-label="Daily log for ${C.WEEKDAYS_LONG[d.d.getDay()]}">${mood ? mood.icon : ''}${lg.events.slice(0, 2).map(e => C.eventPreset(e.type).icon)}${lg.events.length > 2 ? '+' : ''}</button>`; })()}</div>
             <div class="wk-dh-meta ${d.open ? '' : 'is-free'}" title="${d.open + ' due' + (d.est ? ', about ' + C.formatDuration(d.est) + ' of work' : '')}"><span>${d.open ? d.open + ' due' : 'Free'}</span>${d.est ? html`<span class="wk-dh-sep"> · </span><span class="wk-dh-est">${C.formatDuration(d.est)}</span>` : ''}</div>
             <div class="wk-load ${d.est > budget ? 'is-over' : ''}" title="${'Workload vs. daily budget of ' + C.formatDuration(budget)}"><i style="width:${pct}%"></i></div>
           </div>`;
@@ -5251,6 +5262,7 @@ const App = (function () {
   /* Drop the week DOM when another view is shown so stale copies of items
      (same data-id) never shadow the live ones. */
   on('render', p => { if (p && p.view !== 'week') { const r = $('.view[data-view="week"]'); if (r && r.querySelector('.wk')) r.innerHTML = ''; } });
+  registerAction('wk-open-log', (id, el) => openLogDay(el.dataset.day));
   /* === VIEW:WEEK:JS:END === */
 
   /* === VIEW:BOARD:JS:START === */
@@ -6714,7 +6726,7 @@ const App = (function () {
     const name = it.title;
     const classes = state.classes;
     return html`<tr data-row="${row.i}" class="${it.missing ? 'is-missing' : ''}">
-      <td class="c-inc"><input type="checkbox" data-f="inc" checked aria-label="Include ${name}"></td>
+      <td class="c-inc"><input type="checkbox" data-f="inc" ${it.missing && d && (now() - d) > (Number(state.settings.importLookbackDays) || 30) * C.DAY ? '' : 'checked'} aria-label="Include ${name}" title="${it.missing && d && (now() - d) > (Number(state.settings.importLookbackDays) || 30) * C.DAY ? 'Missing for a long time, so left unticked. Tick it to import it anyway.' : ''}"></td>
       <td class="c-title"><input class="input" data-f="title" value="${row.title}" maxlength="200" aria-label="Title for ${name}" title="${it.rawLines.join(' · ')}"></td>
       <td class="c-class"><select class="select" data-f="class" aria-label="Class for ${name}">
         <option value="" ${row.classVal === '' ? 'selected' : ''}>No class</option>
@@ -7146,7 +7158,7 @@ const App = (function () {
       ${tile('done', D.doneWeek ? 'is-good' : '', '✅', 'Done this week', D.doneWeek, 'since ' + C.WEEKDAYS_LONG[D.ws], '', i)}
       ${tile('overdue', D.overdue.length ? 'is-bad' : '', '⏰', 'Overdue', D.overdue.length, D.overdue.length ? 'catch up in Next Up' : 'nothing late. nice!', '', i + 1)}
       ${tile('next48', '', '⏳', 'Due in 48h', D.next48.length, html`${C.formatDuration(D.load48) || '0m'} of ${C.formatDuration(D.budget48)} budget${over ? ' · over' : ''}`, html`<div class="ov-bar ${over ? 'is-over' : ''}" role="progressbar" aria-label="Workload against budget" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></div>`, i + 2)}
-      ${tile('streak', D.streak ? '' : '', D.streak ? '🔥' : '🌱', 'Day streak', D.streak, days.reduce((s, d) => s + d.count, 0) + ' done in the last 7 days', html`<div class="ov-spark" aria-hidden="true">${days.map((d, j) => html`<i class="${d.count ? '' : 'zero'} ${j === 6 ? 'today' : ''}" style="height:${Math.max(3, Math.round(d.count / max * 26))}px; --j:${j}" title="${d.key}: ${d.count} done"></i>`)}</div>`, i + 3)}
+      ${tile('streak', D.streak ? '' : '', D.streak ? '🔥' : '🌱', 'Done streak', D.streak, days.reduce((s, d) => s + d.count, 0) + ' done in the last 7 days', html`<div class="ov-spark" aria-hidden="true">${days.map((d, j) => html`<i class="${d.count ? '' : 'zero'} ${j === 6 ? 'today' : ''}" style="height:${Math.max(3, Math.round(d.count / max * 26))}px; --j:${j}" title="${d.key}: ${d.count} done"></i>`)}</div>`, i + 3)}
     </div>`;
   }
 
@@ -7273,7 +7285,7 @@ const App = (function () {
   registerAction('ov-mood', (id, el) => {
     const key = C.dayKey(now()), m = ovMood(el.dataset.mood); if (!m) return;
     const prev = logDay(key) ? logDay(key).mood : null;
-    if (prev === m.key) return;
+    if (prev === m.key) { updateLogDay(key, { mood: null }); toast('Mood cleared', '', { label: 'Undo', fn: () => updateLogDay(key, { mood: prev }) }); return; }
     updateLogDay(key, { mood: m.key });
     toast(m.icon + ' Logged: ' + m.label.toLowerCase(), 'ok', { label: 'Undo', fn: () => updateLogDay(key, { mood: prev }) });
   });
@@ -8039,7 +8051,13 @@ const App = (function () {
     const chip = t && t.closest ? t.closest('.log-chip') : null;
     logShift(delta, chip ? chip.dataset.day : null);
   });
-  window.addEventListener('pagehide', () => { if (logUi.noteTimer || logUi.weightTimer) { logFlushAll(); save(true); } });
+  window.addEventListener('pagehide', () => {
+    const t = document.activeElement;
+    let pending = !!(logUi.noteTimer || logUi.weightTimer);
+    if (t && inLogView(t) && t.classList && (t.classList.contains('log-ev-label') || t.classList.contains('log-ev-time'))) { t.dispatchEvent(new Event('change', { bubbles: true })); pending = true; }
+    if (logUi.noteTimer || logUi.weightTimer) logFlushAll();
+    if (pending) save(true);
+  });
   on('render', p => {
     const active = !!(p && p.view === 'log');
     if (!active && logUi.wasActive) logFlushAll();
@@ -8703,7 +8721,7 @@ const App = (function () {
       </div>
       <div data-tabpanel="paste" hidden>${pasteTabHtml()}</div>
       <div data-tabpanel="json" class="col" hidden style="gap:12px">
-        <p class="small muted">A backup is a JSON file with everything: assignments, classes, settings and streaks. Keep one somewhere safe once a week.</p>
+        <p class="small muted">A backup is a JSON file with everything: assignments, classes, your daily log, settings and streaks. Keep one somewhere safe once a week.</p>
         <div class="row wrap"><button class="btn btn-primary" data-action="export-json">Export backup</button><button class="btn" data-action="import-json-merge">Import &amp; merge…</button><button class="btn" data-action="import-json-replace">Import &amp; replace…</button></div>
       </div>`;
     const m = openModal({ title: 'Import', body, wide: true });
@@ -8850,7 +8868,7 @@ const App = (function () {
     'open-settings': () => openSettings(),
     'load-demo': () => loadDemo(),
     'clear-demo': () => { closeModal(); clearDemo(); },
-    'clear-all': async () => { if (await confirmModal({ title: 'Clear everything?', message: 'This deletes all assignments, classes, settings and streaks from this browser. Export a backup first if you might want them back.', ok: 'Clear everything', danger: true })) { clearAll(); } },
+    'clear-all': async () => { if (await confirmModal({ title: 'Clear everything?', message: 'This deletes all assignments, classes, daily log entries, settings and streaks from this browser. Export a backup first if you might want them back.', ok: 'Clear everything', danger: true })) { clearAll(); } },
     'export-json': () => exportJSON(),
     'import-json-merge': () => { pendingJsonMode = 'merge'; $('#file-json').click(); },
     'import-json-replace': async () => { if (await confirmModal({ title: 'Replace everything?', message: 'Everything currently stored here will be replaced by the backup file.', ok: 'Choose file', danger: true })) { pendingJsonMode = 'replace'; $('#file-json').click(); } },
@@ -8923,7 +8941,7 @@ const App = (function () {
       }
       if (e.key === 'Tab' && modalOpen()) {
         const focusables = $$('#modal-root .modal button:not([disabled]), #modal-root .modal input:not([disabled]):not([type=hidden]), #modal-root .modal select, #modal-root .modal textarea, #modal-root .modal a[href], #modal-root .modal [tabindex="0"]').filter(el => el.offsetParent !== null);
-        if (focusables.length) { const first = focusables[0], last = focusables[focusables.length - 1]; if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); } else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); } }
+        if (focusables.length) { const first = focusables[0], last = focusables[focusables.length - 1]; if (!$('#modal-root .modal').contains(document.activeElement)) { e.preventDefault(); (e.shiftKey ? last : first).focus(); } else if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); } else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); } }
         return;
       }
       if (typing || e.metaKey || e.ctrlKey || e.altKey || modalOpen() || panelOpen()) return;

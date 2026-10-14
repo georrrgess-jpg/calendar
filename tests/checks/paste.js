@@ -3,6 +3,8 @@
 const fs = require('fs');
 
 module.exports = async ({ page, check, assert, fixtures, SHOTS, shotsDir, path }) => {
+  /* These checks count every fixture row; keep long-missing rows ticked here (zz-integration covers the default). */
+  const lookback = await page.evaluate(() => { const v = App.state.settings.importLookbackDays; App.state.settings.importLookbackDays = 400; return v; });
   const todo = fs.readFileSync(fixtures('todo-paste.txt'), 'utf8');
   const messy = fs.readFileSync(fixtures('paste-messy.txt'), 'utf8');
   /* Theme switches animate colours, so let them settle (and move the pointer off the table) before a screenshot. */
@@ -332,4 +334,5 @@ module.exports = async ({ page, check, assert, fixtures, SHOTS, shotsDir, path }
       await page.evaluate(() => App.setNow(null));
     }
   });
+  await page.evaluate(v => { App.state.settings.importLookbackDays = v; App.save(); }, lookback);
 };

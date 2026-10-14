@@ -83,4 +83,41 @@ module.exports = async ({ page, check, assert, fixtures }) => {
     await page.keyboard.press('Escape');
     await page.evaluate(() => App.setView('today'));
   });
+
+  await check('paste preview leaves long-missing items unticked by default', async () => {
+    await page.evaluate(() => { App.closeModal(); App.setNow(new Date(2026, 9, 14, 10, 0)); });
+    await page.click('#btn-import');
+    await page.click('[role="tab"][data-tab="paste"]');
+    await page.fill('.paste-tab textarea', 'Missing\nOld summer essay\nEnglish 11\nDue Aug 1\nThis week\nNew worksheet\nEnglish 11\nDue Oct 16\n');
+    await page.click('.paste-tab [data-paste="preview"]');
+    const r = await page.$$eval('.paste-tab tbody tr', trs => trs.map(tr => ({ t: tr.querySelector('[data-f="title"]').value, on: tr.querySelector('[data-f="inc"]').checked })));
+    assert.deepStrictEqual(r, [{ t: 'Old summer essay', on: false }, { t: 'New worksheet', on: true }]);
+    assert.strictEqual((await page.textContent('[data-paste="import"]')).trim(), 'Import 1 assignment');
+    await page.keyboard.press('Escape');
+    await page.evaluate(() => { App.closeModal(); App.setNow(null); });
+  });
+
+  await check('calendar import reuses a class picked from the catalog', async () => {
+    const r = await page.evaluate(() => {
+      const cls = App.ensureClass('AP Chemistry');
+      App.importICSTexts([{ name: 'chem.ics', text: 'BEGIN:VCALENDAR\r\nX-WR-CALNAME:AP Chemistry - Period 2\r\nBEGIN:VEVENT\r\nUID:chem-zz-1\r\nSUMMARY:Titration lab\r\nDTSTART:20261030T035900Z\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n' }]);
+      const a = App.byId('chem-zz-1');
+      const out = { same: a.classId === cls.id, classes: App.state.classes.filter(c => /AP Chemistry/.test(c.name)).length, source: cls.sourceName };
+      App.state.assignments.splice(App.state.assignments.indexOf(a), 1);
+      App.state.classes.splice(App.state.classes.indexOf(cls), 1); App.save(); App.render();
+      return out;
+    });
+    assert.deepStrictEqual(r, { same: true, classes: 1, source: 'AP Chemistry - Period 2' });
+  });
+
+  await check('restoring a backup with merge keeps daily-log entries already in the browser', async () => {
+    const r = await page.evaluate(() => {
+      const backup = JSON.stringify({ version: 1, assignments: [{ id: 'bk1', title: 'From backup' }], classes: [], log: { days: { '2026-10-10': { mood: 'good' } } } });
+      App.clearAll();
+      App.updateLogDay('2026-10-14', { mood: 'bad', note: 'kept' });
+      App.importJSONText(backup, 'merge');
+      return Object.keys(App.state.log.days).sort();
+    });
+    assert.deepStrictEqual(r, ['2026-10-10', '2026-10-14']);
+  });
 };
