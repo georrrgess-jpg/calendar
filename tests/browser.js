@@ -310,7 +310,22 @@ async function check(name, fn) {
     assert.deepStrictEqual(external, []);
   });
 
-  /* === VIEW:CHECKS === */
+  /* Module checks: every tests/checks/*.js exports async ({ page, check, assert, fixtures, SHOTS, shotsDir, path }) => {} */
+  const checksDir = path.join(__dirname, 'checks');
+  if (fs.existsSync(checksDir)) {
+    for (const f of fs.readdirSync(checksDir).filter(f => f.endsWith('.js')).sort()) {
+      console.log(f.replace(/\.js$/, ''));
+      await page.setViewportSize({ width: 1440, height: 900 });
+      await page.emulateMedia({ reducedMotion: 'no-preference' });
+      await page.evaluate(() => App.setNow(null));
+      await require(path.join(checksDir, f))({ page, check, assert, fixtures, SHOTS, shotsDir, path, fileUrl });
+    }
+    await check('no console or page errors in module checks', async () => {
+      assert.deepStrictEqual(pageErrors, []);
+      assert.deepStrictEqual(consoleErrors, []);
+      assert.deepStrictEqual(requests.filter(u => !u.startsWith('file://')), []);
+    });
+  }
 
   await browser.close();
   console.log('\n' + passed + ' passed, ' + failed + ' failed');

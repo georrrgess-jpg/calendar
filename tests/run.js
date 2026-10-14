@@ -281,7 +281,8 @@ test('demoData is self-consistent', () => {
   assert.ok(d.assignments.some(a => C.parseISO(a.due) < NOW && !a.done), 'has an overdue item');
 });
 
-/* === FEATURE:PASTE:TESTS === */
+/* === FEATURE:PASTE:TESTS:START === */
+/* === FEATURE:PASTE:TESTS:END === */
 
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
 if (failed) { console.log('Failed: ' + failures.join(', ')); process.exit(1); }

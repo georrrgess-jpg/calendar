@@ -484,17 +484,23 @@ body.focus-mode .lanes { grid-template-columns: 1fr; }
 /* ==========================================================================
    View-specific styles (filled in by each view module)
    ========================================================================== */
-/* === VIEW:MONTH:CSS === */
+/* === VIEW:MONTH:CSS:START === */
+/* === VIEW:MONTH:CSS:END === */
 
-/* === VIEW:WEEK:CSS === */
+/* === VIEW:WEEK:CSS:START === */
+/* === VIEW:WEEK:CSS:END === */
 
-/* === VIEW:BOARD:CSS === */
+/* === VIEW:BOARD:CSS:START === */
+/* === VIEW:BOARD:CSS:END === */
 
-/* === VIEW:CLASSES:CSS === */
+/* === VIEW:CLASSES:CSS:START === */
+/* === VIEW:CLASSES:CSS:END === */
 
-/* === FEATURE:POMODORO:CSS === */
+/* === FEATURE:POMODORO:CSS:START === */
+/* === FEATURE:POMODORO:CSS:END === */
 
-/* === FEATURE:PASTE:CSS === */
+/* === FEATURE:PASTE:CSS:START === */
+/* === FEATURE:PASTE:CSS:END === */
 
 /* ==========================================================================
    Responsive
@@ -605,16 +611,20 @@ body.focus-mode .lanes { grid-template-columns: 1fr; }
   <main id="view-root">
     <section class="view active" data-view="today" aria-label="Next up"></section>
     <section class="view" data-view="month" aria-label="Month calendar">
-      <!-- === VIEW:MONTH:HTML === -->
+      <!-- === VIEW:MONTH:HTML:START === -->
+      <!-- === VIEW:MONTH:HTML:END === -->
     </section>
     <section class="view" data-view="week" aria-label="Week timeline">
-      <!-- === VIEW:WEEK:HTML === -->
+      <!-- === VIEW:WEEK:HTML:START === -->
+      <!-- === VIEW:WEEK:HTML:END === -->
     </section>
     <section class="view" data-view="board" aria-label="Priority board">
-      <!-- === VIEW:BOARD:HTML === -->
+      <!-- === VIEW:BOARD:HTML:START === -->
+      <!-- === VIEW:BOARD:HTML:END === -->
     </section>
     <section class="view" data-view="classes" aria-label="By class">
-      <!-- === VIEW:CLASSES:HTML === -->
+      <!-- === VIEW:CLASSES:HTML:START === -->
+      <!-- === VIEW:CLASSES:HTML:END === -->
     </section>
   </main>
 </div>
@@ -1033,10 +1043,11 @@ const Core = (function () {
   }
 
   /* ---------- paste import (Google Classroom To-do page) ---------- */
-  /* === FEATURE:PASTE:CORE === */
+  /* === FEATURE:PASTE:CORE:START === */
   function parseTodoPaste(text, opts) {
     return { items: [], warnings: ['The paste importer is not available yet.'] };
   }
+  /* === FEATURE:PASTE:CORE:END === */
 
   /* ---------- merge ---------- */
   function mergeImported(existing, incoming, now) {
