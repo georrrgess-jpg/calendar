@@ -177,7 +177,7 @@ module.exports = async ({ page, check, assert, SHOTS, shotsDir, path }) => {
   });
 
   await check('pomodoro: mini timer chip appears on other views and returns to Next Up', async () => {
-    await page.keyboard.press('2');
+    await page.keyboard.press('3');
     await page.waitForSelector('#pomo-chip');
     assert.match((await page.textContent('#pomo-chip .pomo-chip-time')).trim(), /^\d\d:\d\d$/);
     await shot('pomodoro-chip-1440.png');
@@ -296,7 +296,7 @@ module.exports = async ({ page, check, assert, SHOTS, shotsDir, path }) => {
     const breakColor = await page.$eval('#focus-root .pomo-phase', el => getComputedStyle(el).color);
     assert.strictEqual(breakColor, 'rgb(4, 120, 87)', 'darker green for the break label in light theme: ' + breakColor);
     await page.evaluate(() => { App.state.settings.theme = 'dark'; App.applyTheme(); App.save(); });
-    await page.keyboard.press('2');
+    await page.keyboard.press('3');
     await page.waitForSelector('#pomo-chip');
     await page.focus('#pomo-chip [data-action="pomo-toggle"]');
     await page.keyboard.press('Enter');
@@ -307,7 +307,7 @@ module.exports = async ({ page, check, assert, SHOTS, shotsDir, path }) => {
     assert.strictEqual((await pomo()).paused, false, 'Enter again resumes');
     const pad = await page.$eval('.footer', el => parseFloat(getComputedStyle(el).paddingBottom));
     assert.ok(pad >= 80, 'footer leaves room under the chip: ' + pad);
-    await page.keyboard.press('1');
+    await page.keyboard.press('2');
     await page.evaluate(() => App.stopAssignment());
   });
 
@@ -321,13 +321,13 @@ module.exports = async ({ page, check, assert, SHOTS, shotsDir, path }) => {
     await setTimer({ endsAt: -500 });
     await page.waitForSelector('.toast:has-text("Pomodoro done")');
     assert.ok((await page.textContent('.toast:has-text("Pomodoro done")')).includes(evil), 'toast shows the raw title as text');
-    await page.keyboard.press('3');
+    await page.keyboard.press('4');
     await page.waitForSelector('#pomo-chip');
     assert.ok((await page.textContent('#pomo-chip .pomo-chip-label')).includes(evil));
     assert.strictEqual(await page.$$eval('img[src="x"]', els => els.length), 0, 'no injected <img>');
     await page.waitForTimeout(200);
     assert.strictEqual(await page.evaluate(() => window.__pomoXss), undefined);
-    await page.keyboard.press('1');
+    await page.keyboard.press('2');
     await page.evaluate(id => App.deleteAssignment(id), id);
     assert.strictEqual(await pomo(), null);
     await clearToasts();

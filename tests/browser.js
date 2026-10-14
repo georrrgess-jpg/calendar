@@ -70,6 +70,7 @@ async function check(name, fn) {
   });
   await check('demo data loads and the hero card shows a countdown', async () => {
     await page.click('[data-action="load-demo"]');
+    await page.keyboard.press('2');
     await page.waitForSelector('.hero .hero-title');
     const title = await page.textContent('.hero .hero-title');
     assert.ok(title.trim().length > 0);
@@ -100,13 +101,17 @@ async function check(name, fn) {
   });
 
   console.log('views, filters, persistence');
-  await check('keyboard 1-5 switches views and the last view is restored on reload', async () => {
-    await page.keyboard.press('4');
+  await check('keyboard 1-7 switches views and the last view is restored on reload', async () => {
+    await page.keyboard.press('5');
     assert.ok(await page.isVisible('.view[data-view="board"].active'));
     await page.reload(); await page.waitForSelector('#view-root');
     assert.ok(await page.isVisible('.view[data-view="board"].active'), 'board restored after reload');
     assert.strictEqual(await page.getAttribute('#nav [data-view="board"]', 'aria-current'), 'page');
+    await page.keyboard.press('7');
+    assert.ok(await page.isVisible('.view[data-view="log"].active'));
     await page.keyboard.press('1');
+    assert.ok(await page.isVisible('.view[data-view="overview"].active'));
+    await page.keyboard.press('2');
     assert.ok(await page.isVisible('.view[data-view="today"].active'));
   });
   await check('class filter chip persists across views and reload; overdue items stay visible', async () => {
@@ -117,7 +122,7 @@ async function check(name, fn) {
     assert.ok(titles.every(t => /Problem set|Midterm/.test(t)), 'only Precalculus items: ' + titles.join(' | '));
     const overdue = await page.$$eval('.lane[data-lane="overdue"] .item .item-title', els => els.map(e => e.textContent));
     assert.ok(overdue.some(t => t.includes('Cell respiration')), 'overdue AP Bio item still shown despite class filter');
-    await page.keyboard.press('2'); await page.keyboard.press('1');
+    await page.keyboard.press('3'); await page.keyboard.press('2');
     assert.strictEqual(await page.getAttribute('#filter-classes .chip:has-text("Precalculus")', 'aria-pressed'), 'true');
     await page.reload(); await page.waitForSelector('#view-root');
     assert.strictEqual(await page.getAttribute('#filter-classes .chip:has-text("Precalculus")', 'aria-pressed'), 'true');

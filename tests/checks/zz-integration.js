@@ -73,11 +73,11 @@ module.exports = async ({ page, check, assert, fixtures }) => {
 
   await check('switching view with 1-5 leaves focus mode; shortcuts pause while a panel is open', async () => {
     await page.evaluate(() => { App.setView('today'); if (!App.state.settings.focusMode) App.toggleFocusMode(); });
-    await page.keyboard.press('4');
+    await page.keyboard.press('5');
     let r = await page.evaluate(() => ({ v: App.state.ui.view, f: App.state.settings.focusMode, nav: getComputedStyle(document.getElementById('nav')).display !== 'none' }));
     assert.deepStrictEqual(r, { v: 'board', f: false, nav: true });
     await page.evaluate(() => { App.setView('month'); App.openPanel({ title: 'Test panel', body: App.html`<p>x</p>` }); });
-    await page.keyboard.press('3');
+    await page.keyboard.press('4');
     r = await page.evaluate(() => ({ v: App.state.ui.view, open: App.panelOpen() }));
     assert.deepStrictEqual(r, { v: 'month', open: true });
     await page.keyboard.press('Escape');
