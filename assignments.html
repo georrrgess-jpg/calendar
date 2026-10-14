@@ -2016,6 +2016,281 @@ body:has(#pomo-chip) .toasts { bottom: calc(80px + var(--safe-b)); }
 /* === FEATURE:CHECKLIST:CSS:END === */
 
 /* === FEATURE:ASSIGN:CSS:START === */
+/* Create button (top bar; a floating action button on phones) ---------------- */
+.topbar-create { height: 36px; padding: 0 14px 0 11px; margin-right: 2px; font-size: 13.5px; font-weight: 650; border-radius: 11px; gap: 6px; }
+.topbar-create svg { width: 17px; height: 17px; transition: transform 300ms var(--ease-spring); }
+.topbar-create:hover svg { transform: rotate(90deg) scale(1.08); }
+.topbar-create:active:not(:disabled) svg { transform: rotate(90deg) scale(0.85); transition-duration: 90ms; }
+/* Room for Create in the top bar: Import becomes an icon, and the brand name gives way where space is tight. */
+@media (min-width: 721px) {
+  .topbar-import .ti-label { display: none; }
+  .topbar-import { width: 36px; padding: 0; margin-right: 0; }
+}
+@media (min-width: 1101px) and (max-width: 1340px) { .brand > span:not(.brand-mark) { display: none; } }
+@media (min-width: 941px) and (max-width: 1040px) {
+  .nav-btn:not([aria-current="page"]) .nav-label { display: none; }
+  .nav-btn:not([aria-current="page"]) { padding: 7px 10px 8px; }
+}
+@media (min-width: 721px) and (max-width: 1100px) {
+  .topbar-create { width: 36px; padding: 0; }
+  .topbar-create .tc-label { display: none; }
+}
+
+/* Progress meter ------------------------------------------------------------ */
+.pm { --pm-w: 56px; display: inline-flex; align-items: center; gap: 7px; min-width: 0; font-size: 12px; line-height: 1; color: var(--text-2); vertical-align: middle; }
+.pm-track { position: relative; flex: none; width: var(--pm-w); height: 6px; border-radius: 999px; overflow: hidden; background: color-mix(in srgb, var(--text-3) 24%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text-3) 10%, transparent); }
+.pm-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; border-radius: inherit; background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 45%, #22d3ee)); transition: width 520ms var(--ease-out), background var(--dur) var(--ease); }
+.pm-fill::after { content: ""; position: absolute; right: 0; top: 50%; width: 6px; height: 6px; margin-top: -3px; border-radius: 50%; background: rgba(255, 255, 255, 0.55); opacity: 0.8; }
+.pm.is-zero .pm-fill::after { display: none; }
+.pm.is-full .pm-fill { background: linear-gradient(90deg, color-mix(in srgb, var(--ok) 70%, #a3e635), var(--ok)); }
+.pm.is-full .pm-fill::after { display: none; }
+.pm-pct { min-width: 3.2ch; font-weight: 650; font-variant-numeric: tabular-nums; color: var(--text-2); transition: color var(--dur) var(--ease); }
+.pm.is-zero .pm-pct { color: var(--text-3); font-weight: 550; }
+.pm.is-full .pm-pct { color: var(--ok); }
+button.pm { appearance: none; margin: -4px -6px; padding: 4px 6px; border: 0; border-radius: 999px; background: transparent; cursor: pointer; font: inherit; font-size: 12px; transition: background var(--dur) var(--ease), transform 140ms var(--ease); }
+button.pm:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+button.pm:hover .pm-pct { color: var(--accent-text); }
+button.pm:active { transform: scale(0.94); }
+button.pm[aria-expanded="true"], button.pm:focus-visible { background: var(--accent-soft); }
+button.pm:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-radius: 999px; }
+.pm-lg { --pm-w: 100%; display: flex; gap: 12px; font-size: 14px; }
+.pm-lg .pm-track { flex: 1 1 auto; height: 10px; }
+.pm-lg .pm-fill::after { width: 8px; height: 8px; margin-top: -4px; right: 1px; }
+.pm-lg .pm-pct { font-size: 15px; font-weight: 740; color: var(--text); min-width: 4ch; text-align: right; }
+button.pm-lg { margin: -6px -8px; padding: 6px 8px; font-size: 14px; border-radius: 12px; width: calc(100% + 16px); }
+button.pm-lg:focus-visible { border-radius: 12px; }
+.pm-xs { --pm-w: 100%; display: block; }
+.pm-xs .pm-track { height: 3px; border-radius: 0 3px 3px 0; background: color-mix(in srgb, var(--text) 10%, transparent); box-shadow: none; }
+.pm-xs .pm-fill::after { display: none; }
+.item-meta .pm { margin-left: 2px; }
+.item.is-done .pm { opacity: 0.8; }
+
+/* Hero, board and week placements */
+.hero-title-btn { all: unset; cursor: pointer; border-radius: 8px; overflow-wrap: anywhere; background-image: linear-gradient(currentColor, currentColor); background-size: 0% 2px; background-repeat: no-repeat; background-position: 0 100%; transition: background-size 320ms var(--ease-out), color var(--dur) var(--ease); }
+.hero-title-btn:hover { background-size: 100% 2px; color: var(--accent-text); }
+.hero-title-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.hero-prog { display: flex; align-items: center; gap: 12px; max-width: 460px; margin-top: 14px; }
+.hero-prog-label { flex: none; font-size: 12px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-3); }
+.hero-prog .pm-lg { flex: 1 1 auto; }
+.hero-prog button.pm-lg { width: auto; flex: 1 1 auto; margin: -6px 0; }
+.bcard-prog { display: flex; min-width: 0; margin: -1px 0 1px; }
+.bcard-prog .pm { --pm-w: 100%; flex: 1 1 auto; width: auto; margin: -4px -6px; }
+.bcard-prog .pm .pm-track { flex: 1 1 auto; height: 5px; }
+.wk-block .pm-xs { position: absolute; left: 0; right: 0; bottom: 0; }
+.pill { position: relative; }
+.pill-prog { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; overflow: hidden; background: color-mix(in srgb, var(--text) 8%, transparent); pointer-events: none; }
+.pill-prog .pm-fill { border-radius: 0 2px 2px 0; }
+.pill-prog .pm-fill::after { display: none; }
+.wk-block-pct { margin-left: auto; padding-left: 4px; font-size: 10.5px; font-weight: 700; color: var(--text); opacity: 0.8; }
+
+/* Progress popover ----------------------------------------------------------- */
+.pm-pop {
+  position: absolute; z-index: 120; width: 268px; max-width: calc(100vw - 24px); padding: 14px 14px 12px;
+  display: flex; flex-direction: column; gap: 10px; color: var(--text);
+  background: var(--surface-1); border: 1px solid var(--border-strong); border-radius: 18px; box-shadow: var(--shadow-2);
+  transform-origin: var(--arrow-x, 50%) 0; animation: pm-pop-in 220ms var(--ease-spring);
+}
+.pm-pop.is-above { transform-origin: var(--arrow-x, 50%) 100%; }
+.pm-pop::before { content: ""; position: absolute; top: -7px; left: var(--arrow-x, 50%); width: 12px; height: 12px; margin-left: -6px; background: var(--surface-1); border-left: 1px solid var(--border-strong); border-top: 1px solid var(--border-strong); transform: rotate(45deg); border-radius: 3px 0 0 0; }
+.pm-pop.is-above::before { top: auto; bottom: -7px; transform: rotate(225deg); }
+.pm-pop.is-closing { animation: pm-pop-out 150ms var(--ease) forwards; pointer-events: none; }
+@keyframes pm-pop-in { from { opacity: 0; transform: translateY(-6px) scale(0.92); } }
+@keyframes pm-pop-out { to { opacity: 0; transform: translateY(-4px) scale(0.96); } }
+.pm-pop-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.pm-pop-label { font-size: 11.5px; font-weight: 750; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); }
+.pm-pop-val { font-size: 26px; font-weight: 780; letter-spacing: -0.02em; line-height: 1; color: var(--accent-text); transition: color var(--dur) var(--ease); }
+.pm-pop.is-full .pm-pop-val { color: var(--ok); }
+.pm-pop-title { margin-top: -6px; font-size: 13px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pm-chips { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; }
+.pm-chip { padding: 6px 0; border-radius: 9px; border: 1px solid var(--border-strong); background: var(--surface-2); color: var(--text-2); font-size: 12.5px; font-weight: 650; font-variant-numeric: tabular-nums; transition: background var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease), transform 120ms var(--ease); }
+.pm-chip:hover { background: var(--surface-3); color: var(--text); }
+.pm-chip:active { transform: scale(0.92); }
+.pm-chip.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-text); animation: badge-pop 260ms var(--ease-spring); }
+.pm-pop.is-full .pm-chip.active { background: var(--ok-soft); border-color: var(--ok); color: var(--ok); }
+.pm-pop-hint { display: flex; justify-content: space-between; gap: 8px; font-size: 11.5px; color: var(--text-3); }
+.pm-pop-hint .kbd { margin-right: 2px; font-size: 10px; padding: 0 5px; }
+@media (hover: none) { .pm-pop-hint { display: none; } }
+
+/* Range slider shared by the popover, Create and Edit ------------------------ */
+.pm-range { --p: 0%; -webkit-appearance: none; appearance: none; width: 100%; height: 26px; margin: 0; padding: 0; background: transparent; cursor: pointer; }
+.pm-range:focus-visible { outline: none; }
+.pm-range::-webkit-slider-runnable-track { height: 8px; border-radius: 999px; background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 45%, #22d3ee)) 0 0 / var(--p) 100% no-repeat, color-mix(in srgb, var(--text-3) 24%, var(--surface-2)); }
+.pm-range::-moz-range-track { height: 8px; border-radius: 999px; background: color-mix(in srgb, var(--text-3) 24%, var(--surface-2)); }
+.pm-range::-moz-range-progress { height: 8px; border-radius: 999px; background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 45%, #22d3ee)); }
+.pm-range::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; margin-top: -7px; border-radius: 50%; background: #fff; border: 3px solid var(--accent); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3); transition: transform 160ms var(--ease-spring), box-shadow var(--dur) var(--ease); }
+.pm-range::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: #fff; border: 3px solid var(--accent); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3); }
+.pm-range:hover::-webkit-slider-thumb { transform: scale(1.1); }
+.pm-range:active::-webkit-slider-thumb { transform: scale(1.18); }
+.pm-range:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 5px var(--accent-soft), 0 2px 8px rgba(0, 0, 0, 0.3); }
+.pm-range:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 5px var(--accent-soft); }
+.ca-prog-val { margin-left: 6px; padding: 1px 7px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-text); font-size: 11.5px; font-weight: 750; }
+
+/* Read-only detail ------------------------------------------------------------ */
+.ad-modal { max-width: 660px; overflow: hidden; }
+.ad-modal .modal-head { align-items: flex-start; padding: 18px 18px 16px 22px; border-bottom-color: transparent; background: linear-gradient(180deg, color-mix(in srgb, var(--c) 20%, transparent), transparent); position: relative; }
+.ad-modal .modal-head::before { content: ""; position: absolute; left: 0; top: 0; right: 0; height: 4px; background: var(--c); }
+.ad-head-main { display: flex; flex-direction: column; gap: 8px; min-width: 0; flex: 1 1 auto; }
+.ad-modal #modal-title { font-size: 23px; font-weight: 760; letter-spacing: -0.02em; line-height: 1.2; overflow-wrap: anywhere; }
+.ad-eyebrow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ad-chip { display: inline-flex; align-items: center; gap: 7px; max-width: 100%; padding: 4px 11px 4px 6px; border-radius: 999px; font-size: 13px; font-weight: 650; color: var(--text); background: color-mix(in srgb, var(--c) 18%, var(--surface-1)); border: 1px solid color-mix(in srgb, var(--c) 45%, transparent); overflow-wrap: anywhere; }
+.ad-chip .ad-sym { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: color-mix(in srgb, var(--c) 30%, var(--surface-1)); font-size: 12.5px; }
+.ad-eyebrow-sep { font-size: 11.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); }
+.ad { display: flex; flex-direction: column; gap: 14px; }
+.ad > * { animation: stg-rise 380ms var(--ease-out) backwards; }
+.ad > :nth-child(2) { animation-delay: 40ms; } .ad > :nth-child(3) { animation-delay: 80ms; } .ad > :nth-child(4) { animation-delay: 120ms; } .ad > :nth-child(n+5) { animation-delay: 160ms; }
+.ad-badges { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 8px; margin-top: -4px; }
+.ad-status { --sc: var(--accent); display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 8px; border-radius: 999px; font-size: 12px; font-weight: 700; color: var(--sc); background: color-mix(in srgb, var(--sc) 14%, transparent); border: 1px solid color-mix(in srgb, var(--sc) 35%, transparent); }
+:root[data-theme="dark"] .ad-status.is-open { --sc: var(--accent-text); }
+.ad-status.is-done { --sc: var(--ok); } .ad-status.is-overdue { --sc: var(--danger); } .ad-status.is-archived { --sc: var(--text-3); } .ad-status.is-active { --sc: var(--warn); }
+.ad-status-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 22%, transparent); }
+.ad-status.is-active .ad-status-dot, .ad-status.is-overdue .ad-status-dot { animation: hot-pulse 1.8s ease-in-out infinite; }
+.ad-pri-src { margin-left: -4px; font-size: 12px; color: var(--text-3); }
+.ad-src { display: inline-flex; align-items: center; gap: 5px; margin-left: auto; padding: 3px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; color: var(--text-2); background: var(--surface-2); border: 1px solid var(--border); }
+.ad-due { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 14px 16px; border-radius: var(--radius); background: var(--surface-2); border: 1px solid var(--border); }
+.ad-due.is-overdue { background: color-mix(in srgb, var(--danger) 8%, var(--surface-2)); border-color: color-mix(in srgb, var(--danger) 35%, var(--border)); }
+.ad-due-ico { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 13px; color: var(--c); background: color-mix(in srgb, var(--c) 15%, var(--surface-1)); border: 1px solid color-mix(in srgb, var(--c) 30%, transparent); }
+.ad-due-ico svg { width: 20px; height: 20px; }
+.ad-k { font-size: 11px; font-weight: 750; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); margin: 0; }
+.ad-due-date { font-size: 16.5px; font-weight: 700; letter-spacing: -0.01em; margin-top: 2px; }
+.ad-due-time { font-size: 13px; color: var(--text-2); margin-top: 1px; }
+.ad-due-cd { text-align: right; }
+.ad-cd { font-size: 22px; font-weight: 770; letter-spacing: -0.02em; line-height: 1.1; margin-top: 3px; font-variant-numeric: tabular-nums; color: hsl(var(--uh, 215) 75% 70%); }
+:root[data-theme="light"] .ad-cd { color: hsl(var(--uh, 215) 72% 40%); }
+.ad-cd.is-overdue { color: var(--danger); }
+.ad-cd.is-hot { animation: hot-pulse 1.8s ease-in-out infinite; }
+.ad-cd-done { display: inline-flex; padding: 5px 11px; border-radius: 999px; font-size: 13px; font-weight: 700; color: var(--ok); background: var(--ok-soft); }
+.ad-prog { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px 16px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface-1); }
+.ad-prog-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.ad-prog-note { font-size: 12px; color: var(--text-3); }
+.ad-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; margin: 0; border-radius: var(--radius); overflow: hidden; background: var(--border); border: 1px solid var(--border); }
+.ad-fact { display: flex; flex-direction: column; gap: 3px; min-width: 0; padding: 10px 14px; background: var(--surface-1); }
+.ad-fact.ad-wide { grid-column: 1 / -1; }
+.ad-fact dt { font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-3); }
+.ad-fact dd { margin: 0; font-size: 14px; color: var(--text); overflow-wrap: anywhere; }
+.ad-class { display: inline-flex; align-items: center; gap: 7px; font-weight: 600; }
+.ad-class .ad-sym { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 7px; font-size: 12.5px; background: color-mix(in srgb, var(--c) 22%, var(--surface-2)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 40%, transparent); }
+.ad-pri { display: inline-flex; align-items: center; gap: 6px; font-weight: 650; color: var(--pc); }
+.ad-link { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: var(--radius); border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border)); background: color-mix(in srgb, var(--accent) 7%, var(--surface-1)); color: var(--text); transition: transform 180ms var(--ease-out), border-color var(--dur) var(--ease), background var(--dur) var(--ease); }
+.ad-link:hover { text-decoration: none; transform: translateY(-1px); border-color: var(--accent); background: var(--accent-soft); }
+.ad-link-ico { display: grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: 10px; background: var(--accent-soft); color: var(--accent-text); }
+.ad-link-ico svg { width: 17px; height: 17px; }
+.ad-link-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1 1 auto; }
+.ad-link-text b { font-size: 14px; font-weight: 650; }
+.ad-link-url { font-size: 12px; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ad-block { display: flex; flex-direction: column; gap: 6px; margin: 0; }
+.ad-block h3 { font-size: 11px; }
+.ad-text { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; line-height: 1.55; color: var(--text); padding: 12px 14px; border-radius: var(--radius-sm); background: var(--surface-2); border: 1px solid var(--border); }
+.ad-source-text { max-height: 200px; overflow: auto; color: var(--text-2); font-size: 13.5px; }
+.ad-empty { font-size: 13.5px; color: var(--text-3); padding: 10px 14px; border-radius: var(--radius-sm); border: 1px dashed var(--border-strong); }
+.ad-modal .modal-foot { gap: 8px; }
+.ad-modal .ad-del { color: var(--danger); }
+.ad-modal .ad-del:hover { background: var(--danger-soft); color: var(--danger); }
+.ad-done-btn svg { color: var(--ok); }
+.ad-edit { padding-left: 18px; padding-right: 18px; }
+
+/* Create assignment ----------------------------------------------------------- */
+.ca-modal { max-width: 660px; }
+/* Long dialogs scroll inside, so the primary action in the footer is always in view. */
+@media (min-width: 721px) {
+  .ca-modal, .ad-modal { display: flex; flex-direction: column; max-height: calc(100vh - 6vh - 24px); }
+  .ca-modal .modal-body, .ad-modal .modal-body { overflow: auto; overscroll-behavior: contain; }
+}
+.ca { display: flex; flex-direction: column; gap: 16px; }
+.ca-smart {
+  position: relative; display: flex; flex-direction: column; gap: 10px; padding: 14px 14px 12px; border-radius: 18px;
+  background: radial-gradient(420px 160px at 0% 0%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 70%), radial-gradient(360px 160px at 100% 100%, rgba(34, 211, 238, 0.10), transparent 70%), var(--surface-2);
+  border: 1px solid color-mix(in srgb, var(--accent) 38%, var(--border));
+}
+.ca-smart-label { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 8px; font-size: 14.5px; font-weight: 720; color: var(--text); }
+.ca-smart-sub { font-size: 12.5px; font-weight: 500; color: var(--text-3); }
+.ca-spark { display: inline-block; animation: ca-twinkle 2.8s ease-in-out infinite; }
+@keyframes ca-twinkle { 0%, 100% { transform: scale(1) rotate(0); } 50% { transform: scale(1.18) rotate(12deg); } }
+.ca-prompt-wrap { position: relative; }
+.ca-prompt { height: 50px; padding-right: 74px; font-size: 16px; background: var(--surface-1); border-color: color-mix(in srgb, var(--accent) 35%, var(--border-strong)); box-shadow: var(--shadow-1); }
+.ca-prompt-kbd { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; transition: opacity var(--dur) var(--ease); }
+.ca-prompt:placeholder-shown ~ .ca-prompt-kbd { opacity: 0.45; }
+.ca-understood { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-height: 30px; }
+.ca-got, .ca-try { font-size: 11px; font-weight: 750; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); margin-right: 2px; }
+.ca-got { color: var(--accent-text); }
+.ca-tok { display: inline-flex; align-items: center; gap: 5px; max-width: 100%; padding: 4px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 600; color: var(--text); background: var(--surface-1); border: 1px solid var(--border-strong); overflow-wrap: anywhere; animation: ca-tok-in 280ms var(--ease-spring) backwards; }
+.ca-tok:nth-child(3) { animation-delay: 30ms; } .ca-tok:nth-child(4) { animation-delay: 60ms; } .ca-tok:nth-child(5) { animation-delay: 90ms; } .ca-tok:nth-child(n+6) { animation-delay: 120ms; }
+@keyframes ca-tok-in { from { opacity: 0; transform: translateY(4px) scale(0.9); } }
+.ca-tok.is-kept { animation: none; }
+.ca-tok.is-title { font-weight: 700; }
+.ca-tok.is-class { --c: var(--accent); background: color-mix(in srgb, var(--c) 16%, var(--surface-1)); border-color: color-mix(in srgb, var(--c) 45%, transparent); }
+.ca-tok.is-pri { color: var(--pc); border-color: color-mix(in srgb, var(--pc) 45%, transparent); background: color-mix(in srgb, var(--pc) 12%, var(--surface-1)); }
+.ca-tok.is-missing { color: var(--text-3); border-style: dashed; font-weight: 550; }
+.ca-example { max-width: 100%; padding: 4px 10px; border-radius: 999px; border: 1px dashed var(--border-strong); background: transparent; color: var(--text-2); font-size: 12.5px; text-align: left; white-space: normal; overflow-wrap: anywhere; transition: background var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease), transform 120ms var(--ease); }
+.ca-example:hover { color: var(--accent-text); border-color: var(--accent); background: var(--accent-soft); }
+.ca-example:active { transform: scale(0.96); }
+.ca-sep { display: flex; align-items: center; gap: 12px; font-size: 11px; font-weight: 750; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); }
+.ca-sep::before, .ca-sep::after { content: ""; flex: 1 1 auto; height: 1px; background: var(--border); }
+.ca-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 14px; }
+.ca-grid .span-2 { grid-column: 1 / -1; }
+.ca-field { position: relative; border-radius: 12px; }
+.ca-field > label, .ca-field > .label { display: flex; align-items: center; transition: color var(--dur) var(--ease); }
+.ca-field.is-filled > label, .ca-field.is-filled > .label { color: var(--accent-text); }
+.ca-field.is-filled .input, .ca-field.is-filled .select, .ca-field.is-filled .ca-seg { animation: ca-filled 1.2s var(--ease-out); }
+@keyframes ca-filled { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 60%, transparent); border-color: var(--accent); background-color: color-mix(in srgb, var(--accent) 16%, var(--surface-1)); } 60% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 0%, transparent); border-color: var(--accent); } 100% { box-shadow: none; } }
+.ca-field.is-filled > label::after, .ca-field.is-filled > .label::after { content: "✨"; margin-left: 6px; font-size: 11px; animation: ca-spark-pop 1.2s var(--ease-out) forwards; pointer-events: none; }
+@keyframes ca-spark-pop { 0% { opacity: 0; transform: scale(0.4); } 25% { opacity: 1; transform: scale(1.2); } 100% { opacity: 0; transform: translateY(-6px) scale(0.9); } }
+.ca-field.is-error .input { border-color: var(--danger); box-shadow: 0 0 0 3px var(--danger-soft); animation: ca-shake 360ms var(--ease); }
+@keyframes ca-shake { 20%, 60% { transform: translateX(-4px); } 40%, 80% { transform: translateX(4px); } }
+.ca-class-new { margin-top: 6px; animation: tab-in 200ms var(--ease-out); }
+.ca-suffix { position: relative; }
+.ca-suffix .input { padding-right: 46px; }
+.ca-suffix span { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--text-3); pointer-events: none; }
+.ca-eod { margin-top: 6px; }
+.ca-grid input[type="time"]:disabled { opacity: 0.5; }
+.ca-seg { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 13px; background: var(--surface-2); border: 1px solid var(--border); }
+.ca-seg-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 0; padding: 8px 4px; border: 1px solid transparent; border-radius: 9px; background: transparent; color: var(--text-2); font-size: 13px; font-weight: 650; white-space: nowrap; transition: background var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease), transform 120ms var(--ease); }
+.ca-seg-btn:hover { color: var(--text); background: var(--surface-3); }
+.ca-seg-btn:active { transform: scale(0.95); }
+.ca-seg-btn[aria-checked="true"] { color: var(--text); background: color-mix(in srgb, var(--pc) 16%, var(--surface-1)); border-color: color-mix(in srgb, var(--pc) 55%, transparent); box-shadow: var(--shadow-1); animation: badge-pop 260ms var(--ease-spring); }
+.ca-seg-btn .dot { width: 8px; height: 8px; }
+.ca-seg-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.ca-modal .textarea { min-height: 64px; }
+.ca-create { padding-left: 18px; padding-right: 20px; }
+.ca-foot-hint .kbd { margin-right: 3px; }
+
+@media (max-width: 720px) {
+  /* Floating Create button above the bottom nav. */
+  .topbar-create { position: fixed; right: 16px; bottom: calc(var(--nav-h) + 20px + var(--safe-b)); z-index: 61; width: 56px; height: 56px; padding: 0; margin: 0; border-radius: 19px; box-shadow: 0 10px 28px rgba(124, 58, 237, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.25); animation: fab-in 420ms var(--ease-spring) backwards; animation-delay: 160ms; }
+  .topbar-create .tc-label { display: none; }
+  .topbar-create svg { width: 26px; height: 26px; }
+  @keyframes fab-in { from { opacity: 0; transform: scale(0.5) translateY(16px); } }
+  body .page { padding-bottom: calc(var(--nav-h) + 104px + var(--safe-b)); }
+  body .toasts { bottom: calc(var(--nav-h) + 90px + var(--safe-b)); }
+  body.focus-mode .topbar-create { bottom: calc(20px + var(--safe-b)); }
+  .ad-modal { overflow: visible; }
+  .ad-modal .modal-head { padding: 16px 14px 14px 18px; border-radius: 22px 22px 0 0; }
+  .ad-modal .modal-head::before { border-radius: 22px 22px 0 0; height: 0; }
+  .ad-modal #modal-title { font-size: 20px; }
+  .ad-due { grid-template-columns: auto minmax(0, 1fr); padding: 12px 14px; }
+  .ad-due-cd { grid-column: 1 / -1; text-align: left; display: flex; align-items: baseline; gap: 8px; padding-top: 10px; border-top: 1px solid var(--border); }
+  .ad-cd { font-size: 19px; margin: 0; }
+  .ad-src { margin-left: 0; }
+  .ad-modal .modal-foot .right { display: none; }
+  .ad-modal .modal-foot { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ad-modal .modal-foot .btn { width: 100%; }
+  .ad-modal .modal-foot .ad-edit { grid-column: 1 / -1; order: -1; padding-top: 11px; padding-bottom: 11px; }
+  .ca-grid { grid-template-columns: minmax(0, 1fr); }
+  .ca-smart { padding: 12px; }
+  .ca-prompt { font-size: 16px; }
+  .ca-foot-hint { display: none; }
+  .ca-seg-btn { font-size: 12px; gap: 4px; padding: 9px 2px; }
+  .ca-seg-btn .dot { display: none; }
+  .ca-modal .modal-foot .right { display: none; }
+  .ca-modal .modal-foot { display: grid; grid-template-columns: 1fr 2fr; }
+  .ca-modal .modal-foot .btn { width: 100%; padding-top: 11px; padding-bottom: 11px; }
+  .pm-pop { width: min(300px, calc(100vw - 24px)); }
+  .pm-chip { padding: 9px 0; }
+}
+@media (max-width: 380px) { .ad-facts { grid-template-columns: minmax(0, 1fr); } }
+@media (prefers-reduced-motion: reduce) {
+  .ca-spark, .ad-status-dot, .ad-cd.is-hot { animation: none !important; }
+  .ad > * { animation: none !important; }
+}
 /* === FEATURE:ASSIGN:CSS:END === */
 
 /* ==========================================================================
@@ -2171,6 +2446,7 @@ body:has(#pomo-chip) .toasts { bottom: calc(80px + var(--safe-b)); }
     </nav>
     <div class="topbar-actions">
       <div id="streak-widget" class="streak" title="Done streak: days in a row you finished at least one assignment" aria-live="polite"></div>
+      <button class="btn btn-primary topbar-create" id="btn-create" type="button" title="Create assignment (C)" aria-label="Create assignment"><svg><use href="#i-plus"/></svg><span class="tc-label">Create</span></button>
       <button class="btn btn-ghost topbar-import" id="btn-import" title="Import from Google (I)"><svg><use href="#i-upload"/></svg><span class="ti-label">Import</span></button>
       <button class="btn btn-icon btn-ghost" id="btn-focus" title="Focus mode (F)" aria-label="Toggle focus mode" aria-pressed="false"><svg><use href="#i-focus"/></svg></button>
       <button class="btn btn-icon btn-ghost" id="btn-theme" title="Toggle theme" aria-label="Toggle light or dark theme"><svg><use href="#i-moon"/></svg></button>
@@ -2231,7 +2507,7 @@ body:has(#pomo-chip) .toasts { bottom: calc(80px + var(--safe-b)); }
     <section class="view" data-view="board" aria-label="Priority board">
       <!-- === VIEW:BOARD:HTML:START === -->
       <div id="board-live" class="sr-only" aria-live="polite" aria-atomic="true"></div>
-      <p id="board-help" class="sr-only">Press Left or Right arrow (or [ and ]) to move this card to the next column, Up and Down to move between cards, Enter to edit, Space or X to mark done or not done, A to reset the priority to automatic.</p>
+      <p id="board-help" class="sr-only">Press Left or Right arrow (or [ and ]) to move this card to the next column, Up and Down to move between cards, Enter to open its details, Space or X to mark done or not done, A to reset the priority to automatic.</p>
       <div id="board-mount"></div>
       <!-- === VIEW:BOARD:HTML:END === -->
     </section>
@@ -2577,22 +2853,115 @@ const Core = (function () {
   const PRIORITIES = ['critical', 'high', 'medium', 'low'];
   const PRIORITY_RANK = { critical: 0, high: 1, medium: 2, low: 3 };
 
-  /* ---------- quick add ---------- */
+  /* ---------- quick add and the smart prompt ---------- */
+  /* parseQuickAdd(input, { now, classes }) reads a one-line description such as
+     "Unit 1 test psych Est time 15 min due on the 10th" and returns
+     { title, due, allDay, hasDate, hasTime, classTag, classId, classWord, priority, estimatedMin, progress }.
+     classes is an optional [{ id, name }]; with it, a bare word or phrase that
+     confidently names exactly one class ("psych", "chem", "us history", "apush")
+     sets classId and is removed from the title. Removed pieces leave a marker so
+     glue words next to them ("due on the", "for", "in") are dropped as well. */
   const DAY_NAMES = { sun: 0, sunday: 0, mon: 1, monday: 1, tue: 2, tues: 2, tuesday: 2, wed: 3, weds: 3, wednesday: 3, thu: 4, thur: 4, thurs: 4, thursday: 4, fri: 5, friday: 5, sat: 6, saturday: 6 };
   const MONTH_NAMES = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, sept: 8, oct: 9, nov: 10, dec: 11 };
+  const MONTH_RE = '(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\\.?';
+  /* Words that describe the work, not the class: never read as a class name on their own. */
+  const QA_PLAIN_WORDS = new Set(('test tests quiz quizzes exam exams midterm midterms final finals lab labs report reports essay essays paper papers ' +
+    'project projects homework hw worksheet worksheets reading read notes note study review draft unit units chapter chapters ch section ' +
+    'problem problems set sets practice presentation slides outline packet assignment assignments due est time take takes min mins hour hours ' +
+    'day days week weeks next this today tomorrow tonight and the for with from into about your you our his her its their was are not but all ' +
+    'any can get had has how now one two out see who why may new old use way end few let put say too top big part page pages question questions ' +
+    'vocab vocabulary analysis journal response discussion post intro finish start submit turn hand work class period done half almost nearly ' +
+    'urgent important priority high low medium critical lesson lessons online book books story poem log write writing speech').split(' '));
+  /* Words in class names that say nothing about the subject. */
+  const CLASS_FILLER = new Set(['ap', 'ib', 'honors', 'hon', 'intro', 'introduction', 'to', 'of', 'and', 'the', 'in', 'i', 'ii', 'iii', 'iv', 'period', 'class', 'course', 'advanced', 'general', 'dual', 'enrollment', 'college', 'level']);
+  function nextDayOfMonth(now, n) {
+    if (!(n >= 1 && n <= 31)) return null;
+    const today = startOfDay(now);
+    if (today.getDate() === n) return today;
+    for (let k = 0; k <= 12; k++) {
+      const d = new Date(today.getFullYear(), today.getMonth() + k, n);
+      if (d.getDate() !== n) continue; /* this month has no such day */
+      if (d > today) return d;
+    }
+    return null;
+  }
+  /* matchClassWords(text, classes) -> { id, start, count } | null: the first window of 1-3 words
+     in text (longest first) that names exactly one class. Words are split on single spaces. */
+  function matchClassWords(text, classes) {
+    if (!Array.isArray(classes) || !classes.length) return null;
+    const words = String(text || '').split(' ');
+    const toks = words.map(w => normalizeName(w).replace(/ /g, ''));
+    const cls = classes.filter(c => c && c.id && c.name).map(c => {
+      const ws = normalizeName(c.name).split(' ').filter(Boolean);
+      return { id: c.id, ws, joined: ws.join(''), full: ws.join(' '), sym: suggestSymbolSafe(c.name) };
+    });
+    const strongTok = t => t.length >= 3 && /[a-z]/.test(t) && !QA_PLAIN_WORDS.has(t);
+    const single = t => {
+      if (!strongTok(t)) return [];
+      let hits = cls.filter(c => c.ws.some(w => w.length >= 3 && !CLASS_FILLER.has(w) && w.startsWith(t)) || (t.length >= 4 && c.joined.startsWith(t)));
+      if (!hits.length) {
+        /* Subject nicknames from the symbol catalog: "math" for Precalculus, "apush" for US History. */
+        const sym = aliasSymbol(t);
+        if (sym) hits = cls.filter(c => c.sym === sym);
+      }
+      return hits;
+    };
+    const phrase = ts => cls.filter(c => {
+      for (let j = 0; j + ts.length <= c.ws.length; j++) {
+        if (ts.every((t, i) => t && c.ws[j + i].startsWith(t) && (t.length >= 3 || t === c.ws[j + i]))) return true;
+      }
+      return false;
+    });
+    for (let k = 3; k >= 1; k--) {
+      for (let i = 0; i + k <= toks.length; i++) {
+        const ts = toks.slice(i, i + k);
+        if (ts.some(t => !t)) continue;
+        if (k > 1 && !ts.some(strongTok)) continue;
+        let hits = k === 1 ? single(ts[0]) : phrase(ts);
+        if (hits.length > 1) {
+          const exact = hits.filter(c => c.full === ts.join(' '));
+          hits = exact.length === 1 ? exact : [];
+        }
+        if (hits.length === 1) return { id: hits[0].id, start: i, count: k };
+      }
+    }
+    return null;
+  }
+  function suggestSymbolSafe(name) { try { return typeof suggestSymbol === 'function' ? suggestSymbol(name) : ''; } catch (e) { return ''; } }
+  function aliasSymbol(t) {
+    if (typeof CLASS_SYMBOLS === 'undefined' || !Array.isArray(CLASS_SYMBOLS)) return '';
+    for (const s of CLASS_SYMBOLS) for (const k of s.keywords || []) if (k === t) return s.symbol;
+    return '';
+  }
   function parseQuickAdd(input, opts) {
     opts = opts || {};
     const now = opts.now || new Date();
-    let s = ' ' + String(input || '').replace(/\s+/g, ' ') + ' ';
-    const out = { title: '', due: null, allDay: true, hasDate: false, hasTime: false, classTag: '', priority: '', estimatedMin: null };
+    const CUT = '\u0000', CLS = '\u0001';
+    let s = ' ' + String(input || '').replace(/[\u0000\u0001]/g, '').replace(/\s+/g, ' ') + ' ';
+    const out = { title: '', due: null, allDay: true, hasDate: false, hasTime: false, classTag: '', classId: null, classWord: '', priority: '', estimatedMin: null, progress: null };
     let m;
-    const take = (re, fn) => { m = re.exec(s); if (m) { fn(m); s = s.slice(0, m.index) + ' ' + s.slice(m.index + m[0].length); return true; } return false; };
+    const take = (re, fn) => { m = re.exec(s); if (m) { fn(m); s = s.slice(0, m.index) + ' ' + CUT + ' ' + s.slice(m.index + m[0].length); return true; } return false; };
 
     take(/(?:^|\s)#([\w&-]+)/, mm => { out.classTag = mm[1]; });
     take(/(?:^|\s)!(critical|crit|urgent|high|hi|medium|med|normal|low|lo)\b/i, mm => {
       const p = mm[1].toLowerCase();
       out.priority = /^(crit|urgent)/.test(p) ? 'critical' : /^hi/.test(p) ? 'high' : /^(med|normal)/.test(p) ? 'medium' : 'low';
     });
+    const level = w => { w = w.toLowerCase(); return /^(crit|urgent|top)/.test(w) ? 'critical' : /^hi/.test(w) ? 'high' : /^med/.test(w) ? 'medium' : 'low'; };
+    if (!out.priority) {
+      take(/\b(critical|high|medium|med|low|top)[\s-]+pri(?:ority|o)?\b/i, mm => { out.priority = level(mm[1]); }) ||
+      take(/\bpriority\s*:?\s*(critical|high|medium|med|low)\b/i, mm => { out.priority = level(mm[1]); }) ||
+      take(/\b(urgent|asap)\b/i, () => { out.priority = 'critical'; }) ||
+      take(/\b(important)\b/i, () => { out.priority = 'high'; });
+    }
+    /* Progress: "50% done", "progress 40%", "half done", "almost done". */
+    const pct = n => Math.max(0, Math.min(100, Math.round(n)));
+    take(/(?:^|\s)(?:progress\s*:?\s*|at\s+)(\d{1,3})\s*%(?:\s*(?:done|complete|completed|finished|through))?(?=\s|$)/i, mm => { out.progress = pct(+mm[1]); }) ||
+    take(/(?:^|\s)(\d{1,3})\s*%\s*(?:done|complete|completed|finished|through)\b/i, mm => { out.progress = pct(+mm[1]); }) ||
+    take(/\b(?:half\s*way|halfway|half)\s+(?:done|through|complete|finished)\b|\bhalfway\b/i, () => { out.progress = 50; }) ||
+    take(/\b(?:almost|nearly)\s+(?:done|finished|complete)\b/i, () => { out.progress = 90; }) ||
+    take(/\bnot\s+started\b/i, () => { out.progress = 0; });
+
     let date = null, time = null, relative = null;
     const setDate = d => { date = startOfDay(d); out.hasDate = true; };
     take(/\bin\s+(\d+|a|an|one|two|three|four|five|six|seven)\s+(day|days|week|weeks|wk|wks|hour|hours|hr|hrs|minute|minutes|min|mins)\b/i, mm => {
@@ -2604,9 +2973,11 @@ const Core = (function () {
       else if (/^h/.test(u)) relative = n * HOUR;
       else relative = n * MIN;
     });
+    /* Estimates: "45m", "2h", "1h30m", "est 15m", "Est time 15 min", "estimated 2 hours", "takes 45 minutes", "~30m". */
+    const LABEL = '(?:(?:est(?:imated?|\\.)?|estimate[ds]?)(?:\\s+time)?\\s*:?\\s*|(?:takes?|about|around|approx(?:imately|\\.)?)\\s+|~\\s*)?';
     let est = null;
-    if (take(/(?:^|\s)(\d+(?:\.\d+)?)\s*(?:h|hr|hrs|hour|hours)(?:\s*(\d+)\s*(?:m|min|mins))?(?=\s|$)/i, mm => { est = Math.round(parseFloat(mm[1]) * 60) + (mm[2] ? parseInt(mm[2], 10) : 0); })) { /* hours form */ }
-    else take(/(?:^|\s)(\d+)\s*(?:m|min|mins|minute|minutes)(?=\s|$)/i, mm => { est = parseInt(mm[1], 10); });
+    if (take(new RegExp('(?:^|\\s)' + LABEL + '(\\d+(?:\\.\\d+)?)\\s*(?:h|hr|hrs|hour|hours)(?:\\s*(\\d+)\\s*(?:m|min|mins|minute|minutes))?(?=\\s|$|[,;])', 'i'), mm => { est = Math.round(parseFloat(mm[1]) * 60) + (mm[2] ? parseInt(mm[2], 10) : 0); })) { /* hours form */ }
+    else take(new RegExp('(?:^|\\s)' + LABEL + '(\\d+)\\s*(?:m|min|mins|minute|minutes)(?=\\s|$|[,;])', 'i'), mm => { est = parseInt(mm[1], 10); });
     if (est != null && est > 0) out.estimatedMin = est;
 
     (date || relative != null) ||
@@ -2627,28 +2998,30 @@ const Core = (function () {
       if (!mm[3] && d < addDays(now, -60)) d = new Date(y + 1, +mm[1] - 1, +mm[2]);
       setDate(d);
     }) ||
-    take(/\b(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?\s+(\d{1,2})(?:st|nd|rd|th)?(?:,?\s+(\d{4}))?\b/i, mm => {
+    take(new RegExp('\\b' + MONTH_RE + '\\s+(?:the\\s+)?(\\d{1,2})(?:st|nd|rd|th)?(?:,?\\s+(\\d{4}))?\\b', 'i'), mm => {
       const y = mm[3] ? +mm[3] : now.getFullYear();
       let d = new Date(y, MONTH_NAMES[mm[1].toLowerCase()], +mm[2]);
       if (!mm[3] && d < addDays(now, -60)) d = new Date(y + 1, MONTH_NAMES[mm[1].toLowerCase()], +mm[2]);
       setDate(d);
     }) ||
-    take(/\b(\d{1,2})(?:st|nd|rd|th)?\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\b/i, mm => {
+    take(new RegExp('\\b(?:the\\s+)?(\\d{1,2})(?:st|nd|rd|th)?\\s+(?:of\\s+)?' + MONTH_RE + '(?=\\s|$|[,;])', 'i'), mm => {
       let d = new Date(now.getFullYear(), MONTH_NAMES[mm[2].toLowerCase()], +mm[1]);
       if (d < addDays(now, -60)) d = new Date(now.getFullYear() + 1, MONTH_NAMES[mm[2].toLowerCase()], +mm[1]);
       setDate(d);
     }) ||
+    /* "due on the 10th", "due the 3rd", "on the 22nd", "by the 5th": the coming day with that number (today if it is today). */
+    take(/\b(?:(?:due|on|by)\s+(?:the\s+)?|the\s+)(\d{1,2})(?:st|nd|rd|th)\b/i, mm => { const d = nextDayOfMonth(now, +mm[1]); if (d) setDate(d); }) ||
     take(/\b(eod|end of day)\b/i, () => { setDate(now); time = { h: 23, m: 59 }; });
 
     if (relative == null) {
-      take(/\b(?:at\s+|@\s*)?(\d{1,2})(?::(\d{2}))?\s*(am|pm|a\.m\.|p\.m\.)\b/i, mm => {
+      take(/\b(?:at\s+|@\s*)?(\d{1,2})(?::(\d{2}))?\s*(am|pm|a\.m\.|p\.m\.)(?=\s|$|[,;])/i, mm => {
         let h = parseInt(mm[1], 10) % 12;
         if (/^p/i.test(mm[3])) h += 12;
         time = { h, m: mm[2] ? parseInt(mm[2], 10) : 0 };
       }) ||
       take(/\b(?:at\s+|@\s*)?(\d{1,2}):(\d{2})\b/, mm => { time = { h: parseInt(mm[1], 10), m: parseInt(mm[2], 10) }; }) ||
-      take(/\b(noon|midday)\b/i, () => { time = { h: 12, m: 0 }; }) ||
-      take(/\b(midnight)\b/i, () => { time = { h: 23, m: 59 }; }) ||
+      take(/\b(?:at\s+)?(noon|midday)\b/i, () => { time = { h: 12, m: 0 }; }) ||
+      take(/\b(?:at\s+)?(midnight)\b/i, () => { time = { h: 23, m: 59 }; }) ||
       take(/\b(?:at|@)\s+(\d{1,2})\b(?![:\/\-])/i, mm => { let h = parseInt(mm[1], 10); if (h >= 1 && h <= 7) h += 12; time = { h, m: 0 }; });
     }
     if (time && time.h > 23) time = null;
@@ -2667,12 +3040,39 @@ const Core = (function () {
       out.due = d; out.hasDate = true; out.hasTime = true; out.allDay = false;
     }
 
-    let title = s.replace(/\s+/g, ' ').trim();
-    title = title.replace(/^(?:due|by|on|at|for)\s+/i, '').replace(/\s+(?:due|by|on|at|for|is due)$/i, '').replace(/\s+(?:due|by|on|at)$/i, '').trim();
-    title = title.replace(/\s{2,}/g, ' ').replace(/^[-–—:,]+|[-–—:,]+$/g, '').trim();
+    const finish = ws => {
+      let t = ' ' + ws.join(' ') + ' ';
+      /* Glue left next to removed pieces: "due on the <date>", "for <class>", "in <class>". */
+      let prev;
+      do {
+        prev = t;
+        t = t.replace(/ (?:is due|due|by|on|at|for|the|of|before) (?=[\u0000\u0001] )/gi, ' ');
+        t = t.replace(/ (?:in|from|with) (?=\u0001 )/gi, ' ');
+        t = t.replace(/ \u0001 (?:class|course) /gi, ' \u0001 ');
+      } while (t !== prev);
+      let title = t.replace(/[\u0000\u0001]/g, ' ').replace(/\s+/g, ' ').trim();
+      title = title.replace(/^(?:due|by|on|at|for)\s+/i, '').replace(/\s+(?:due|by|on|at|for|is due)$/i, '').replace(/\s+(?:due|by|on|at)$/i, '').trim();
+      return title.replace(/\s{2,}/g, ' ').replace(/^[-–—:,]+|[-–—:,]+$/g, '').trim();
+    };
+    const words = s.replace(/\s+/g, ' ').trim().split(' ');
+    let title = finish(words);
+    /* A class named without "#": only when no #tag was given and the match is unambiguous. */
+    if (!out.classTag && opts.classes) {
+      const hit = matchClassWords(words.map(w => (w === CUT ? '' : w)).join(' '), opts.classes);
+      if (hit) {
+        out.classId = hit.id;
+        out.classWord = words.slice(hit.start, hit.start + hit.count).join(' ');
+        const ws = words.slice(); ws.splice(hit.start, hit.count, CLS);
+        /* Keep the words when they are the whole title ("Chemistry due fri"). */
+        const without = finish(ws);
+        if (without) title = without;
+      }
+    }
     out.title = title;
     return out;
   }
+  /* parseSmartPrompt is the same parser under the name the Create dialog uses. */
+  const parseSmartPrompt = parseQuickAdd;
 
   /* ---------- paste import (Google Classroom To-do page) ---------- */
   /* === FEATURE:PASTE:CORE:START === */
@@ -3695,7 +4095,7 @@ const Core = (function () {
     urgencyHue, countdown, tzOffsetMs, zonedToDate,
     unfoldICS, decodeICSBytes, parseICSLine, parseICSDateTime, cleanCalendarName, isNonClassCalendar, parseICS, extractClassroomUrl, dueFromEvent, eventToAssignment,
     keywordWeight, priorityScore, scoreToPriority,
-    parseQuickAdd, parseTodoPaste, mergeImported, computeStreak, last7Days, demoData,
+    parseQuickAdd, parseSmartPrompt, matchClassWords, nextDayOfMonth, parseTodoPaste, mergeImported, computeStreak, last7Days, demoData,
     checklistDue, MOODS, EVENT_PRESETS, eventPreset, VERSES, pickVerse, CLASS_CATALOG, CLASS_SYMBOLS, suggestSymbol, searchSymbols, searchCatalog
   };
 })();
@@ -4046,6 +4446,7 @@ const App = (function () {
       priority: 'medium', priorityAuto: true, estimatedMin: null, done: false, doneAt: null, archived: false, pomodoros: 0, createdAt: n, updatedAt: n
     }, partial || {});
     if (partial && partial.priority && partial.priorityAuto === undefined) a.priorityAuto = false;
+    a.url = C.safeUrl(a.url);
     state.assignments.push(a);
     recomputePriorities(); save(); render();
     return a;
@@ -4054,6 +4455,7 @@ const App = (function () {
     const a = byId(id); if (!a) return null;
     if (patch.priority !== undefined && patch.priorityAuto === undefined) patch.priorityAuto = false;
     Object.assign(a, patch); touch(a);
+    if (patch.url !== undefined) a.url = C.safeUrl(a.url);
     recomputePriorities(); save(); render();
     return a;
   }
@@ -4456,13 +4858,14 @@ const App = (function () {
     return html`<div class="item ${a.done ? 'is-done' : ''} ${isOverdue(a, n) ? 'is-overdue' : ''}" data-id="${a.id}" style="--pc: var(--pri-${a.priority}); --c: ${cls ? raw(classColorVar(cls)) : 'var(--text-3)'}">
       <button class="item-check" data-action="toggle-done" aria-label="${a.done ? 'Mark as not done' : 'Mark as done'}" aria-pressed="${a.done ? 'true' : 'false'}"><svg><use href="#i-check"/></svg></button>
       <div class="item-main">
-        <button class="item-title-btn item-title" data-action="edit" title="Open">${a.title}</button>
+        <button class="item-title-btn item-title" data-action="open" title="Open details">${a.title}</button>
         <div class="item-meta">
           ${opts.hideClass ? '' : html`<span class="class-name"><span class="dot"></span>${classLabel(a.classId)}</span>`}
           <span class="due">${C.formatDue(due, a.allDay, n)}</span>
           ${a.estimatedMin ? html`<span class="est">~${C.formatDuration(a.estimatedMin)}</span>` : ''}
           ${a.pomodoros ? html`<span class="est" title="Pomodoros completed">🍅 ${a.pomodoros}</span>` : ''}
           ${a.url ? html`<a href="${a.url}" target="_blank" rel="noopener noreferrer" title="Open in Google Classroom">Classroom ↗</a>` : ''}
+          ${progressMeter(a, { editable: true })}
         </div>
       </div>
       <div class="item-side">
@@ -4478,8 +4881,8 @@ const App = (function () {
     const cls = getClass(a.classId);
     const due = C.parseISO(a.due);
     const n = now();
-    return html`<button class="pill ${a.done ? 'is-done' : ''} ${isOverdue(a, n) ? 'is-overdue' : ''}" data-id="${a.id}" data-action="${opts.action || 'edit'}" style="--c: ${cls ? raw(classColorVar(cls)) : 'var(--text-3)'}; --pc: var(--pri-${a.priority})" title="${a.title} · ${classLabel(a.classId)} · ${C.formatDue(due, a.allDay, n)}">
-      ${opts.showTime && due && !a.allDay ? html`<span class="pill-time">${C.formatTime(due).replace(' ', '').toLowerCase()}</span>` : ''}<span class="ellipsis">${a.title}</span></button>`;
+    return html`<button class="pill ${a.done ? 'is-done' : ''} ${isOverdue(a, n) ? 'is-overdue' : ''}" data-id="${a.id}" data-action="${opts.action || 'open'}" style="--c: ${cls ? raw(classColorVar(cls)) : 'var(--text-3)'}; --pc: var(--pri-${a.priority})" title="${a.title} · ${classLabel(a.classId)} · ${C.formatDue(due, a.allDay, n)}${!a.done && progressOf(a) ? ' · ' + progressOf(a) + '% done' : ''}">
+      ${opts.showTime && due && !a.allDay ? html`<span class="pill-time">${C.formatTime(due).replace(' ', '').toLowerCase()}</span>` : ''}<span class="ellipsis">${a.title}</span>${!a.done && progressOf(a) ? html`<span class="pill-prog" data-pm-id="${a.id}" aria-hidden="true"><span class="pm-fill" style="width:${progressOf(a)}%"></span></span>` : ''}</button>`;
   }
   function laneCard(title, items, key, opts) {
     opts = opts || {};
@@ -4535,7 +4938,7 @@ const App = (function () {
       <div class="hero-grid">
         <div class="grow">
           <div class="hero-eyebrow"><span class="dot"></span>${active ? 'In progress' : overdue ? 'Do this first' : 'Do this next'}${overdue ? html` · <span style="color:var(--danger)">overdue</span>` : ''}</div>
-          <h2 class="hero-title">${a.title}</h2>
+          <h2 class="hero-title"><button class="hero-title-btn" data-action="open" data-id="${a.id}" title="Open details">${a.title}</button></h2>
           <div class="hero-meta">
             <span class="class-name row"><span class="dot" style="--c: ${cls ? raw(classColorVar(cls)) : 'var(--text-3)'}"></span>${classLabel(a.classId)}</span>
             <span>·</span><span>${C.formatDue(due, a.allDay, n)}</span>
@@ -4543,6 +4946,7 @@ const App = (function () {
             <span>·</span>${priorityBadge(a)}
             ${a.url ? html`<a href="${a.url}" target="_blank" rel="noopener noreferrer">Open in Classroom ↗</a>` : ''}
           </div>
+          <div class="hero-prog"><span class="hero-prog-label">Progress</span>${progressMeter(a, { editable: true, size: 'lg' })}</div>
           ${state.settings.nudges !== false ? html`<div class="hero-nudge"><span class="nudge-icon">✦</span><span>${nudgeFor(a)}</span></div>` : ''}
           ${future}
         </div>
@@ -5180,7 +5584,7 @@ const App = (function () {
         const cd = C.countdown(C.parseISO(a.due), n);
         return html`<div class="wk-od" data-id="${a.id}" style="${wkColorStyle(a)}">
           <button class="item-check" data-action="toggle-done" aria-label="${'Mark ' + a.title + ' as done'}"><svg><use href="#i-check"/></svg></button>
-          <button class="wk-od-title" data-action="edit" title="${a.title + ' · ' + classLabel(a.classId) + ' · ' + C.formatDue(C.parseISO(a.due), a.allDay, n)}"><span class="wk-od-name">${a.title}</span><span class="wk-od-class"><span class="dot"></span>${classLabel(a.classId)}</span></button>
+          <button class="wk-od-title" data-action="open" title="${a.title + ' · ' + classLabel(a.classId) + ' · ' + C.formatDue(C.parseISO(a.due), a.allDay, n)}"><span class="wk-od-name">${a.title}</span><span class="wk-od-class"><span class="dot"></span>${classLabel(a.classId)}</span></button>
           <span class="tag-overdue" data-due="${a.due}" data-mode="short">${cd.short}</span>
         </div>`;
       })}</div>
@@ -5191,13 +5595,15 @@ const App = (function () {
     const a = b.a;
     const od = isOverdue(a, n);
     const cd = C.countdown(b.d, n);
-    const label = a.title + ', ' + classLabel(a.classId) + ', due ' + C.formatDue(b.d, false, n) + ', ' + a.priority + ' priority' + (od ? ', overdue' : '') + (a.done ? ', done' : '');
+    const prog = progressOf(a);
+    const label = a.title + ', ' + classLabel(a.classId) + ', due ' + C.formatDue(b.d, false, n) + ', ' + a.priority + ' priority' + (od ? ', overdue' : '') + (a.done ? ', done' : prog ? ', ' + prog + '% done' : '');
     const tight = b.h < WK_BLOCK_H;
-    return html`<button class="wk-block ${a.done ? 'is-done' : ''} ${od ? 'is-overdue' : ''} ${tight ? 'is-tight' : ''}" data-action="edit" data-id="${a.id}" data-due-at="${a.due}" style="top:${b.top}px; ${tight ? raw('height:' + b.h + 'px; ') : ''}${wkColorStyle(a)}" aria-label="${label}" title="${label}">
+    return html`<button class="wk-block ${a.done ? 'is-done' : ''} ${od ? 'is-overdue' : ''} ${tight ? 'is-tight' : ''}" data-action="open" data-id="${a.id}" data-due-at="${a.due}" style="top:${b.top}px; ${tight ? raw('height:' + b.h + 'px; ') : ''}${wkColorStyle(a)}" aria-label="${label}" title="${label}">
       <span class="wk-block-title">${a.title}</span>
       <span class="wk-block-meta"><span class="wk-block-time">${wkTime(b.d)}</span>${a.done
         ? html`<span>done</span>`
-        : html`<span class="countdown ${cd.state === 'hot' ? 'is-hot' : ''} ${od ? 'is-overdue' : ''}" data-due="${a.due}" data-mode="short" style="--uh:${cd.hue}">${cd.short}</span>`}</span>
+        : html`<span class="countdown ${cd.state === 'hot' ? 'is-hot' : ''} ${od ? 'is-overdue' : ''}" data-due="${a.due}" data-mode="short" style="--uh:${cd.hue}">${cd.short}</span>`}${!a.done && prog ? html`<span class="wk-block-pct num">${prog}%</span>` : ''}</span>
+      ${!a.done && prog ? progressMeter(a, { size: 'xs' }) : ''}
     </button>`;
   }
 
@@ -5417,13 +5823,14 @@ const App = (function () {
           ? html`<span class="bmark bmark-pin" title="Priority set by you. It will not change automatically.">${raw(BOARD_SVG.pin)}you</span><button type="button" class="bcard-reset" data-action="board-reset" aria-label="Reset priority of ${a.title} to automatic (${autoP})" title="Back to automatic priority (would be ${autoP})">${raw(BOARD_SVG.reset)}auto</button>`
           : html`<span class="bmark bmark-auto" title="Priority computed automatically from the due date, keywords and effort">${raw(BOARD_SVG.auto)}auto</span>`}
       </span>`;
-    return html`<li class="bcard ${a.done ? 'is-done' : ''} ${overdue ? 'is-overdue' : ''}" data-id="${a.id}" data-col="${colKey}" data-action="edit" tabindex="0" draggable="true" aria-label="${label}" aria-describedby="board-help" style="--c: ${cls ? raw(classColorVar(cls)) : 'var(--text-3)'}">
+    return html`<li class="bcard ${a.done ? 'is-done' : ''} ${overdue ? 'is-overdue' : ''}" data-id="${a.id}" data-col="${colKey}" data-action="open" tabindex="0" draggable="true" aria-label="${label}" aria-describedby="board-help" style="--c: ${cls ? raw(classColorVar(cls)) : 'var(--text-3)'}">
       <div class="bcard-top">
         <span class="bcard-grip" data-action="board-grip" title="Drag to move" aria-hidden="true">${raw(BOARD_SVG.grip)}</span>
         <span class="bcard-title">${a.title}</span>
         <button type="button" class="bcard-check" data-action="toggle-done" tabindex="-1" aria-label="${a.done ? 'Mark ' + a.title + ' as not done' : 'Mark ' + a.title + ' as done'}" aria-pressed="${a.done ? 'true' : 'false'}"><svg><use href="#i-check"/></svg></button>
       </div>
       <div class="bcard-meta"><span class="bcard-class"><span class="dot"></span><span class="ellipsis">${classLabel(a.classId)}</span></span>${a.done || !due ? '' : html`<span class="bcard-due">${dueText}</span>`}</div>
+      ${a.done ? '' : html`<div class="bcard-prog">${progressMeter(a, { editable: true })}</div>`}
       <div class="bcard-foot">${countdownEl(a)}${tags}</div>
     </li>`;
   }
@@ -5447,7 +5854,7 @@ const App = (function () {
     boardCancelPress();
     let mount = root.querySelector('#board-mount');
     if (!mount || !root.querySelector('#board-live')) {
-      root.innerHTML = '<div id="board-live" class="sr-only" aria-live="polite" aria-atomic="true"></div><p id="board-help" class="sr-only">Press Left or Right arrow (or [ and ]) to move this card to the next column, Up and Down to move between cards, Enter to edit, Space or X to mark done or not done, A to reset the priority to automatic.</p><div id="board-mount"></div>';
+      root.innerHTML = '<div id="board-live" class="sr-only" aria-live="polite" aria-atomic="true"></div><p id="board-help" class="sr-only">Press Left or Right arrow (or [ and ]) to move this card to the next column, Up and Down to move between cards, Enter to open its details, Space or X to mark done or not done, A to reset the priority to automatic.</p><div id="board-mount"></div>';
       mount = root.querySelector('#board-mount');
     }
     const oldScroller = mount.querySelector('.board-scroll');
@@ -5625,7 +6032,7 @@ const App = (function () {
     else if (k === 'ArrowRight' || k === ']') { e.preventDefault(); moveTo(1); }
     else if (k === 'ArrowUp' || k === 'ArrowDown') { e.preventDefault(); const t = cards[index + (k === 'ArrowUp' ? -1 : 1)]; if (t) t.focus(); }
     else if (k === 'Home' || k === 'End') { e.preventDefault(); const t = k === 'Home' ? cards[0] : cards[cards.length - 1]; if (t) t.focus(); }
-    else if (k === 'Enter') { e.preventDefault(); openEditModal(id); }
+    else if (k === 'Enter') { e.preventDefault(); openAssignmentDetail(id); }
     else if (k === ' ' || k === 'Spacebar' || k === 'x' || k === 'X') { e.preventDefault(); boardToggleDone(id, { focus: true, fromCol: colKey, index, el: card }); }
     else if (k === 'a' || k === 'A') {
       const a = byId(id);
@@ -8474,9 +8881,445 @@ const App = (function () {
   /* openAssignmentDetail(id): read-only view of everything about an assignment, with an Edit button.
      openCreateAssignment(prefill): the Create assignment dialog with the smart prompt.
      progressMeter(a, {editable}): compact progress bar (data-action="progress" when editable). */
-  function openAssignmentDetail(id) { openEditModal(id); }
-  function openCreateAssignment() { openEditModal(); }
-  function progressMeter(a, opts) { const p = progressOf(a); return html`<span class="progress-meter" role="img" aria-label="${p}% done"><i style="width:${p}%"></i></span>`; }
+
+  /* ---------- progress meter ---------- */
+  /* Bars that just changed start from their old width and grow to the new one after render. */
+  const pmAnimFrom = new Map();
+  function progressMeter(a, opts) {
+    opts = opts || {};
+    if (!a) return '';
+    const p = progressOf(a);
+    const from = pmAnimFrom.has(a.id) ? pmAnimFrom.get(a.id) : null;
+    const size = opts.size === 'lg' ? 'pm-lg' : opts.size === 'xs' ? 'pm-xs' : '';
+    const cls = 'pm ' + size + (p >= 100 ? ' is-full' : p === 0 ? ' is-zero' : '');
+    const fill = html`<span class="pm-track" aria-hidden="true"><span class="pm-fill" style="width:${from == null ? p : from}%" ${from == null ? '' : raw('data-to="' + p + '"')}></span></span>`;
+    if (opts.size === 'xs') return html`<span class="${cls}" data-pm-id="${a.id}" aria-hidden="true">${fill}</span>`;
+    const pct = html`<span class="pm-pct num">${p}%</span>`;
+    if (opts.editable && !a.done) {
+      return html`<button type="button" class="${cls} pm-edit" data-action="progress" data-id="${a.id}" data-pm-id="${a.id}" aria-haspopup="dialog" aria-label="${'Progress ' + p + '%. Change progress of ' + a.title}" title="Progress · click to change">${fill}${pct}</button>`;
+    }
+    return html`<span class="${cls}" data-pm-id="${a.id}" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${p}" aria-label="${'Progress of ' + a.title}">${fill}${pct}</span>`;
+  }
+  on('render', () => {
+    const fills = $$('.pm-fill[data-to]');
+    if (!fills.length) return;
+    void document.body.offsetWidth;
+    requestAnimationFrame(() => fills.forEach(f => { f.style.width = f.dataset.to + '%'; f.removeAttribute('data-to'); }));
+  });
+
+  /* ---------- progress popover: slider, quick chips, arrows by 5, Enter / Esc closes ---------- */
+  const pmPop = { el: null, id: null, anchorRect: null, onDoc: null, onKey: null, onMove: null };
+  function pmFindAnchor(id, near) {
+    const list = $$(`.view.active [data-action="progress"][data-pm-id="${CSS.escape(id)}"], #panel-root [data-action="progress"][data-pm-id="${CSS.escape(id)}"]`);
+    if (!list.length) return null;
+    if (!near) return list[0];
+    let best = list[0], bestD = Infinity;
+    for (const el of list) { const r = el.getBoundingClientRect(); const d = Math.abs(r.left - near.left) + Math.abs(r.top - near.top); if (d < bestD) { bestD = d; best = el; } }
+    return best;
+  }
+  function pmPlace() {
+    const pop = pmPop.el; if (!pop) return;
+    const anchor = pmFindAnchor(pmPop.id, pmPop.anchorRect);
+    const r = anchor ? anchor.getBoundingClientRect() : pmPop.anchorRect;
+    if (!r) return;
+    if (anchor) pmPop.anchorRect = { left: r.left, top: r.top, width: r.width, height: r.height, bottom: r.bottom };
+    const vw = document.documentElement.clientWidth, vh = window.innerHeight;
+    const w = pop.offsetWidth, h = pop.offsetHeight;
+    let left = Math.round(r.left + r.width / 2 - w / 2);
+    left = Math.max(12, Math.min(left, vw - w - 12));
+    let top = r.bottom + 10, above = false;
+    if (top + h > vh - 12 && r.top - h - 10 > 12) { top = r.top - h - 10; above = true; }
+    pop.style.left = (left + window.scrollX) + 'px';
+    pop.style.top = (Math.max(8, top) + window.scrollY) + 'px';
+    pop.classList.toggle('is-above', above);
+    pop.style.setProperty('--arrow-x', Math.max(16, Math.min(w - 16, r.left + r.width / 2 - left)) + 'px');
+  }
+  function pmLive(id, p) {
+    for (const el of $$(`[data-pm-id="${CSS.escape(id)}"]`)) {
+      const f = el.querySelector('.pm-fill'); if (f) { f.removeAttribute('data-to'); f.style.width = p + '%'; }
+      const t = el.querySelector('.pm-pct'); if (t) t.textContent = p + '%';
+      el.classList.toggle('is-full', p >= 100); el.classList.toggle('is-zero', p === 0);
+    }
+  }
+  function pmSyncPop(p) {
+    const pop = pmPop.el; if (!pop) return;
+    const range = pop.querySelector('.pm-range');
+    if (range && +range.value !== p) range.value = p;
+    if (range) { range.style.setProperty('--p', p + '%'); range.setAttribute('aria-valuetext', p + '% done'); }
+    const v = pop.querySelector('.pm-pop-val'); if (v) v.textContent = p + '%';
+    pop.querySelectorAll('.pm-chip').forEach(c => { const on = +c.dataset.p === p; c.classList.toggle('active', on); c.setAttribute('aria-pressed', on ? 'true' : 'false'); });
+    pop.classList.toggle('is-full', p >= 100);
+  }
+  function pmCommit(p) {
+    const id = pmPop.id; const a = byId(id); if (!a) return;
+    p = Math.max(0, Math.min(100, Math.round(p)));
+    const before = a.progress || 0;
+    if (before === p) { pmSyncPop(p); return; }
+    const anchor = pmFindAnchor(id, pmPop.anchorRect);
+    if (anchor) { const r = anchor.getBoundingClientRect(); pmPop.anchorRect = { left: r.left, top: r.top, width: r.width, height: r.height, bottom: r.bottom }; }
+    if (!reducedMotion()) { pmAnimFrom.set(id, before); setTimeout(() => { if (pmAnimFrom.get(id) === before) pmAnimFrom.delete(id); }, 60); }
+    setProgress(id, p);
+    pmSyncPop(p);
+    pmPlace();
+    if (p === 100 && before < 100 && !a.done) {
+      toast('100% on “' + a.title + '”. Mark it as done?', 'ok', { label: 'Mark done', fn: () => { closeProgressPop(); completeAssignment(id); } });
+    }
+  }
+  function closeProgressPop(refocus) {
+    const pop = pmPop.el; if (!pop) return;
+    const id = pmPop.id, near = pmPop.anchorRect;
+    pmPop.el = null; pmPop.id = null;
+    document.removeEventListener('pointerdown', pmPop.onDoc, true);
+    document.removeEventListener('keydown', pmPop.onKey, true);
+    window.removeEventListener('resize', pmPop.onMove);
+    window.removeEventListener('scroll', pmPop.onMove, true);
+    if (reducedMotion()) pop.remove();
+    else { pop.classList.add('is-closing'); setTimeout(() => pop.remove(), 160); }
+    pop.setAttribute('aria-hidden', 'true');
+    if (refocus) { const a = pmFindAnchor(id, near); if (a) a.focus({ preventScroll: true }); }
+  }
+  function openProgressPop(id, anchor) {
+    const a = byId(id); if (!a) return;
+    if (pmPop.el && pmPop.id === id) { closeProgressPop(true); return; }
+    closeProgressPop();
+    const p = progressOf(a);
+    const r = anchor ? anchor.getBoundingClientRect() : null;
+    pmPop.id = id;
+    pmPop.anchorRect = r ? { left: r.left, top: r.top, width: r.width, height: r.height, bottom: r.bottom } : { left: innerWidth / 2, top: innerHeight / 3, width: 0, height: 0, bottom: innerHeight / 3 };
+    const pop = document.createElement('div');
+    pop.className = 'pm-pop';
+    pop.setAttribute('role', 'dialog');
+    pop.setAttribute('aria-label', 'Progress for ' + a.title);
+    const cls = getClass(a.classId);
+    pop.style.setProperty('--c', cls ? classColorVar(cls) : 'var(--accent)');
+    pop.innerHTML = html`<div class="pm-pop-head"><span class="pm-pop-label">Progress</span><span class="pm-pop-val num" aria-hidden="true">${p}%</span></div>
+      <div class="pm-pop-title" title="${a.title}">${a.title}</div>
+      <input class="pm-range" type="range" min="0" max="100" step="5" value="${p}" aria-label="Progress percent" aria-valuetext="${p}% done" style="--p:${p}%">
+      <div class="pm-chips" role="group" aria-label="Quick set">${[0, 25, 50, 75, 100].map(v => html`<button type="button" class="pm-chip" data-p="${v}" aria-pressed="${v === p ? 'true' : 'false'}">${v}%</button>`)}</div>
+      <div class="pm-pop-hint"><span><span class="kbd">←</span><span class="kbd">→</span> ±5</span><span><span class="kbd">Enter</span> done</span></div>`;
+    document.body.appendChild(pop);
+    pmPop.el = pop;
+    pmSyncPop(p);
+    pmPlace();
+    const range = pop.querySelector('.pm-range');
+    range.addEventListener('input', () => { const v = +range.value; pmSyncPop(v); pmLive(id, v); });
+    range.addEventListener('change', () => pmCommit(+range.value));
+    pop.querySelectorAll('.pm-chip').forEach(c => c.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); pmCommit(+c.dataset.p); }));
+    pop.addEventListener('click', e => e.stopPropagation());
+    pop.addEventListener('keydown', e => {
+      if (e.key === 'Escape' || e.key === 'Enter') {
+        e.preventDefault(); e.stopPropagation();
+        if (e.key === 'Enter' && document.activeElement === range) pmCommit(+range.value);
+        closeProgressPop(true);
+      } else if (e.key === 'Tab') {
+        const f = [range, ...pop.querySelectorAll('.pm-chip')];
+        const i = f.indexOf(document.activeElement);
+        e.preventDefault();
+        f[(i + (e.shiftKey ? f.length - 1 : 1)) % f.length].focus();
+      }
+    });
+    pmPop.onDoc = e => { if (pmPop.el && !pmPop.el.contains(e.target) && !(e.target.closest && e.target.closest(`[data-action="progress"][data-pm-id="${CSS.escape(id)}"]`))) closeProgressPop(); };
+    pmPop.onMove = () => { if (pmPop.el) pmPlace(); };
+    /* Esc closes the popover wherever focus is (it may have moved back to a card). */
+    pmPop.onKey = e => { if (e.key === 'Escape' && pmPop.el && !pmPop.el.contains(e.target)) { e.preventDefault(); e.stopPropagation(); closeProgressPop(true); } };
+    document.addEventListener('pointerdown', pmPop.onDoc, true);
+    document.addEventListener('keydown', pmPop.onKey, true);
+    window.addEventListener('resize', pmPop.onMove);
+    window.addEventListener('scroll', pmPop.onMove, true);
+    range.focus({ preventScroll: true });
+    setTimeout(() => { if (pmPop.el === pop && !pop.contains(document.activeElement)) range.focus({ preventScroll: true }); }, 30);
+  }
+  on('render', () => { if (pmPop.el) { if (!byId(pmPop.id) || (byId(pmPop.id) || {}).done) closeProgressPop(); else requestAnimationFrame(pmPlace); } });
+  registerAction('progress', (id, el, e) => { if (e) e.stopPropagation(); openProgressPop(id, el); });
+
+  /* ---------- read-only detail ---------- */
+  function adStatus(a, n) {
+    if (a.archived) return { key: 'archived', label: 'Archived' };
+    if (a.done) return { key: 'done', label: 'Done' };
+    if (isOverdue(a, n)) return { key: 'overdue', label: 'Overdue' };
+    if (state.ui.activeId === a.id) return { key: 'active', label: 'In progress' };
+    return { key: 'open', label: 'Open' };
+  }
+  function adStamp(iso) {
+    const d = C.parseISO(iso); if (!d) return '—';
+    return C.WEEKDAYS[d.getDay()] + ', ' + C.MONTHS[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear() + ' · ' + C.formatTime(d);
+  }
+  const AD_SOURCE = { ics: { ico: '📅', label: 'Imported from your calendar' }, paste: { ico: '📋', label: 'Pasted from Classroom' }, manual: { ico: '✍️', label: 'Added by you' } };
+  function openAssignmentDetail(id) {
+    const a = byId(id);
+    if (!a) { toast('That assignment no longer exists.', 'err'); return null; }
+    closeProgressPop();
+    const n = now();
+    const cls = getClass(a.classId);
+    const due = C.parseISO(a.due);
+    const st = adStatus(a, n);
+    const cd = C.countdown(due, n);
+    const src = AD_SOURCE[a.source] || AD_SOURCE.manual;
+    const autoP = a.priorityAuto !== false;
+    const color = cls ? classColorVar(cls) : 'var(--text-3)';
+    const dueLong = due ? C.WEEKDAYS_LONG[due.getDay()] + ', ' + C.MONTHS_LONG[due.getMonth()] + ' ' + due.getDate() + (due.getFullYear() !== n.getFullYear() ? ', ' + due.getFullYear() : '') : '';
+    const fact = (k, v, extra) => html`<div class="ad-fact ${extra || ''}"><dt>${k}</dt><dd>${v}</dd></div>`;
+    const focused = a.focusedMin ? ' · ' + C.formatDuration(a.focusedMin) + ' focused' : '';
+    const url = C.safeUrl(a.url);
+    const body = html`<div class="ad" style="--c: ${raw(color)}">
+      <div class="ad-badges">
+        <span class="ad-status is-${st.key}"><span class="ad-status-dot" aria-hidden="true"></span>${st.label}</span>
+        ${priorityBadge(a)}<span class="ad-pri-src">${autoP ? 'auto' : 'set by you'}</span>
+        <span class="ad-src" title="${src.label}"><span aria-hidden="true">${src.ico}</span>${a.source === 'ics' ? 'Calendar' : a.source === 'paste' ? 'Paste' : 'Manual'}</span>
+      </div>
+      <section class="ad-due ${st.key === 'overdue' ? 'is-overdue' : ''}" aria-label="Due">
+        <span class="ad-due-ico" aria-hidden="true"><svg><use href="#i-cal"/></svg></span>
+        <div class="ad-due-main">
+          <div class="ad-k">Due</div>
+          <div class="ad-due-date">${due ? dueLong : 'No due date'}</div>
+          <div class="ad-due-time">${due ? (a.allDay ? 'End of day' : C.formatTime(due)) + ' · ' + C.formatDateShort(due, n) : 'Add one with Edit'}</div>
+        </div>
+        <div class="ad-due-cd">${a.done ? html`<span class="ad-cd-done">✓ Done${a.doneAt ? ' ' + C.formatDateShort(new Date(a.doneAt), n).toLowerCase() : ''}</span>`
+          : cd.state === 'none' ? html`<span class="countdown is-none">—</span>`
+          : html`<div class="ad-k">${cd.state === 'overdue' ? 'Overdue by' : 'Time left'}</div><div class="ad-cd num ${cd.state === 'hot' ? 'is-hot' : ''} ${cd.state === 'overdue' ? 'is-overdue' : ''}" data-due="${a.due}" data-mode="bare" style="--uh:${cd.hue}">${cd.text.replace('Overdue by ', '')}</div>`}</div>
+      </section>
+      <section class="ad-prog" aria-label="Progress">
+        <div class="ad-prog-head"><span class="ad-k">Progress</span><span class="ad-prog-note">Press Edit to change it</span></div>
+        ${progressMeter(a, { size: 'lg' })}
+      </section>
+      <dl class="ad-facts">
+        ${fact('Class', cls ? html`<span class="ad-class"><span class="ad-sym" aria-hidden="true">${cls.emoji || '•'}</span>${cls.name}</span>` : html`<span class="faint">No class</span>`)}
+        ${fact('Estimate', a.estimatedMin ? html`<span class="num">${C.formatDuration(a.estimatedMin)}</span>` : html`<span class="faint">Not set</span>`)}
+        ${fact('Priority', html`<span class="ad-pri" style="--pc: var(--pri-${a.priority})"><span class="dot" style="--c: var(--pri-${a.priority})"></span>${a.priority[0].toUpperCase() + a.priority.slice(1)}</span> <span class="faint">${autoP ? '· automatic' : '· set by you'}</span>`)}
+        ${fact('Pomodoros', a.pomodoros ? html`<span>🍅 <span class="num">${a.pomodoros}</span>${focused}</span>` : html`<span class="faint">None yet</span>`)}
+        ${fact('Source', html`<span>${src.label}</span>`)}
+        ${fact('Status', html`<span>${st.label}${a.archived && a.archiveReason ? ' · ' + a.archiveReason : ''}</span>`)}
+        ${fact('Created', html`<span class="num">${adStamp(a.createdAt)}</span>`)}
+        ${fact('Updated', html`<span class="num">${adStamp(a.updatedAt)}</span>`)}
+        ${a.location ? fact('Location', html`<span>${a.location}</span>`, 'ad-wide') : ''}
+      </dl>
+      ${url ? html`<a class="ad-link" href="${url}" target="_blank" rel="noopener noreferrer"><span class="ad-link-ico" aria-hidden="true"><svg><use href="#i-link"/></svg></span><span class="ad-link-text"><b>${/^https?:\/\/classroom\.google\.com\//i.test(url) ? 'Open in Google Classroom' : 'Open link'}</b><span class="ad-link-url">${url}</span></span><span aria-hidden="true">↗</span><span class="sr-only">(opens in a new tab)</span></a>` : ''}
+      <section class="ad-block"><h3 class="ad-k">Notes</h3>${(a.notes || '').trim() ? html`<div class="ad-text">${a.notes}</div>` : html`<div class="ad-empty">No notes yet.</div>`}</section>
+      ${(a.sourceNotes || '').trim() ? html`<section class="ad-block"><h3 class="ad-k">From Classroom</h3><div class="ad-text ad-source-text">${a.sourceNotes}</div></section>` : ''}
+    </div>`;
+    const footer = html`
+      <button class="btn btn-ghost ad-del" data-role="delete" type="button"><span aria-hidden="true">🗑</span> Delete</button>
+      ${!a.done && !a.archived && state.ui.activeId !== a.id ? html`<button class="btn" data-role="start" type="button"><svg><use href="#i-play"/></svg> Start</button>` : ''}
+      ${a.done ? html`<button class="btn" data-role="undone" type="button">Mark not done</button>` : html`<button class="btn ad-done-btn" data-role="done" type="button"><svg><use href="#i-check"/></svg> Mark done</button>`}
+      <span class="right"></span>
+      <button class="btn btn-ghost" data-role="close" type="button">Close</button>
+      <button class="btn btn-primary ad-edit" data-role="edit" type="button"><svg><use href="#i-edit"/></svg> Edit</button>`;
+    const m = openModal({ title: a.title, body, footer });
+    m.classList.add('ad-modal');
+    m.style.setProperty('--c', color);
+    m.dataset.id = a.id;
+    const head = m.querySelector('.modal-head'), h2 = head.querySelector('h2');
+    const main = document.createElement('div');
+    main.className = 'ad-head-main';
+    main.innerHTML = html`<div class="ad-eyebrow"><span class="ad-chip">${cls ? html`<span class="ad-sym" aria-hidden="true">${cls.emoji || '•'}</span>${cls.name}` : 'No class'}</span><span class="ad-eyebrow-sep">Assignment</span></div>`;
+    head.insertBefore(main, h2); main.appendChild(h2);
+    const q = s => m.querySelector(s);
+    q('[data-role="close"]').addEventListener('click', () => closeModal());
+    q('[data-role="edit"]').addEventListener('click', () => openEditModal(a.id));
+    q('[data-role="delete"]').addEventListener('click', async () => { if (await confirmModal({ title: 'Delete assignment?', message: '“' + a.title + '” will be removed. You can undo right after.', ok: 'Delete', danger: true })) deleteAssignment(a.id); });
+    if (q('[data-role="start"]')) q('[data-role="start"]').addEventListener('click', () => { closeModal(); startAssignment(a.id); toast('Started: ' + a.title, 'ok'); });
+    if (q('[data-role="done"]')) q('[data-role="done"]').addEventListener('click', () => { closeModal(); completeAssignment(a.id); });
+    if (q('[data-role="undone"]')) q('[data-role="undone"]').addEventListener('click', () => { closeModal(); uncompleteAssignment(a.id); });
+    setTimeout(() => { const e = q('[data-role="edit"]'); if (e && m.isConnected) e.focus({ preventScroll: true }); }, 40);
+    return m;
+  }
+
+  /* ---------- Create assignment: smart prompt + structured fields ---------- */
+  const CA_PRI = [['auto', 'Auto'], ['low', 'Low'], ['medium', 'Medium'], ['high', 'High'], ['critical', 'Critical']];
+  const CA_EXAMPLES = ['Unit 1 test psych est time 15 min due on the 10th', 'Chem lab report fri 11:59pm !high 45m', 'Essay draft for english due next week 2h', 'Bio worksheet tomorrow 3pm half done'];
+  function titleCaseTag(t) { return String(t || '').replace(/[-_]+/g, ' ').replace(/\b\w/g, ch => ch.toUpperCase()); }
+  function openCreateAssignment(prefill) {
+    prefill = prefill || {};
+    closeProgressPop();
+    const n = now();
+    const pDue = prefill.due ? (prefill.due instanceof Date ? prefill.due : C.parseISO(prefill.due)) : null;
+    const base = {
+      title: prefill.title || '', cls: prefill.classId || '', clsNew: '',
+      date: pDue ? C.dayKey(pDue) : '', time: pDue && prefill.allDay === false ? timeInputValue(pDue) : '', allDay: pDue ? prefill.allDay !== false : true,
+      est: prefill.estimatedMin ? String(prefill.estimatedMin) : '', pri: prefill.priority || 'auto', progress: Math.max(0, Math.min(100, +prefill.progress || 0)),
+      url: prefill.url || '', notes: prefill.notes || ''
+    };
+    const classOpts = state.classes.map(c => html`<option value="${c.id}">${(c.emoji ? c.emoji + '  ' : '') + c.name}${c.hidden ? ' (hidden)' : ''}</option>`);
+    const body = html`<form id="ca-form" class="ca" novalidate autocomplete="off">
+      <div class="ca-smart">
+        <label class="ca-smart-label" for="ca-prompt"><span class="ca-spark" aria-hidden="true">✨</span><span>Describe it</span><span class="ca-smart-sub">and the details fill themselves in</span></label>
+        <div class="ca-prompt-wrap">
+          <input class="input ca-prompt" id="ca-prompt" placeholder="${'e.g. ' + CA_EXAMPLES[0]}" aria-describedby="ca-understood" spellcheck="false" maxlength="300">
+          <span class="ca-prompt-kbd kbd" aria-hidden="true">Enter</span>
+        </div>
+        <div class="ca-understood" id="ca-understood" aria-live="polite"></div>
+      </div>
+      <div class="ca-sep" aria-hidden="true"><span>Details</span></div>
+      <div class="ca-grid">
+        <div class="field ca-field span-2" data-f="title"><label for="ca-title">Title</label><input class="input" id="ca-title" maxlength="200" placeholder="What is it?" required></div>
+        <div class="field ca-field" data-f="cls"><label for="ca-class">Class</label>
+          <select class="select" id="ca-class"><option value="">No class</option>${classOpts}<option value="__new">＋ New class…</option></select>
+          <input class="input ca-class-new" id="ca-class-new" placeholder="New class name" maxlength="80" hidden aria-label="New class name">
+        </div>
+        <div class="field ca-field" data-f="est"><label for="ca-est">Estimate</label><div class="ca-suffix"><input class="input" type="number" id="ca-est" min="0" max="1440" step="5" inputmode="numeric" placeholder="e.g. 45"><span aria-hidden="true">min</span></div></div>
+        <div class="field ca-field" data-f="date"><label for="ca-date">Due date</label><input class="input" type="date" id="ca-date"></div>
+        <div class="field ca-field" data-f="time"><label for="ca-time">Due time</label><input class="input" type="time" id="ca-time">
+          <label class="switch ca-eod"><input type="checkbox" id="ca-allday"><span class="track"></span><span class="small">End of day</span></label></div>
+        <div class="field ca-field span-2" data-f="pri"><span class="label" id="ca-pri-l">Priority</span>
+          <div class="ca-seg" id="ca-pri" role="radiogroup" aria-labelledby="ca-pri-l">${CA_PRI.map(([k, l]) => html`<button type="button" class="ca-seg-btn" role="radio" data-pri="${k}" style="--pc: ${k === 'auto' ? 'var(--accent)' : raw('var(--pri-' + k + ')')}" aria-checked="false" tabindex="-1">${k === 'auto' ? html`<span aria-hidden="true">✦</span>` : html`<span class="dot" style="--c: var(--pri-${k})"></span>`}${l}</button>`)}</div>
+        </div>
+        <div class="field ca-field span-2" data-f="progress"><label for="ca-progress">Progress <span class="ca-prog-val num" id="ca-prog-val">0%</span></label>
+          <input class="pm-range ca-range" type="range" id="ca-progress" min="0" max="100" step="5" value="0">
+        </div>
+        <div class="field ca-field span-2" data-f="url"><label for="ca-url">Link</label><input class="input" type="url" id="ca-url" placeholder="https://classroom.google.com/…" maxlength="2000"></div>
+        <div class="field ca-field span-2" data-f="notes"><label for="ca-notes">Notes</label><textarea class="textarea" id="ca-notes" rows="3" placeholder="Anything that helps you start"></textarea></div>
+      </div>
+    </form>`;
+    const footer = html`<span class="ca-foot-hint tiny faint"><span class="kbd">Enter</span> in the prompt creates it</span><span class="right"></span><button class="btn" data-role="cancel" type="button">Cancel</button><button class="btn btn-primary ca-create" data-role="create" type="submit" form="ca-form"><svg><use href="#i-plus"/></svg> Create</button>`;
+    const m = openModal({ title: 'Create assignment', body, footer });
+    m.classList.add('ca-modal');
+    const q = s => m.querySelector(s);
+    const F = { title: q('#ca-title'), cls: q('#ca-class'), clsNew: q('#ca-class-new'), date: q('#ca-date'), time: q('#ca-time'), allDay: q('#ca-allday'), est: q('#ca-est'), progress: q('#ca-progress'), url: q('#ca-url'), notes: q('#ca-notes') };
+    const prompt = q('#ca-prompt');
+    const touched = new Set();
+    let pri = 'auto';
+    const setPri = (k, focus) => {
+      pri = k;
+      m.querySelectorAll('.ca-seg-btn').forEach(b => { const on = b.dataset.pri === k; b.setAttribute('aria-checked', on ? 'true' : 'false'); b.tabIndex = on ? 0 : -1; if (on && focus) b.focus(); });
+    };
+    const syncTime = () => { F.time.disabled = F.allDay.checked; if (F.allDay.checked) F.time.value = ''; };
+    const syncProg = () => { const v = +F.progress.value; F.progress.style.setProperty('--p', v + '%'); q('#ca-prog-val').textContent = v + '%'; F.progress.setAttribute('aria-valuetext', v + '% done'); };
+    const syncNew = () => { F.clsNew.hidden = F.cls.value !== '__new'; };
+    const flash = f => {
+      const el = m.querySelector(`.ca-field[data-f="${f}"]`); if (!el) return;
+      el.classList.remove('is-filled'); void el.offsetWidth; el.classList.add('is-filled');
+      clearTimeout(el.__t); el.__t = setTimeout(() => el.classList.remove('is-filled'), 1300);
+    };
+    const read = () => ({ title: F.title.value, cls: F.cls.value, clsNew: F.clsNew.value, date: F.date.value, time: F.time.value, allDay: F.allDay.checked, est: F.est.value, pri, progress: +F.progress.value });
+    const write = (v, from) => {
+      const cur = read();
+      const changed = new Set();
+      const set = (f, fn) => { if (touched.has(f)) return; if (String(cur[f]) !== String(v[f])) { fn(v[f]); changed.add(f); } };
+      set('title', x => { F.title.value = x; });
+      set('cls', x => { F.cls.value = x; syncNew(); });
+      set('clsNew', x => { F.clsNew.value = x; });
+      set('date', x => { F.date.value = x; });
+      set('allDay', x => { F.allDay.checked = !!x; syncTime(); });
+      set('time', x => { if (!F.allDay.checked) F.time.value = x; });
+      set('est', x => { F.est.value = x; });
+      set('pri', x => setPri(x));
+      set('progress', x => { F.progress.value = x; syncProg(); });
+      if (from === 'prompt') {
+        if (changed.has('clsNew')) changed.add('cls');
+        if (changed.has('allDay') || changed.has('time')) changed.add('time');
+        changed.delete('clsNew'); changed.delete('allDay');
+        changed.forEach(flash);
+      }
+    };
+    const parse = () => C.parseSmartPrompt(prompt.value, { now: now(), classes: state.classes.filter(c => !c.hidden).map(c => ({ id: c.id, name: c.name })) });
+    /* Chips for what the prompt understood. Only chips that are new or changed animate in. */
+    let shownToks = new Set(), shownMarkup = '';
+    const understood = (p, v) => {
+      const box = q('#ca-understood');
+      if (!prompt.value.trim()) {
+        const mk = String(html`<span class="ca-try">Try</span>${CA_EXAMPLES.slice(0, 3).map(x => html`<button type="button" class="ca-example" data-example="${x}">${x}</button>`)}`);
+        if (mk !== shownMarkup) { box.innerHTML = mk; shownMarkup = mk; shownToks = new Set(); }
+        return;
+      }
+      const chips = [], keys = new Set();
+      const chip = (ico, label, extra, style) => {
+        const key = ico + '|' + label;
+        keys.add(key);
+        return html`<span class="ca-tok ${extra || ''} ${shownToks.has(key) ? 'is-kept' : ''}" style="${style || ''}"><span aria-hidden="true">${ico}</span>${label}</span>`;
+      };
+      chips.push(p.title ? chip('📝', p.title, 'is-title') : chip('📝', 'Needs a title', 'is-missing'));
+      const c = v.cls && v.cls !== '__new' ? getClass(v.cls) : null;
+      if (c) chips.push(chip(c.emoji || '🏷️', c.name, 'is-class', raw('--c: ' + classColorVar(c))));
+      else if (v.clsNew) chips.push(chip('＋', 'New class “' + v.clsNew + '”', 'is-class'));
+      if (p.due) chips.push(chip('📅', C.formatDue(p.due, p.allDay, now()) + (p.allDay ? ' · end of day' : '')));
+      if (p.estimatedMin) chips.push(chip('⏱', C.formatDuration(p.estimatedMin)));
+      if (p.priority) chips.push(chip('⚑', p.priority[0].toUpperCase() + p.priority.slice(1), 'is-pri', raw('--pc: var(--pri-' + p.priority + ')')));
+      if (p.progress != null) chips.push(chip('◔', p.progress + '% done'));
+      const mk = String(html`<span class="ca-got">Understood</span>${chips}`);
+      if (mk !== shownMarkup) { box.innerHTML = mk; shownMarkup = mk; }
+      shownToks = keys;
+    };
+    const applyPrompt = () => {
+      const p = parse();
+      let clsId = p.classId || '', clsNew = '';
+      if (p.classTag) { const c = findClassByTag(p.classTag); if (c) clsId = c.id; else { clsId = '__new'; clsNew = titleCaseTag(p.classTag); } }
+      const v = {
+        title: p.title || base.title,
+        cls: clsId || base.cls, clsNew: clsNew || '',
+        date: p.due ? C.dayKey(p.due) : base.date,
+        allDay: p.due ? p.allDay : base.allDay,
+        time: p.due ? (p.allDay ? '' : timeInputValue(p.due)) : base.time,
+        est: p.estimatedMin ? String(p.estimatedMin) : base.est,
+        pri: p.priority || base.pri,
+        progress: p.progress != null ? p.progress : base.progress
+      };
+      if (!prompt.value.trim()) Object.assign(v, { title: base.title });
+      write(v, 'prompt');
+      understood(p, v);
+    };
+    /* Initial values: defaults merged with the prefill. */
+    write(Object.assign({}, base), 'init');
+    F.url.value = base.url; F.notes.value = base.notes;
+    syncNew(); syncTime(); syncProg(); setPri(base.pri);
+    if (prefill.prompt) { prompt.value = String(prefill.prompt); applyPrompt(); } else understood(null, {});
+
+    prompt.addEventListener('input', applyPrompt);
+    prompt.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); submit(); } });
+    q('#ca-understood').addEventListener('click', e => {
+      const b = e.target.closest('[data-example]'); if (!b) return;
+      prompt.value = b.dataset.example; applyPrompt(); prompt.focus();
+    });
+    const mark = f => () => touched.add(f);
+    F.title.addEventListener('input', mark('title'));
+    F.cls.addEventListener('change', () => { touched.add('cls'); touched.add('clsNew'); syncNew(); if (!F.clsNew.hidden) F.clsNew.focus(); });
+    F.clsNew.addEventListener('input', mark('clsNew'));
+    F.date.addEventListener('input', () => { touched.add('date'); });
+    F.time.addEventListener('input', () => { touched.add('time'); touched.add('allDay'); });
+    F.allDay.addEventListener('change', () => { touched.add('allDay'); touched.add('time'); syncTime(); if (!F.allDay.checked && !F.time.value) F.time.value = '23:59'; });
+    F.est.addEventListener('input', mark('est'));
+    F.progress.addEventListener('input', () => { touched.add('progress'); syncProg(); });
+    const seg = q('#ca-pri');
+    seg.addEventListener('click', e => { const b = e.target.closest('.ca-seg-btn'); if (!b) return; touched.add('pri'); setPri(b.dataset.pri); });
+    seg.addEventListener('keydown', e => {
+      const keys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+      if (!keys.includes(e.key)) return;
+      e.preventDefault();
+      const order = CA_PRI.map(x => x[0]); let i = order.indexOf(pri);
+      if (e.key === 'Home') i = 0; else if (e.key === 'End') i = order.length - 1; else i = (i + (e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? order.length - 1 : 1)) % order.length;
+      touched.add('pri'); setPri(order[i], true);
+    });
+    q('[data-role="cancel"]').addEventListener('click', () => closeModal());
+    function submit() {
+      const title = F.title.value.trim();
+      if (!title) {
+        const fld = m.querySelector('.ca-field[data-f="title"]');
+        fld.classList.remove('is-error'); void fld.offsetWidth; fld.classList.add('is-error');
+        if (document.activeElement !== prompt) F.title.focus();
+        toast('Give it a title first: type it in the prompt or the Title field.', 'err');
+        return null;
+      }
+      let classId = F.cls.value || null;
+      if (classId === '__new') { const c = ensureClass(F.clsNew.value); classId = c ? c.id : null; }
+      const allDay = F.allDay.checked || !F.time.value;
+      let dueIso = null;
+      if (F.date.value) {
+        const d = C.fromDayKey(F.date.value);
+        if (d) { if (allDay) d.setHours(23, 59, 0, 0); else { const [h, mi] = F.time.value.split(':').map(Number); d.setHours(h, mi, 0, 0); } dueIso = C.toISO(d); }
+      }
+      const est = parseInt(F.est.value, 10);
+      const partial = { title, classId, due: dueIso, allDay, estimatedMin: isNaN(est) || est <= 0 ? null : est, progress: +F.progress.value || 0, url: C.safeUrl(F.url.value), notes: F.notes.value, source: 'manual' };
+      if (pri === 'auto') partial.priorityAuto = true; else { partial.priority = pri; partial.priorityAuto = false; }
+      closeModal();
+      const a = addAssignment(partial);
+      toast('Created: ' + a.title + (dueIso ? ' · ' + C.formatDue(new Date(dueIso), allDay, now()) : ' · no due date'), 'ok', { label: 'View', fn: () => openAssignmentDetail(a.id) });
+      return a;
+    }
+    q('#ca-form').addEventListener('submit', e => { e.preventDefault(); submit(); });
+    setTimeout(() => { if (m.isConnected) prompt.focus({ preventScroll: true }); }, 30);
+    return m;
+  }
+  registerAction('create-assignment', (id, el) => openCreateAssignment(el && el.dataset.day ? { due: C.endOfDay(C.fromDayKey(el.dataset.day)), allDay: true } : null));
+  registerAction('open', id => { if (id) openAssignmentDetail(id); });
   /* === FEATURE:ASSIGN:JS:END === */
 
   /* ---------- views registry & rendering ---------- */
@@ -8699,11 +9542,13 @@ const App = (function () {
   }
 
   /* ---------- quick add ---------- */
+  /* Classes the smart parser may name without "#" (hidden classes are left out). */
+  const parserClasses = () => state.classes.filter(c => !c.hidden).map(c => ({ id: c.id, name: c.name }));
   function quickAddPreview(text) {
     const box = $('#quickadd-preview');
     if (!text.trim()) { box.hidden = true; return; }
-    const p = C.parseQuickAdd(text, { now: now() });
-    const cls = p.classTag ? findClassByTag(p.classTag) : null;
+    const p = C.parseQuickAdd(text, { now: now(), classes: parserClasses() });
+    const cls = p.classTag ? findClassByTag(p.classTag) : p.classId ? getClass(p.classId) : null;
     const parts = [
       html`<span>Title: <b>${p.title || html`<span class="q-missing">(empty)</span>`}</b></span>`,
       html`<span>Due: <b>${p.due ? C.formatDue(p.due, p.allDay, now()) : html`<span class="q-missing">none · try "fri 11:59pm"</span>`}</b></span>`,
@@ -8711,18 +9556,20 @@ const App = (function () {
       html`<span>Priority: <b>${p.priority || html`<span class="q-missing">auto</span>`}</b></span>`,
       html`<span>Estimate: <b>${p.estimatedMin ? C.formatDuration(p.estimatedMin) : html`<span class="q-missing">none · try 45m</span>`}</b></span>`
     ];
+    if (p.progress != null) parts.push(html`<span>Progress: <b>${p.progress}%</b></span>`);
     box.innerHTML = html`${parts}`;
     box.hidden = false;
   }
   function quickAddSubmit(text) {
-    const p = C.parseQuickAdd(text, { now: now() });
+    const p = C.parseQuickAdd(text, { now: now(), classes: parserClasses() });
     if (!p.title) { toast('Give it a title first.', 'err'); return null; }
     let cls = null;
     if (p.classTag) cls = findClassByTag(p.classTag) || ensureClass(p.classTag.replace(/[-_]+/g, ' ').replace(/\b\w/g, ch => ch.toUpperCase()));
-    const partial = { title: p.title, classId: cls ? cls.id : null, due: p.due ? C.toISO(p.due) : null, allDay: p.due ? p.allDay : true, estimatedMin: p.estimatedMin };
+    else if (p.classId) cls = getClass(p.classId);
+    const partial = { title: p.title, classId: cls ? cls.id : null, due: p.due ? C.toISO(p.due) : null, allDay: p.due ? p.allDay : true, estimatedMin: p.estimatedMin, progress: p.progress || 0 };
     if (p.priority) { partial.priority = p.priority; partial.priorityAuto = false; }
     const a = addAssignment(partial);
-    toast('Added: ' + a.title + (p.due ? ' · ' + C.formatDue(p.due, p.allDay, now()) : ' · no due date'), 'ok', { label: 'Edit', fn: () => openEditModal(a.id) });
+    toast('Added: ' + a.title + (p.due ? ' · ' + C.formatDue(p.due, p.allDay, now()) : ' · no due date'), 'ok', { label: 'View', fn: () => openAssignmentDetail(a.id) });
     return a;
   }
 
@@ -8751,6 +9598,7 @@ const App = (function () {
           <label class="checkbox small"><input type="checkbox" id="ed-allday" ${draft.allDay ? 'checked' : ''}> End of day (no specific time)</label></div>
         <div class="field"><label for="ed-est">Estimated time (minutes)</label><input class="input" type="number" id="ed-est" min="0" step="5" value="${draft.estimatedMin || ''}" placeholder="e.g. 45"></div>
         <div class="field"><label for="ed-url">Link</label><input class="input" type="url" id="ed-url" value="${draft.url || ''}" placeholder="https://classroom.google.com/…"></div>
+        <div class="field span-2"><label for="ed-progress">Progress <span class="ca-prog-val num" id="ed-prog-val">${progressOf(draft)}%</span></label><input class="pm-range" type="range" id="ed-progress" min="0" max="100" step="5" value="${progressOf(draft)}" style="--p:${progressOf(draft)}%" aria-valuetext="${progressOf(draft)}% done"></div>
         <div class="field span-2"><label for="ed-notes">Notes</label><textarea class="textarea" id="ed-notes" placeholder="Anything that helps you start">${draft.notes || ''}</textarea></div>
         ${draft.sourceNotes ? html`<div class="field span-2"><label>From Classroom</label><div class="privacy-note" style="white-space:pre-wrap;max-height:160px;overflow:auto">${draft.sourceNotes}</div></div>` : ''}
       </div>
@@ -8770,6 +9618,7 @@ const App = (function () {
     q('#ed-allday').addEventListener('change', e => { q('#ed-time').disabled = e.target.checked; if (!e.target.checked && !q('#ed-time').value) q('#ed-time').value = '23:59'; });
     q('#ed-date').addEventListener('change', e => { if (e.target.value && !q('#ed-allday').checked && !q('#ed-time').value) q('#ed-time').value = '23:59'; });
     q('[data-role="cancel"]').addEventListener('click', closeModal);
+    q('#ed-progress').addEventListener('input', e => { const v = +e.target.value; e.target.style.setProperty('--p', v + '%'); e.target.setAttribute('aria-valuetext', v + '% done'); q('#ed-prog-val').textContent = v + '%'; });
     if (q('[data-role="delete"]')) q('[data-role="delete"]').addEventListener('click', async () => { if (await confirmModal({ title: 'Delete assignment?', message: '“' + a.title + '” will be removed. You can undo right after.', ok: 'Delete', danger: true })) deleteAssignment(a.id); });
     if (q('[data-role="archive"]')) q('[data-role="archive"]').addEventListener('click', async () => { const r = await confirmModal({ title: 'Archive overdue item', message: 'Archiving hides it everywhere without marking it done. Say why, so future you knows.', input: 'Reason', placeholder: 'e.g. teacher excused it / turned in late', ok: 'Archive' }); if (r !== null) archiveAssignment(a.id, r); });
     if (q('[data-role="done"]')) q('[data-role="done"]').addEventListener('click', () => { closeModal(); completeAssignment(a.id); });
@@ -8787,6 +9636,8 @@ const App = (function () {
       const pv = q('#ed-priority').value;
       const est = parseInt(q('#ed-est').value, 10);
       const patch = { title, classId, due: dueIso, allDay: allDay || !timeV, estimatedMin: isNaN(est) || est <= 0 ? null : est, notes: q('#ed-notes').value, url: C.safeUrl(q('#ed-url').value) };
+      const prog = +q('#ed-progress').value;
+      if (!(draft.done && prog === 100)) patch.progress = Math.max(0, Math.min(100, Math.round(prog || 0)));
       if (pv === 'auto') patch.priorityAuto = true; else { patch.priority = pv; patch.priorityAuto = false; }
       closeModal();
       if (isNew) addAssignment(patch); else updateAssignment(a.id, patch);
@@ -8918,10 +9769,10 @@ const App = (function () {
     const k = (...keys) => html`<dt>${keys.map(x => html`<span class="kbd">${x}</span>`)}</dt>`;
     const group = (icon, title, rows) => html`<section class="sc-group"><h3><span aria-hidden="true">${icon}</span>${title}</h3><dl class="shortcuts">${rows.map(r => html`${k(...r[0])}<dd>${r[1]}</dd>`)}</dl></section>`;
     openModal({ title: 'Keyboard shortcuts', wide: true, body: html`<div class="sc-groups">
-      ${group('⚡', 'Anywhere', [[['N'], 'Quick add an assignment'], [['/'], 'Search assignments'], [['I'], 'Import from Google'], [['L'], 'Log today'], [['F'], 'Focus mode'], [['P'], 'Pause / resume focus timer'], [[','], 'Settings'], [['?'], 'This help'], [['Esc'], 'Close panels and dialogs']])}
+      ${group('⚡', 'Anywhere', [[['C'], 'Create an assignment'], [['N'], 'Quick add an assignment'], [['/'], 'Search assignments'], [['I'], 'Import from Google'], [['L'], 'Log today'], [['F'], 'Focus mode'], [['P'], 'Pause / resume focus timer'], [[','], 'Settings'], [['?'], 'This help'], [['Esc'], 'Close panels and dialogs']])}
       ${group('🧭', 'Switch views', VIEW_ORDER.map((v, i) => [[String(i + 1)], VIEWS[v].label]))}
       ${group('🗓️', 'Inside a view', [[['[', ']'], 'Previous / next week (Week)'], [['PgUp', 'PgDn'], 'Previous / next month (Month)'], [['T'], 'Jump to today (Month)'], [['←', '→'], 'Move a focused card (Board) or flip days (Log)'], [['Space'], 'Mark a focused card done (Board)']])}
-    </div><p class="small muted">Quick add understands days (<code>fri</code>, <code>tomorrow</code>, <code>10/17</code>, <code>in 3 days</code>), times (<code>11:59pm</code>), <code>#class</code>, <code>!low</code> / <code>!med</code> / <code>!high</code> / <code>!crit</code> and estimates like <code>45m</code> or <code>2h</code>.</p>` });
+    </div><p class="small muted">Quick add understands days (<code>fri</code>, <code>tomorrow</code>, <code>10/17</code>, <code>in 3 days</code>), times (<code>11:59pm</code>), <code>#class</code>, <code>!low</code> / <code>!med</code> / <code>!high</code> / <code>!crit</code> and estimates like <code>45m</code> or <code>2h</code>. Both quick add and <b>Create assignment</b> also read class names without <code>#</code> (<code>psych</code>, <code>chem</code>), <code>est time 15 min</code>, <code>due on the 10th</code>, <code>urgent</code> and <code>50% done</code>.</p>` });
   }
 
   /* ---------- theme, focus mode ---------- */
@@ -8959,7 +9810,8 @@ const App = (function () {
   Object.assign(actions, {
     'toggle-done': (id, el) => { const a = byId(id); if (!a) return; if (a.done) uncompleteAssignment(id); else completeAssignment(id, { el }); },
     'done': (id, el) => completeAssignment(id, { el }),
-    'edit': id => openEditModal(id),
+    /* Explicit Edit buttons (pencils) edit; clicking an assignment itself opens the read-only detail (data-action="open"). */
+    'edit': (id, el) => { if (el && el.classList.contains('ov-next-title')) openAssignmentDetail(id); else openEditModal(id); },
     'start': id => startAssignment(id),
     'stop': () => stopAssignment(),
     'set-view': (id, el) => setView(el.dataset.view),
@@ -9000,6 +9852,7 @@ const App = (function () {
     $('#btn-theme').addEventListener('click', toggleTheme);
     $('#btn-focus').addEventListener('click', toggleFocusMode);
     $('#btn-import').addEventListener('click', () => openImportModal());
+    $('#btn-create').addEventListener('click', () => openCreateAssignment());
     $('#btn-filters').addEventListener('click', toggleFilters);
     $('#filter-scrim').addEventListener('click', () => closeFilters(false, true));
     $('#filter-wrap').addEventListener('focusout', e => { if (filtersOpen() && e.relatedTarget && !$('#filter-wrap').contains(e.relatedTarget)) closeFilters(); });
@@ -9051,6 +9904,7 @@ const App = (function () {
       else if (k === 'l' || k === 'L') { e.preventDefault(); openLogDay(C.dayKey(now())); }
       else if (k === 'f' || k === 'F') { e.preventDefault(); toggleFocusMode(); }
       else if (k === 'i' || k === 'I') { e.preventDefault(); openImportModal(); }
+      else if (k === 'c' || k === 'C') { e.preventDefault(); openCreateAssignment(); }
       else if (k === ',') { e.preventDefault(); openSettings(); }
       else if (k === '?') { e.preventDefault(); openHelp(); }
     });

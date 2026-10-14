@@ -206,10 +206,13 @@ module.exports = async ({ page, check, assert, SHOTS, shotsDir, path }) => {
     assert.strictEqual(await page.evaluate(() => document.activeElement.dataset.id), id);
   });
 
-  await check('board: Enter on a focused card opens the edit modal', async () => {
+  await check('board: Enter on a focused card opens the detail, and its Edit button the edit modal', async () => {
     const id = await page.$eval('#board-mount .board-col[data-col="high"] .bcard', el => el.dataset.id);
     await page.focus(`#board-mount .bcard[data-id="${id}"]`);
     await page.keyboard.press('Enter');
+    await page.waitForSelector('#modal-root .ad-modal');
+    assert.strictEqual(await page.$$eval('#modal-root .modal input, #modal-root .modal select, #modal-root .modal textarea', els => els.length), 0, 'detail is read-only');
+    await page.click('#modal-root [data-role="edit"]');
     await page.waitForSelector('#modal-root .modal #ed-title');
     assert.strictEqual(await page.inputValue('#ed-title'), await page.evaluate(id => App.byId(id).title, id));
     await page.keyboard.press('Escape');

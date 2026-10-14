@@ -105,13 +105,18 @@ module.exports = async ({ page, check, assert, SHOTS, shotsDir, path }) => {
     assert.ok(10 * HOUR_PX >= sc.top && 10 * HOUR_PX <= sc.top + sc.h, 'current time scrolled into view');
   });
 
-  await check('week: blocks open the edit modal by click and keyboard', async () => {
+  await check('week: blocks open the detail by click and keyboard, then Edit opens the edit modal', async () => {
     await page.click(`.wk-block[data-id="${ids.afternoon}"]`);
+    await page.waitForSelector('#modal-root .ad-modal');
+    assert.strictEqual((await page.textContent('#modal-root #modal-title')).trim(), 'WK afternoon item');
+    await page.click('#modal-root [data-role="edit"]');
     await page.waitForSelector('#modal-root .modal #ed-title');
     assert.strictEqual(await page.inputValue('#ed-title'), 'WK afternoon item');
     await page.keyboard.press('Escape');
     await page.focus(`.wk-block[data-id="${ids.morning}"]`);
     await page.keyboard.press('Enter');
+    await page.waitForSelector('#modal-root .ad-modal');
+    await page.click('#modal-root [data-role="edit"]');
     await page.waitForSelector('#modal-root .modal #ed-title');
     assert.strictEqual(await page.inputValue('#ed-title'), 'WK morning item');
     await page.keyboard.press('Escape');
