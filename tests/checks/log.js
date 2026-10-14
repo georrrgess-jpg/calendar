@@ -138,9 +138,16 @@ module.exports = async ({ page, check, assert, SHOTS, shotsDir, path }) => {
     assert.strictEqual(d.weight, 150.4, 'stored value untouched by the toggle');
     /* Hover and focus both show the readout. */
     await page.locator('.log-spark').scrollIntoViewIfNeeded();
-    const box = await page.locator('.log-spark').boundingBox();
-    await page.mouse.move(box.x + 4, box.y + box.height / 2);
-    assert.ok(await page.isVisible('.log-spark-tip'));
+    /* The editor re-renders after the unit switch; hover the settled chart, re-hovering if a render replaced it. */
+    let tipShown = false;
+    for (let attempt = 0; attempt < 4 && !tipShown; attempt++) {
+      await page.waitForTimeout(150);
+      const box = await page.locator('.log-spark').boundingBox();
+      await page.mouse.move(0, 0);
+      await page.mouse.move(box.x + 4, box.y + box.height / 2, { steps: 3 });
+      tipShown = await page.waitForSelector('.log-spark-tip:not([hidden])', { timeout: 800 }).then(() => true).catch(() => false);
+    }
+    assert.ok(tipShown && await page.isVisible('.log-spark-tip'));
     assert.ok((await page.textContent('.log-spark-tip')).includes('68.6 kg'), await page.textContent('.log-spark-tip'));
     await page.mouse.move(0, 0);
     await page.focus('.log-spark');

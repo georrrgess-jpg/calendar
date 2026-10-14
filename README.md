@@ -6,8 +6,10 @@ A calendar for your Google Classroom assignments that lives in **one file**, `as
 - Fills itself from your own Google data, with nothing installed: Google Calendar's export, or a copy-paste of Classroom's To-do page.
 - Remembers everything (check-offs, priorities, notes, streaks) in your browser.
 - Shows countdowns, auto-priorities, a month calendar with a workload heat map, a week timeline, a drag-and-drop priority board, per-class progress and a built-in Pomodoro timer.
-- Opens on a **Home** overview with a little of everything: what to do next, today's log, this week, your stats and classes.
-- Has a **Daily log** for your mood, weight, a verse of the day, notes and events such as games, birthdays and vacations.
+- Opens on a **Home** overview: what to do next, this week, your daily checklist, the verse of the day, your stats and classes.
+- Has a **Daily log** month calendar for your mood, weight, a verse of the day, notes and events such as games, birthdays and vacations.
+- Has a **daily checklist** with items that repeat every day, on weekdays, on weekends, on days you pick, or just once.
+- Lets you **create assignments by describing them**, track **progress** on each one, and open any assignment to see everything about it.
 - Comes with a **class catalog** for 9th to 12th grade and college, so adding your classes takes seconds.
 
 To start, download `assignments.html` and double-click it.
@@ -36,6 +38,7 @@ To start, download `assignments.html` and double-click it.
 
 | Key | What it does |
 |---|---|
+| `C` | Create assignment |
 | `N` | Quick add (it slides in on Home and the Daily log) |
 | `/` | Search (opens Next Up from Home and the Daily log) |
 | `1` to `7` | Home, Next Up, Month, Week, Board, Classes, Daily log |
@@ -54,16 +57,28 @@ To start, download `assignments.html` and double-click it.
 - Priority: `!low`, `!med`, `!high`, `!crit`.
 - Estimate: `45m`, `2h`, `1h30m`.
 
+**Create assignment** (the **＋ Create** button at the top, or `C`): describe it in plain words and the form fills itself in. For example, `Unit 1 test psych est time 15 min due on the 10th` becomes "Unit 1 test" in your AP Psychology class, due on the 10th, about 15 minutes. Check the fields, change anything, and press Create.
+
+- Class names work without a `#`: `chem`, `psych`, `math`, `spanish`. Small typos are fine.
+- Dates: `due on the 10th`, `friday`, `tomorrow`, `10/20`, `next tuesday`. `11:59` with no am/pm means 11:59 PM.
+- Estimates: `est 15 min`, `2 hours`, `45m`. Progress: `half done`, `50% done`.
+
+**Progress:** every assignment has a progress bar. Click it to set how far along you are, from 0 to 100%. At 100% the app offers to mark it done.
+
+**Assignment details:** click any assignment to see everything about it: due date and countdown, class, priority, estimate, progress, notes and the Classroom link. Nothing changes until you press **Edit**.
+
+**Daily checklist:** it sits on Home and in each day of the Daily log. Tap a starter like 💧 Drink water to begin, or add your own. The gear opens its settings, where you choose how each item repeats: every day, weekdays, weekends, specific days, or once. You can also edit, reorder, archive and delete items there. Changing or archiving an item never rewrites past days.
+
 **Adding classes:** open Classes and choose **Add classes**. Pick your grade (9th, 10th, 11th, 12th or College), tap every class you take, and press Add. Can't find one? Type it under Custom class; a matching symbol is suggested for you. Tap a class's symbol later to change it.
 
-**The daily log** (key `L`, or the Daily log button on Home):
+**The daily log** (key `L`, or the Daily log button on Home) shows the whole month. Each day shows its mood, events, weight and checklist progress. Select a day to open it and fill it in:
 
 - Tap 😊 😐 or 😞 for a good, medium or bad day.
 - Enter your weight in lb or kg. The log shows the change since last time and a trend line.
 - Press **Get a verse** for a random Bible verse (King James Version) that stays with that day. Press **New verse** to draw another.
 - Write an optional description of the day. It saves as you type.
 - Tap a symbol to add an event: 🏆 Sports game, 🎂 Birthday, 🏖️ Vacation, ✈️ Trip and more. Or type it, like `Basketball game 7pm`, and the symbol and time are filled in for you. Vacations can repeat over several days.
-- Your events and moods also show on the Month calendar.
+- Your events and moods also show on the Month and Week views.
 
 **Priorities are automatic** until you change one. The score comes from how soon it's due, words like test, exam, project or essay in the title, your time estimate, and how busy that class is this week. Change a priority in the edit dialog or by dragging on the Board, and it stays the way you set it.
 
