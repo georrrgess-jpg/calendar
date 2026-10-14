@@ -571,9 +571,33 @@ body.focus-mode .lanes { grid-template-columns: 1fr; }
 .mday-items { display: flex; flex-direction: column; gap: 6px; }
 .mday-add { align-self: flex-start; margin-top: 6px; }
 
+/* Daily-log marks (mood dot + event symbols) in cells, agenda and the day panel */
+.mlog { display: inline-flex; align-items: center; gap: 3px; min-width: 0; margin-right: auto; overflow: hidden; line-height: 1; }
+.mlog-mood { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--mc, var(--text-3)); box-shadow: 0 0 0 2px var(--surface-1); }
+.mlog-mood.is-plain { width: 6px; height: 6px; opacity: 0.6; }
+.mlog-ev { display: inline-flex; gap: 1px; font-size: 12px; white-space: nowrap; }
+.mlog-ev i { font-style: normal; }
+.mlog-agenda { margin-left: auto; margin-right: 0; padding-left: 4px; gap: 4px; flex: none; }
+.mlog-agenda .mlog-ev { font-size: 15px; gap: 2px; }
+.mlog-agenda .mlog-mood { width: 9px; height: 9px; }
+.mday-log { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface-2); }
+.mday-log-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.mday-log-title { font-size: 13px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-2); }
+.mday-log-mood { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 650; background: color-mix(in srgb, var(--mc) 16%, transparent); color: var(--text); }
+.mday-log-events { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: 13.5px; }
+.mday-log-events li { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.mday-log-label { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mday-log-time { flex: none; font-size: 12px; color: var(--text-3); }
+.mday-log-verse, .mday-log-empty { font-size: 13px; color: var(--text-3); }
+.mday-log-open { align-self: flex-start; }
+
 @media (max-width: 1100px) {
   .mcell .pill-time { display: none; }
   .mcell { min-height: 112px; padding: 4px 4px 6px; }
+  .mcell .mlog-ev i:nth-child(n+3) { display: none; }
+}
+@media (max-width: 900px) {
+  .mcell .mlog-ev i:nth-child(n+2) { display: none; }
 }
 @media (max-width: 720px) {
   .month-card { display: none; }
@@ -1291,6 +1315,276 @@ body:has(#pomo-chip) .footer { padding-bottom: 84px; }
 /* === VIEW:OVERVIEW:CSS:END === */
 
 /* === VIEW:LOG:CSS:START === */
+/* Daily log ---------------------------------------------------------------- */
+.view[data-view="log"] { scroll-margin-top: calc(var(--topbar-h) + 10px); }
+.log { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.log-card { position: relative; padding: 16px 18px 18px; min-width: 0; }
+.log-card-head { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 4px 12px; margin-bottom: 12px; }
+.log-card-head h3 { font-size: 16px; font-weight: 700; letter-spacing: -0.01em; color: var(--text); }
+.log-card-head h3 label { cursor: pointer; }
+.log-hint { font-size: 12.5px; color: var(--text-3); }
+
+/* Hero: soft gradient header with the date and day navigation */
+.log-hero {
+  position: relative; overflow: hidden; display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 14px 20px;
+  padding: 22px 24px; border-radius: 22px; border: 1px solid var(--border-strong);
+  background:
+    radial-gradient(520px 220px at 0% 0%, color-mix(in srgb, var(--accent) 30%, transparent), transparent 70%),
+    radial-gradient(420px 220px at 100% 0%, color-mix(in srgb, var(--class-5) 20%, transparent), transparent 70%),
+    radial-gradient(520px 260px at 70% 120%, color-mix(in srgb, var(--ok) 16%, transparent), transparent 70%),
+    var(--surface-1);
+  box-shadow: var(--shadow-1);
+}
+.log-hero-main { min-width: 0; flex: 1 1 320px; }
+.log-eyebrow { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--accent-text); margin-bottom: 8px; }
+.log-title { font-size: clamp(24px, 3.4vw, 34px); font-weight: 760; letter-spacing: -0.025em; line-height: 1.12; overflow-wrap: anywhere; }
+.log-title-rel { color: var(--accent-text); }
+.log-title-sep { color: var(--text-3); font-weight: 500; }
+.log-sub { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; margin-top: 8px; font-size: 13.5px; color: var(--text-2); min-height: 20px; }
+.log-sub-logged { display: inline-flex; align-items: center; gap: 6px; }
+.log-sub-check { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: var(--ok-soft); color: var(--ok); font-size: 11px; font-weight: 800; }
+.log-sub-streak { font-weight: 600; color: var(--text); }
+.log-nav { display: flex; align-items: center; gap: 4px; padding: 4px; border-radius: 14px; background: color-mix(in srgb, var(--surface-1) 70%, transparent); border: 1px solid var(--border); flex-wrap: wrap; }
+.log-nav .btn { background: transparent; border-color: transparent; }
+.log-nav .btn:hover { background: var(--surface-3); }
+.log-nav .btn:active { transform: scale(0.94); }
+.log-nav-today.is-current { color: var(--text-3); }
+.log-date-input { width: auto; min-width: 0; padding: 6px 10px; background: var(--surface-2); color-scheme: inherit; font-variant-numeric: tabular-nums; }
+
+/* Day strip: horizontally scrollable, scrolled inside its own container */
+.log-strip-wrap { position: relative; margin: -4px 0 0; min-width: 0; }
+.log-strip {
+  display: flex; gap: 8px; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; padding: 6px 4px 10px; scrollbar-width: thin;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 18px, #000 calc(100% - 18px), transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 18px, #000 calc(100% - 18px), transparent);
+}
+.log-chip {
+  flex: none; scroll-snap-align: center; width: 54px; height: 78px; padding: 8px 0 7px; border-radius: 16px; border: 1px solid var(--border);
+  background: var(--surface-1); color: var(--text-2); display: flex; flex-direction: column; align-items: center; gap: 2px; position: relative;
+  transition: transform var(--dur) var(--ease), background var(--dur) var(--ease), border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.log-chip:hover { transform: translateY(-2px); background: var(--surface-2); border-color: var(--border-strong); color: var(--text); }
+.log-chip:active { transform: scale(0.94); }
+.log-chip-wd { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); }
+.log-chip-num { font-size: 19px; font-weight: 740; line-height: 1.1; color: var(--text); font-variant-numeric: tabular-nums; }
+.log-chip-marks { display: flex; align-items: center; justify-content: center; gap: 2px; height: 18px; margin-top: auto; max-width: 48px; overflow: hidden; }
+.log-chip-mood { width: 9px; height: 9px; border-radius: 50%; background: var(--mc); box-shadow: 0 0 0 2px var(--surface-1); flex: none; }
+.log-chip-ev { font-size: 12px; line-height: 1; letter-spacing: -1px; white-space: nowrap; }
+.log-chip-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--text-3); flex: none; }
+.log-chip.is-future { background: transparent; border-style: dashed; }
+.log-chip.is-future .log-chip-num { color: var(--text-2); }
+.log-chip.is-month-start .log-chip-wd { color: var(--accent-text); }
+.log-chip.is-today { border-color: var(--accent); }
+.log-chip.is-today::after { content: ""; position: absolute; top: 5px; right: 6px; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+.log-chip.is-selected { background: var(--accent); border-color: transparent; color: #fff; transform: translateY(-2px); box-shadow: 0 10px 24px color-mix(in srgb, var(--accent) 38%, transparent); animation: log-pop 320ms var(--ease); }
+.log-chip.is-selected .log-chip-wd, .log-chip.is-selected .log-chip-num { color: #fff; }
+.log-chip.is-selected .log-chip-mood { box-shadow: 0 0 0 2px #fff; }
+.log-chip.is-selected .log-chip-dot { background: rgba(255, 255, 255, 0.8); }
+.log-chip.is-selected.is-today::after { background: #fff; }
+
+/* Entry layout */
+.log-entry { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.log-col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+/* Entrance + day-change motion (stops under prefers-reduced-motion) */
+.log.is-entering .log-hero, .log.is-entering .log-strip-wrap { animation: log-rise 320ms var(--ease) both; }
+.log.is-entering .log-strip-wrap { animation-delay: 40ms; }
+.log.is-entering .log-card { animation: log-rise 360ms var(--ease) both; animation-delay: calc(80ms + var(--i, 0) * 50ms); }
+.log.is-entering .log-preset { animation: log-rise 300ms var(--ease) both; animation-delay: calc(200ms + var(--i, 0) * 14ms); }
+.log-entry.is-swap[data-dir="next"] .log-card { animation: log-swap-next 260ms var(--ease) both; animation-delay: calc(var(--i, 0) * 30ms); }
+.log-entry.is-swap[data-dir="prev"] .log-card { animation: log-swap-prev 260ms var(--ease) both; animation-delay: calc(var(--i, 0) * 30ms); }
+@keyframes log-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes log-swap-next { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: none; } }
+@keyframes log-swap-prev { from { opacity: 0; transform: translateX(-16px); } to { opacity: 1; transform: none; } }
+@keyframes log-pop { 0% { transform: scale(0.9); } 55% { transform: scale(1.08); } 100% { transform: translateY(-2px) scale(1); } }
+@keyframes log-pop-flat { 0% { transform: scale(0.88); } 55% { transform: scale(1.07); } 100% { transform: scale(1); } }
+
+/* Intro (first run) */
+.log-intro { display: flex; gap: 18px; align-items: center; padding: 18px 20px; background: linear-gradient(120deg, color-mix(in srgb, var(--accent) 12%, var(--surface-1)), var(--surface-1) 60%); border-color: color-mix(in srgb, var(--accent) 30%, var(--border)); }
+.log-intro-art { flex: none; width: 64px; height: 64px; border-radius: 20px; display: grid; place-items: center; font-size: 32px; background: var(--surface-2); border: 1px solid var(--border); box-shadow: var(--shadow-1); }
+.log-intro-body h3 { font-size: 17px; margin-bottom: 4px; }
+.log-intro-body p { color: var(--text-2); font-size: 14px; max-width: 640px; }
+.log-intro-list { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 8px; }
+.log-intro-list li { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px 4px 6px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); font-size: 13px; color: var(--text-2); }
+
+/* Mood: three big tactile buttons */
+.log-moods { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.log-mood-btn {
+  --mc: var(--accent); position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 104px; padding: 12px 6px;
+  border-radius: 18px; border: 1.5px solid var(--border-strong); background: var(--surface-2); color: var(--text-2); font-weight: 650; font-size: 14px;
+  box-shadow: 0 1px 0 var(--border), 0 4px 0 color-mix(in srgb, var(--text) 6%, transparent);
+  transition: transform var(--dur) var(--ease), background var(--dur) var(--ease), border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.log-mood-btn:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--mc) 60%, var(--border-strong)); color: var(--text); }
+.log-mood-btn:active { transform: translateY(2px) scale(0.97); box-shadow: 0 0 0 var(--border); }
+.log-mood-emoji { font-size: 36px; line-height: 1; transition: transform 260ms var(--ease); filter: saturate(0.85); }
+.log-mood-btn:hover .log-mood-emoji { transform: scale(1.08) rotate(-4deg); }
+.log-mood-btn.is-on { background: color-mix(in srgb, var(--mc) 18%, var(--surface-1)); border-color: var(--mc); color: var(--text); box-shadow: 0 0 0 3px color-mix(in srgb, var(--mc) 22%, transparent), 0 10px 26px color-mix(in srgb, var(--mc) 26%, transparent); }
+.log-mood-btn.is-on .log-mood-emoji { transform: scale(1.14); filter: none; }
+.log-mood-btn.is-on::after { content: "✓"; position: absolute; top: 8px; right: 10px; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 800; background: var(--mc); color: var(--text-inverse); }
+.log-mood-btn.is-pop { animation: log-pop-flat 340ms var(--ease); }
+.log-mood-btn.is-pop .log-mood-emoji { animation: log-emoji-bounce 420ms var(--ease); }
+@keyframes log-emoji-bounce { 0% { transform: scale(0.7) rotate(-10deg); } 60% { transform: scale(1.28) rotate(6deg); } 100% { transform: scale(1.14); } }
+
+/* Events */
+.log-presets { display: grid; grid-template-columns: repeat(auto-fill, minmax(86px, 1fr)); gap: 8px; }
+.log-preset {
+  display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 4px 8px; min-width: 0; border-radius: 14px;
+  border: 1px solid var(--border); background: var(--surface-2); color: var(--text-2);
+  transition: transform var(--dur) var(--ease), background var(--dur) var(--ease), border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.log-preset:hover { transform: translateY(-2px); background: var(--surface-3); border-color: var(--border-strong); color: var(--text); box-shadow: var(--shadow-1); }
+.log-preset:hover .log-preset-ico { transform: scale(1.15) rotate(-6deg); }
+.log-preset:active { transform: scale(0.93); }
+.log-preset-ico { font-size: 26px; line-height: 1.1; transition: transform 220ms var(--ease); }
+.log-preset-label { font-size: 11.5px; font-weight: 600; line-height: 1.2; text-align: center; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 2px; }
+.log-preset.is-tap { border-color: var(--accent); background: var(--accent-soft); animation: log-pop-flat 320ms var(--ease); }
+.log-quick { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; align-items: center; }
+.log-quick-field { position: relative; flex: 1 1 240px; min-width: 0; }
+.log-quick-ico { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 26px; height: 26px; display: grid; place-items: center; font-size: 17px; pointer-events: none; transition: transform var(--dur) var(--ease); }
+.log-quick-input { padding-left: 42px; height: 42px; }
+.log-quick-type { width: auto; flex: 0 1 190px; min-width: 0; height: 42px; }
+.log-quick-days { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-2); white-space: nowrap; }
+.log-days-input { width: 64px; padding: 6px 8px; text-align: center; font-variant-numeric: tabular-nums; }
+.log-quick-add { height: 42px; }
+.log-quick-preview { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; min-height: 22px; margin-top: 8px; font-size: 13px; color: var(--text-2); }
+.log-quick-preview b { color: var(--text); font-weight: 650; overflow-wrap: anywhere; }
+.log-qp-ico { font-size: 15px; }
+.log-qp-enter { margin-left: auto; font-size: 12px; }
+.log-ev-list { list-style: none; margin: 14px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.log-ev {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; padding: 6px 6px 6px 6px; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--border);
+  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.log-ev:focus-within { border-color: var(--border-strong); background: var(--surface-3); }
+.log-ev.is-new { animation: log-ev-in 380ms var(--ease); }
+@keyframes log-ev-in { 0% { opacity: 0; transform: translateY(-6px) scale(0.96); } 60% { opacity: 1; transform: scale(1.02); } 100% { transform: none; } }
+.log-ev-ico { flex: none; width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; font-size: 20px; background: var(--surface-1); border: 1px solid var(--border); }
+.log-ev.is-new .log-ev-ico { animation: log-emoji-bounce 420ms var(--ease); }
+.log-ev-label { flex: 1 1 140px; min-width: 0; padding: 7px 8px; border: 1px solid transparent; border-radius: 9px; background: transparent; font-weight: 600; font-size: 14.5px; color: var(--text); }
+.log-ev-label:hover { border-color: var(--border); }
+.log-ev-label:focus-visible { outline: none; border-color: var(--accent); background: var(--surface-1); box-shadow: 0 0 0 3px var(--accent-soft); }
+.log-ev-time { flex: none; width: 128px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface-1); color: var(--text-2); font-variant-numeric: tabular-nums; color-scheme: inherit; }
+.log-ev-time:focus-visible { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.log-ev-remove:hover { color: var(--danger); background: var(--danger-soft); }
+.log-ev-repeat-row { flex: 1 1 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 6px 4px 50px; font-size: 13px; color: var(--text-2); }
+.log-ev-empty { margin-top: 12px; padding: 14px; border-radius: 12px; border: 1px dashed var(--border-strong); text-align: center; font-size: 13.5px; color: var(--text-3); }
+
+/* Verse: quote card */
+.log-verse { overflow: hidden; }
+.log-verse.has-verse { background: radial-gradient(420px 200px at 100% 0%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 70%), radial-gradient(360px 200px at 0% 100%, color-mix(in srgb, var(--class-4) 12%, transparent), transparent 70%), var(--surface-1); }
+.log-quote { position: relative; margin: 0; padding: 4px 4px 0 38px; perspective: 800px; }
+.log-quote.is-flip { animation: log-flip 520ms var(--ease); transform-origin: 50% 0; }
+@keyframes log-flip { 0% { opacity: 0; transform: rotateX(-24deg) translateY(8px); filter: blur(2px); } 100% { opacity: 1; transform: none; filter: none; } }
+.log-quote-mark { position: absolute; left: -4px; top: -18px; font-family: ui-serif, Georgia, "Times New Roman", serif; font-size: 72px; line-height: 1; color: var(--accent); opacity: 0.55; }
+.log-quote-text { margin: 0; font-family: ui-serif, Georgia, Cambria, "Times New Roman", serif; font-size: 18px; line-height: 1.6; color: var(--text); font-style: italic; overflow-wrap: anywhere; }
+.log-quote-ref { margin-top: 12px; display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 700; letter-spacing: 0.04em; color: var(--accent-text); }
+.log-quote-ref::before { content: ""; width: 22px; height: 2px; border-radius: 2px; background: var(--accent); }
+.log-verse-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+.log-verse-actions .btn:active, .log-verse-get:active { transform: scale(0.95); }
+.log-verse-empty { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; padding: 4px 0 2px; }
+.log-verse-empty p { color: var(--text-2); font-size: 14px; max-width: 420px; }
+.log-verse-get { box-shadow: 0 8px 24px color-mix(in srgb, var(--accent) 35%, transparent); }
+.log-verse-get:hover { transform: translateY(-1px); }
+
+/* Weight */
+.log-units { display: inline-flex; padding: 3px; gap: 2px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border); }
+.log-unit { border: 0; padding: 4px 12px; border-radius: 8px; background: transparent; color: var(--text-2); font-weight: 650; font-size: 13px; transition: background var(--dur) var(--ease), color var(--dur) var(--ease), box-shadow var(--dur) var(--ease); }
+.log-unit:hover { color: var(--text); }
+.log-unit.is-on { background: var(--surface-1); color: var(--text); box-shadow: var(--shadow-1); }
+.log-unit.is-pop { animation: log-pop-flat 280ms var(--ease); }
+.log-w-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.log-w-field { position: relative; flex: 0 1 190px; min-width: 0; }
+.log-w-input { font-size: 26px; font-weight: 740; letter-spacing: -0.02em; padding: 8px 46px 8px 14px; height: 54px; font-variant-numeric: tabular-nums; }
+.log-w-input::-webkit-outer-spin-button, .log-w-input::-webkit-inner-spin-button { opacity: 0.4; }
+.log-w-unit { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 14px; font-weight: 650; color: var(--text-3); pointer-events: none; }
+.log-wstats { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.log-delta { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 600; color: var(--text-2); }
+.log-delta.is-down span[aria-hidden], .log-delta.is-up span[aria-hidden] { font-size: 11px; color: var(--text); }
+.log-delta.is-flat { font-weight: 500; color: var(--text-3); }
+.log-spark { position: relative; height: 72px; border-radius: 10px; cursor: crosshair; touch-action: pan-y; }
+.log-spark:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+.log-spark-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.log-spark-line { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.log-spark-area { fill: var(--accent); opacity: 0.1; stroke: none; }
+.log-spark-dot { position: absolute; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 2px var(--surface-1); pointer-events: none; }
+.log-spark-dot.is-sel { width: 12px; height: 12px; margin: -6px 0 0 -6px; background: var(--surface-1); box-shadow: 0 0 0 2.5px var(--accent); }
+.log-spark-hover { width: 12px; height: 12px; margin: -6px 0 0 -6px; z-index: 2; }
+.log-spark-cross { position: absolute; top: 0; bottom: 0; width: 1px; margin-left: -0.5px; background: var(--border-strong); pointer-events: none; }
+.log-spark-tip { position: absolute; bottom: calc(100% + 6px); transform: translateX(-50%); z-index: 3; display: flex; flex-direction: column; align-items: center; padding: 6px 10px; border-radius: 10px; background: var(--surface-3); border: 1px solid var(--border-strong); box-shadow: var(--shadow-2); white-space: nowrap; pointer-events: none; font-size: 12px; color: var(--text-2); }
+.log-spark-tip b { font-size: 14px; color: var(--text); font-variant-numeric: tabular-nums; }
+.log-spark-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--text-3); }
+.log-spark-legend b { color: var(--text-2); font-weight: 650; }
+.log-spark-empty { padding: 12px; border-radius: 12px; border: 1px dashed var(--border-strong); font-size: 13px; color: var(--text-3); }
+
+/* Description */
+.log-note-input { min-height: 112px; line-height: 1.55; }
+.log-saved { font-size: 12.5px; color: var(--text-3); transition: color var(--dur) var(--ease), opacity var(--dur) var(--ease); }
+.log-saved.is-saving { color: var(--text-3); }
+.log-saved.is-saved { color: var(--ok); font-weight: 600; animation: log-fade-in 260ms var(--ease); }
+@keyframes log-fade-in { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; transform: none; } }
+
+/* History + summary */
+.log-summary { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 14px 24px; align-items: center; padding: 4px 0 14px; margin-bottom: 8px; border-bottom: 1px solid var(--border); }
+.log-stat { display: flex; flex-direction: column; min-width: 0; }
+.log-stat-n { font-size: 24px; font-weight: 740; letter-spacing: -0.02em; line-height: 1.1; }
+.log-stat-l { font-size: 12.5px; color: var(--text-3); }
+.log-stat-moods { gap: 8px; }
+.log-moodbar { display: flex; gap: 2px; height: 12px; border-radius: 999px; overflow: hidden; background: var(--surface-3); }
+.log-moodbar-seg { flex: 1 1 0; min-width: 6px; background: var(--mc); transition: flex-grow 400ms var(--ease); }
+.log-moodbar-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12.5px; color: var(--text-2); }
+.log-moodbar-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.log-moodbar-legend i { width: 8px; height: 8px; border-radius: 50%; background: var(--mc); }
+.log-moodbar-legend b { color: var(--text); font-weight: 650; font-variant-numeric: tabular-nums; }
+.log-hist-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.log-hist-row {
+  all: unset; box-sizing: border-box; width: 100%; cursor: pointer; display: grid; grid-template-columns: 82px 32px 76px minmax(0, auto) minmax(0, 1fr); align-items: center; gap: 10px;
+  padding: 8px 10px; border-radius: 12px; transition: background var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+.log-hist-row:hover { background: var(--surface-2); }
+.log-hist-row:active { transform: scale(0.99); }
+.log-hist-row:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.log-hist-row.is-selected { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
+.log-hist-date { display: flex; flex-direction: column; line-height: 1.2; }
+.log-hist-date b { font-weight: 650; font-size: 13.5px; }
+.log-hist-date span { font-size: 12px; color: var(--text-3); }
+.log-hist-mood { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-size: 17px; background: color-mix(in srgb, var(--mc) 16%, transparent); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--mc) 55%, transparent); }
+.log-hist-weight { font-size: 13px; font-weight: 600; color: var(--text-2); white-space: nowrap; }
+.log-hist-ev { font-size: 15px; white-space: nowrap; letter-spacing: 1px; }
+.log-hist-note { font-size: 13px; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.log-hist-empty { padding: 18px; text-align: center; font-size: 14px; color: var(--text-3); }
+
+@media (max-width: 900px) {
+  .log-entry { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 720px) {
+  .log-hero { padding: 18px 16px; border-radius: 18px; }
+  .log-nav { width: 100%; }
+  .log-date { margin-left: auto; }
+  .log-card { padding: 14px 14px 16px; }
+  .log-mood-btn { min-height: 92px; border-radius: 16px; }
+  .log-mood-emoji { font-size: 32px; }
+  .log-presets { grid-template-columns: repeat(auto-fill, minmax(74px, 1fr)); gap: 6px; }
+  .log-quick-type { flex: 1 1 140px; }
+  .log-summary { grid-template-columns: auto auto; }
+  .log-stat-moods { grid-column: 1 / -1; order: 3; }
+  .log-hist-row { grid-template-columns: 64px 30px minmax(0, 1fr) auto; row-gap: 2px; }
+  .log-hist-weight { grid-column: 3; }
+  .log-hist-ev { grid-column: 4; }
+  .log-hist-note { grid-column: 3 / -1; }
+  .log-hist-row .log-hist-date { grid-row: span 2; }
+  .log-hist-row .log-hist-mood { grid-row: span 2; }
+  .log-intro { flex-direction: column; align-items: flex-start; }
+  .log-ev-label { flex: 1 1 calc(100% - 96px); }
+  .log-ev-remove { order: 1; }
+  .log-ev-time { order: 2; margin-left: 44px; }
+  .log-ev-rep { order: 3; }
+  .log-ev-repeat-row { order: 4; padding-left: 44px; }
+}
+@media (max-width: 400px) {
+  .log-chip { width: 48px; }
+  .log-ev-time { width: 120px; }
+}
 /* === VIEW:LOG:CSS:END === */
 
 /* === FEATURE:CATALOG:CSS:START === */
@@ -1443,6 +1737,8 @@ body:has(#pomo-chip) .footer { padding-bottom: 84px; }
     </section>
     <section class="view" data-view="log" aria-label="Daily log">
       <!-- === VIEW:LOG:HTML:START === -->
+      <div id="log-live" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+      <div id="log-mount"></div>
       <!-- === VIEW:LOG:HTML:END === -->
     </section>
   </main>
@@ -2274,10 +2570,294 @@ const Core = (function () {
   function eventPreset(type) { return EVENT_PRESETS.find(p => p.type === type) || EVENT_PRESETS[EVENT_PRESETS.length - 1]; }
 
   /* === FEATURE:LOG:CORE:START === */
-  /* Bible verses (public-domain text) and pure log helpers. */
-  const VERSES = [];
-  /* pickVerse(rand in [0,1), exceptRef) -> { ref, text } (never exceptRef when another exists), or null if VERSES is empty. */
-  function pickVerse(rand, exceptRef) { return null; }
+  /* Bible verses (public-domain King James Version text) and pure log helpers.
+     Each entry is quoted as printed in the KJV; LORD keeps the KJV capitals. */
+  const VERSES = [
+    { ref: 'Joshua 1:9', text: 'Have not I commanded thee? Be strong and of a good courage; be not afraid, neither be thou dismayed: for the LORD thy God is with thee whithersoever thou goest.' },
+    { ref: 'Philippians 4:13', text: 'I can do all things through Christ which strengtheneth me.' },
+    { ref: 'Jeremiah 29:11', text: 'For I know the thoughts that I think toward you, saith the LORD, thoughts of peace, and not of evil, to give you an expected end.' },
+    { ref: 'Proverbs 3:5', text: 'Trust in the LORD with all thine heart; and lean not unto thine own understanding.' },
+    { ref: 'Proverbs 3:6', text: 'In all thy ways acknowledge him, and he shall direct thy paths.' },
+    { ref: 'Isaiah 40:31', text: 'But they that wait upon the LORD shall renew their strength; they shall mount up with wings as eagles; they shall run, and not be weary; and they shall walk, and not faint.' },
+    { ref: 'Isaiah 41:10', text: 'Fear thou not; for I am with thee: be not dismayed; for I am thy God: I will strengthen thee; yea, I will help thee; yea, I will uphold thee with the right hand of my righteousness.' },
+    { ref: 'Isaiah 41:13', text: 'For I the LORD thy God will hold thy right hand, saying unto thee, Fear not; I will help thee.' },
+    { ref: 'Isaiah 40:29', text: 'He giveth power to the faint; and to them that have no might he increaseth strength.' },
+    { ref: 'Isaiah 40:8', text: 'The grass withereth, the flower fadeth: but the word of our God shall stand for ever.' },
+    { ref: 'Isaiah 26:3', text: 'Thou wilt keep him in perfect peace, whose mind is stayed on thee: because he trusteth in thee.' },
+    { ref: 'Isaiah 43:2', text: 'When thou passest through the waters, I will be with thee; and through the rivers, they shall not overflow thee: when thou walkest through the fire, thou shalt not be burned; neither shall the flame kindle upon thee.' },
+    { ref: 'Isaiah 12:2', text: 'Behold, God is my salvation; I will trust, and not be afraid: for the LORD JEHOVAH is my strength and my song; he also is become my salvation.' },
+    { ref: 'Isaiah 55:8', text: 'For my thoughts are not your thoughts, neither are your ways my ways, saith the LORD.' },
+    { ref: 'Isaiah 60:1', text: 'Arise, shine; for thy light is come, and the glory of the LORD is risen upon thee.' },
+    { ref: 'Jeremiah 17:7', text: 'Blessed is the man that trusteth in the LORD, and whose hope the LORD is.' },
+    { ref: 'Jeremiah 33:3', text: 'Call unto me, and I will answer thee, and shew thee great and mighty things, which thou knowest not.' },
+    { ref: 'Lamentations 3:22', text: 'It is of the LORD’s mercies that we are not consumed, because his compassions fail not.' },
+    { ref: 'Lamentations 3:23', text: 'They are new every morning: great is thy faithfulness.' },
+    { ref: 'Micah 6:8', text: 'He hath shewed thee, O man, what is good; and what doth the LORD require of thee, but to do justly, and to love mercy, and to walk humbly with thy God?' },
+    { ref: 'Nahum 1:7', text: 'The LORD is good, a strong hold in the day of trouble; and he knoweth them that trust in him.' },
+    { ref: 'Zephaniah 3:17', text: 'The LORD thy God in the midst of thee is mighty; he will save, he will rejoice over thee with joy; he will rest in his love, he will joy over thee with singing.' },
+    { ref: 'Genesis 1:1', text: 'In the beginning God created the heaven and the earth.' },
+    { ref: 'Genesis 28:15', text: 'And, behold, I am with thee, and will keep thee in all places whither thou goest, and will bring thee again into this land; for I will not leave thee, until I have done that which I have spoken to thee of.' },
+    { ref: 'Exodus 14:14', text: 'The LORD shall fight for you, and ye shall hold your peace.' },
+    { ref: 'Exodus 15:2', text: 'The LORD is my strength and song, and he is become my salvation: he is my God, and I will prepare him an habitation; my father’s God, and I will exalt him.' },
+    { ref: 'Numbers 6:24-26', text: 'The LORD bless thee, and keep thee: The LORD make his face shine upon thee, and be gracious unto thee: The LORD lift up his countenance upon thee, and give thee peace.' },
+    { ref: 'Deuteronomy 31:6', text: 'Be strong and of a good courage, fear not, nor be afraid of them: for the LORD thy God, he it is that doth go with thee; he will not fail thee, nor forsake thee.' },
+    { ref: 'Deuteronomy 31:8', text: 'And the LORD, he it is that doth go before thee; he will be with thee, he will not fail thee, neither forsake thee: fear not, neither be dismayed.' },
+    { ref: '1 Chronicles 16:11', text: 'Seek the LORD and his strength, seek his face continually.' },
+    { ref: '1 Chronicles 16:34', text: 'O give thanks unto the LORD; for he is good; for his mercy endureth for ever.' },
+    { ref: '2 Chronicles 15:7', text: 'Be ye strong therefore, and let not your hands be weak: for your work shall be rewarded.' },
+    { ref: 'Psalm 3:3', text: 'But thou, O LORD, art a shield for me; my glory, and the lifter up of mine head.' },
+    { ref: 'Psalm 4:8', text: 'I will both lay me down in peace, and sleep: for thou, LORD, only makest me dwell in safety.' },
+    { ref: 'Psalm 5:3', text: 'My voice shalt thou hear in the morning, O LORD; in the morning will I direct my prayer unto thee, and will look up.' },
+    { ref: 'Psalm 8:1', text: 'O LORD our Lord, how excellent is thy name in all the earth! who hast set thy glory above the heavens.' },
+    { ref: 'Psalm 9:1', text: 'I will praise thee, O LORD, with my whole heart; I will shew forth all thy marvellous works.' },
+    { ref: 'Psalm 16:11', text: 'Thou wilt shew me the path of life: in thy presence is fulness of joy; at thy right hand there are pleasures for evermore.' },
+    { ref: 'Psalm 18:2', text: 'The LORD is my rock, and my fortress, and my deliverer; my God, my strength, in whom I will trust; my buckler, and the horn of my salvation, and my high tower.' },
+    { ref: 'Psalm 19:1', text: 'The heavens declare the glory of God; and the firmament sheweth his handywork.' },
+    { ref: 'Psalm 19:14', text: 'Let the words of my mouth, and the meditation of my heart, be acceptable in thy sight, O LORD, my strength, and my redeemer.' },
+    { ref: 'Psalm 23:1', text: 'The LORD is my shepherd; I shall not want.' },
+    { ref: 'Psalm 23:4', text: 'Yea, though I walk through the valley of the shadow of death, I will fear no evil: for thou art with me; thy rod and thy staff they comfort me.' },
+    { ref: 'Psalm 25:4', text: 'Shew me thy ways, O LORD; teach me thy paths.' },
+    { ref: 'Psalm 27:1', text: 'The LORD is my light and my salvation; whom shall I fear? the LORD is the strength of my life; of whom shall I be afraid?' },
+    { ref: 'Psalm 28:7', text: 'The LORD is my strength and my shield; my heart trusted in him, and I am helped: therefore my heart greatly rejoiceth; and with my song will I praise him.' },
+    { ref: 'Psalm 29:11', text: 'The LORD will give strength unto his people; the LORD will bless his people with peace.' },
+    { ref: 'Psalm 30:5', text: 'For his anger endureth but a moment; in his favour is life: weeping may endure for a night, but joy cometh in the morning.' },
+    { ref: 'Psalm 31:24', text: 'Be of good courage, and he shall strengthen your heart, all ye that hope in the LORD.' },
+    { ref: 'Psalm 32:8', text: 'I will instruct thee and teach thee in the way which thou shalt go: I will guide thee with mine eye.' },
+    { ref: 'Psalm 34:1', text: 'I will bless the LORD at all times: his praise shall continually be in my mouth.' },
+    { ref: 'Psalm 34:4', text: 'I sought the LORD, and he heard me, and delivered me from all my fears.' },
+    { ref: 'Psalm 34:8', text: 'O taste and see that the LORD is good: blessed is the man that trusteth in him.' },
+    { ref: 'Psalm 34:18', text: 'The LORD is nigh unto them that are of a broken heart; and saveth such as be of a contrite spirit.' },
+    { ref: 'Psalm 37:4', text: 'Delight thyself also in the LORD; and he shall give thee the desires of thine heart.' },
+    { ref: 'Psalm 37:5', text: 'Commit thy way unto the LORD; trust also in him; and he shall bring it to pass.' },
+    { ref: 'Psalm 39:7', text: 'And now, Lord, what wait I for? my hope is in thee.' },
+    { ref: 'Psalm 40:1', text: 'I waited patiently for the LORD; and he inclined unto me, and heard my cry.' },
+    { ref: 'Psalm 46:1', text: 'God is our refuge and strength, a very present help in trouble.' },
+    { ref: 'Psalm 46:10', text: 'Be still, and know that I am God: I will be exalted among the heathen, I will be exalted in the earth.' },
+    { ref: 'Psalm 51:10', text: 'Create in me a clean heart, O God; and renew a right spirit within me.' },
+    { ref: 'Psalm 55:22', text: 'Cast thy burden upon the LORD, and he shall sustain thee: he shall never suffer the righteous to be moved.' },
+    { ref: 'Psalm 56:3', text: 'What time I am afraid, I will trust in thee.' },
+    { ref: 'Psalm 62:1', text: 'Truly my soul waiteth upon God: from him cometh my salvation.' },
+    { ref: 'Psalm 63:3', text: 'Because thy lovingkindness is better than life, my lips shall praise thee.' },
+    { ref: 'Psalm 71:5', text: 'For thou art my hope, O Lord GOD: thou art my trust from my youth.' },
+    { ref: 'Psalm 73:26', text: 'My flesh and my heart faileth: but God is the strength of my heart, and my portion for ever.' },
+    { ref: 'Psalm 90:12', text: 'So teach us to number our days, that we may apply our hearts unto wisdom.' },
+    { ref: 'Psalm 91:1', text: 'He that dwelleth in the secret place of the most High shall abide under the shadow of the Almighty.' },
+    { ref: 'Psalm 91:2', text: 'I will say of the LORD, He is my refuge and my fortress: my God; in him will I trust.' },
+    { ref: 'Psalm 94:19', text: 'In the multitude of my thoughts within me thy comforts delight my soul.' },
+    { ref: 'Psalm 100:4', text: 'Enter into his gates with thanksgiving, and into his courts with praise: be thankful unto him, and bless his name.' },
+    { ref: 'Psalm 100:5', text: 'For the LORD is good; his mercy is everlasting; and his truth endureth to all generations.' },
+    { ref: 'Psalm 107:1', text: 'O give thanks unto the LORD, for he is good: for his mercy endureth for ever.' },
+    { ref: 'Psalm 113:3', text: 'From the rising of the sun unto the going down of the same the LORD’s name is to be praised.' },
+    { ref: 'Psalm 118:6', text: 'The LORD is on my side; I will not fear: what can man do unto me?' },
+    { ref: 'Psalm 118:14', text: 'The LORD is my strength and song, and is become my salvation.' },
+    { ref: 'Psalm 118:24', text: 'This is the day which the LORD hath made; we will rejoice and be glad in it.' },
+    { ref: 'Psalm 119:11', text: 'Thy word have I hid in mine heart, that I might not sin against thee.' },
+    { ref: 'Psalm 119:105', text: 'Thy word is a lamp unto my feet, and a light unto my path.' },
+    { ref: 'Psalm 119:114', text: 'Thou art my hiding place and my shield: I hope in thy word.' },
+    { ref: 'Psalm 121:1', text: 'I will lift up mine eyes unto the hills, from whence cometh my help.' },
+    { ref: 'Psalm 121:2', text: 'My help cometh from the LORD, which made heaven and earth.' },
+    { ref: 'Psalm 133:1', text: 'Behold, how good and how pleasant it is for brethren to dwell together in unity!' },
+    { ref: 'Psalm 139:14', text: 'I will praise thee; for I am fearfully and wonderfully made: marvellous are thy works; and that my soul knoweth right well.' },
+    { ref: 'Psalm 143:8', text: 'Cause me to hear thy lovingkindness in the morning; for in thee do I trust: cause me to know the way wherein I should walk; for I lift up my soul unto thee.' },
+    { ref: 'Psalm 145:18', text: 'The LORD is nigh unto all them that call upon him, to all that call upon him in truth.' },
+    { ref: 'Psalm 147:3', text: 'He healeth the broken in heart, and bindeth up their wounds.' },
+    { ref: 'Psalm 150:6', text: 'Let every thing that hath breath praise the LORD. Praise ye the LORD.' },
+    { ref: 'Proverbs 1:7', text: 'The fear of the LORD is the beginning of knowledge: but fools despise wisdom and instruction.' },
+    { ref: 'Proverbs 2:6', text: 'For the LORD giveth wisdom: out of his mouth cometh knowledge and understanding.' },
+    { ref: 'Proverbs 3:24', text: 'When thou liest down, thou shalt not be afraid: yea, thou shalt lie down, and thy sleep shall be sweet.' },
+    { ref: 'Proverbs 4:7', text: 'Wisdom is the principal thing; therefore get wisdom: and with all thy getting get understanding.' },
+    { ref: 'Proverbs 4:23', text: 'Keep thy heart with all diligence; for out of it are the issues of life.' },
+    { ref: 'Proverbs 9:10', text: 'The fear of the LORD is the beginning of wisdom: and the knowledge of the holy is understanding.' },
+    { ref: 'Proverbs 11:2', text: 'When pride cometh, then cometh shame: but with the lowly is wisdom.' },
+    { ref: 'Proverbs 12:25', text: 'Heaviness in the heart of man maketh it stoop: but a good word maketh it glad.' },
+    { ref: 'Proverbs 13:4', text: 'The soul of the sluggard desireth, and hath nothing: but the soul of the diligent shall be made fat.' },
+    { ref: 'Proverbs 13:20', text: 'He that walketh with wise men shall be wise: but a companion of fools shall be destroyed.' },
+    { ref: 'Proverbs 14:23', text: 'In all labour there is profit: but the talk of the lips tendeth only to penury.' },
+    { ref: 'Proverbs 15:1', text: 'A soft answer turneth away wrath: but grievous words stir up anger.' },
+    { ref: 'Proverbs 15:13', text: 'A merry heart maketh a cheerful countenance: but by sorrow of the heart the spirit is broken.' },
+    { ref: 'Proverbs 16:3', text: 'Commit thy works unto the LORD, and thy thoughts shall be established.' },
+    { ref: 'Proverbs 16:9', text: 'A man’s heart deviseth his way: but the LORD directeth his steps.' },
+    { ref: 'Proverbs 16:24', text: 'Pleasant words are as an honeycomb, sweet to the soul, and health to the bones.' },
+    { ref: 'Proverbs 17:17', text: 'A friend loveth at all times, and a brother is born for adversity.' },
+    { ref: 'Proverbs 17:22', text: 'A merry heart doeth good like a medicine: but a broken spirit drieth the bones.' },
+    { ref: 'Proverbs 18:10', text: 'The name of the LORD is a strong tower: the righteous runneth into it, and is safe.' },
+    { ref: 'Proverbs 19:21', text: 'There are many devices in a man’s heart; nevertheless the counsel of the LORD, that shall stand.' },
+    { ref: 'Proverbs 27:17', text: 'Iron sharpeneth iron; so a man sharpeneth the countenance of his friend.' },
+    { ref: 'Proverbs 31:25', text: 'Strength and honour are her clothing; and she shall rejoice in time to come.' },
+    { ref: 'Ecclesiastes 4:9', text: 'Two are better than one; because they have a good reward for their labour.' },
+    { ref: 'Ecclesiastes 9:10', text: 'Whatsoever thy hand findeth to do, do it with thy might; for there is no work, nor device, nor knowledge, nor wisdom, in the grave, whither thou goest.' },
+    { ref: 'Matthew 5:8', text: 'Blessed are the pure in heart: for they shall see God.' },
+    { ref: 'Matthew 5:9', text: 'Blessed are the peacemakers: for they shall be called the children of God.' },
+    { ref: 'Matthew 5:14', text: 'Ye are the light of the world. A city that is set on an hill cannot be hid.' },
+    { ref: 'Matthew 5:16', text: 'Let your light so shine before men, that they may see your good works, and glorify your Father which is in heaven.' },
+    { ref: 'Matthew 6:21', text: 'For where your treasure is, there will your heart be also.' },
+    { ref: 'Matthew 6:33', text: 'But seek ye first the kingdom of God, and his righteousness; and all these things shall be added unto you.' },
+    { ref: 'Matthew 6:34', text: 'Take therefore no thought for the morrow: for the morrow shall take thought for the things of itself. Sufficient unto the day is the evil thereof.' },
+    { ref: 'Matthew 11:28', text: 'Come unto me, all ye that labour and are heavy laden, and I will give you rest.' },
+    { ref: 'Matthew 11:29', text: 'Take my yoke upon you, and learn of me; for I am meek and lowly in heart: and ye shall find rest unto your souls.' },
+    { ref: 'Matthew 19:26', text: 'But Jesus beheld them, and said unto them, With men this is impossible; but with God all things are possible.' },
+    { ref: 'Matthew 22:39', text: 'And the second is like unto it, Thou shalt love thy neighbour as thyself.' },
+    { ref: 'Mark 9:23', text: 'Jesus said unto him, If thou canst believe, all things are possible to him that believeth.' },
+    { ref: 'Mark 10:27', text: 'And Jesus looking upon them saith, With men it is impossible, but not with God: for with God all things are possible.' },
+    { ref: 'Luke 1:37', text: 'For with God nothing shall be impossible.' },
+    { ref: 'Luke 6:31', text: 'And as ye would that men should do to you, do ye also to them likewise.' },
+    { ref: 'Luke 18:27', text: 'And he said, The things which are impossible with men are possible with God.' },
+    { ref: 'John 1:5', text: 'And the light shineth in darkness; and the darkness comprehended it not.' },
+    { ref: 'John 3:16', text: 'For God so loved the world, that he gave his only begotten Son, that whosoever believeth in him should not perish, but have everlasting life.' },
+    { ref: 'John 8:12', text: 'Then spake Jesus again unto them, saying, I am the light of the world: he that followeth me shall not walk in darkness, but shall have the light of life.' },
+    { ref: 'John 10:10', text: 'The thief cometh not, but for to steal, and to kill, and to destroy: I am come that they might have life, and that they might have it more abundantly.' },
+    { ref: 'John 13:34', text: 'A new commandment I give unto you, That ye love one another; as I have loved you, that ye also love one another.' },
+    { ref: 'John 14:1', text: 'Let not your heart be troubled: ye believe in God, believe also in me.' },
+    { ref: 'John 14:27', text: 'Peace I leave with you, my peace I give unto you: not as the world giveth, give I unto you. Let not your heart be troubled, neither let it be afraid.' },
+    { ref: 'John 15:5', text: 'I am the vine, ye are the branches: He that abideth in me, and I in him, the same bringeth forth much fruit: for without me ye can do nothing.' },
+    { ref: 'John 15:12', text: 'This is my commandment, That ye love one another, as I have loved you.' },
+    { ref: 'John 16:33', text: 'These things I have spoken unto you, that in me ye might have peace. In the world ye shall have tribulation: but be of good cheer; I have overcome the world.' },
+    { ref: 'Romans 8:28', text: 'And we know that all things work together for good to them that love God, to them who are the called according to his purpose.' },
+    { ref: 'Romans 8:31', text: 'What shall we then say to these things? If God be for us, who can be against us?' },
+    { ref: 'Romans 8:38-39', text: 'For I am persuaded, that neither death, nor life, nor angels, nor principalities, nor powers, nor things present, nor things to come, Nor height, nor depth, nor any other creature, shall be able to separate us from the love of God, which is in Christ Jesus our Lord.' },
+    { ref: 'Romans 10:17', text: 'So then faith cometh by hearing, and hearing by the word of God.' },
+    { ref: 'Romans 12:2', text: 'And be not conformed to this world: but be ye transformed by the renewing of your mind, that ye may prove what is that good, and acceptable, and perfect, will of God.' },
+    { ref: 'Romans 12:21', text: 'Be not overcome of evil, but overcome evil with good.' },
+    { ref: 'Romans 15:13', text: 'Now the God of hope fill you with all joy and peace in believing, that ye may abound in hope, through the power of the Holy Ghost.' },
+    { ref: '1 Corinthians 10:13', text: 'There hath no temptation taken you but such as is common to man: but God is faithful, who will not suffer you to be tempted above that ye are able; but will with the temptation also make a way to escape, that ye may be able to bear it.' },
+    { ref: '1 Corinthians 10:31', text: 'Whether therefore ye eat, or drink, or whatsoever ye do, do all to the glory of God.' },
+    { ref: '1 Corinthians 13:13', text: 'And now abideth faith, hope, charity, these three; but the greatest of these is charity.' },
+    { ref: '1 Corinthians 15:58', text: 'Therefore, my beloved brethren, be ye stedfast, unmoveable, always abounding in the work of the Lord, forasmuch as ye know that your labour is not in vain in the Lord.' },
+    { ref: '1 Corinthians 16:13', text: 'Watch ye, stand fast in the faith, quit you like men, be strong.' },
+    { ref: '1 Corinthians 16:14', text: 'Let all your things be done with charity.' },
+    { ref: '2 Corinthians 4:16', text: 'For which cause we faint not; but though our outward man perish, yet the inward man is renewed day by day.' },
+    { ref: '2 Corinthians 5:17', text: 'Therefore if any man be in Christ, he is a new creature: old things are passed away; behold, all things are become new.' },
+    { ref: '2 Corinthians 12:9', text: 'And he said unto me, My grace is sufficient for thee: for my strength is made perfect in weakness. Most gladly therefore will I rather glory in my infirmities, that the power of Christ may rest upon me.' },
+    { ref: 'Galatians 5:22-23', text: 'But the fruit of the Spirit is love, joy, peace, longsuffering, gentleness, goodness, faith, Meekness, temperance: against such there is no law.' },
+    { ref: 'Galatians 6:2', text: 'Bear ye one another’s burdens, and so fulfil the law of Christ.' },
+    { ref: 'Galatians 6:9', text: 'And let us not be weary in well doing: for in due season we shall reap, if we faint not.' },
+    { ref: 'Ephesians 2:10', text: 'For we are his workmanship, created in Christ Jesus unto good works, which God hath before ordained that we should walk in them.' },
+    { ref: 'Ephesians 4:32', text: 'And be ye kind one to another, tenderhearted, forgiving one another, even as God for Christ’s sake hath forgiven you.' },
+    { ref: 'Ephesians 6:10', text: 'Finally, my brethren, be strong in the Lord, and in the power of his might.' },
+    { ref: 'Philippians 3:13-14', text: 'Brethren, I count not myself to have apprehended: but this one thing I do, forgetting those things which are behind, and reaching forth unto those things which are before, I press toward the mark for the prize of the high calling of God in Christ Jesus.' },
+    { ref: 'Philippians 4:4', text: 'Rejoice in the Lord alway: and again I say, Rejoice.' },
+    { ref: 'Philippians 4:6', text: 'Be careful for nothing; but in every thing by prayer and supplication with thanksgiving let your requests be made known unto God.' },
+    { ref: 'Philippians 4:7', text: 'And the peace of God, which passeth all understanding, shall keep your hearts and minds through Christ Jesus.' },
+    { ref: 'Philippians 4:8', text: 'Finally, brethren, whatsoever things are true, whatsoever things are honest, whatsoever things are just, whatsoever things are pure, whatsoever things are lovely, whatsoever things are of good report; if there be any virtue, and if there be any praise, think on these things.' },
+    { ref: 'Philippians 4:19', text: 'But my God shall supply all your need according to his riches in glory by Christ Jesus.' },
+    { ref: 'Colossians 3:15', text: 'And let the peace of God rule in your hearts, to the which also ye are called in one body; and be ye thankful.' },
+    { ref: 'Colossians 3:23-24', text: 'And whatsoever ye do, do it heartily, as to the Lord, and not unto men; Knowing that of the Lord ye shall receive the reward of the inheritance: for ye serve the Lord Christ.' },
+    { ref: '1 Thessalonians 5:11', text: 'Wherefore comfort yourselves together, and edify one another, even as also ye do.' },
+    { ref: '1 Thessalonians 5:16-18', text: 'Rejoice evermore. Pray without ceasing. In every thing give thanks: for this is the will of God in Christ Jesus concerning you.' },
+    { ref: '2 Thessalonians 3:13', text: 'But ye, brethren, be not weary in well doing.' },
+    { ref: '1 Timothy 4:12', text: 'Let no man despise thy youth; but be thou an example of the believers, in word, in conversation, in charity, in spirit, in faith, in purity.' },
+    { ref: '2 Timothy 1:7', text: 'For God hath not given us the spirit of fear; but of power, and of love, and of a sound mind.' },
+    { ref: '2 Timothy 2:15', text: 'Study to shew thyself approved unto God, a workman that needeth not to be ashamed, rightly dividing the word of truth.' },
+    { ref: 'Hebrews 4:16', text: 'Let us therefore come boldly unto the throne of grace, that we may obtain mercy, and find grace to help in time of need.' },
+    { ref: 'Hebrews 11:1', text: 'Now faith is the substance of things hoped for, the evidence of things not seen.' },
+    { ref: 'Hebrews 11:6', text: 'But without faith it is impossible to please him: for he that cometh to God must believe that he is, and that he is a rewarder of them that diligently seek him.' },
+    { ref: 'Hebrews 13:8', text: 'Jesus Christ the same yesterday, and to day, and for ever.' },
+    { ref: 'James 1:2-3', text: 'My brethren, count it all joy when ye fall into divers temptations; Knowing this, that the trying of your faith worketh patience.' },
+    { ref: 'James 1:5', text: 'If any of you lack wisdom, let him ask of God, that giveth to all men liberally, and upbraideth not; and it shall be given him.' },
+    { ref: 'James 1:12', text: 'Blessed is the man that endureth temptation: for when he is tried, he shall receive the crown of life, which the Lord hath promised to them that love him.' },
+    { ref: 'James 1:17', text: 'Every good gift and every perfect gift is from above, and cometh down from the Father of lights, with whom is no variableness, neither shadow of turning.' },
+    { ref: '1 Peter 4:8', text: 'And above all things have fervent charity among yourselves: for charity shall cover the multitude of sins.' },
+    { ref: '1 Peter 5:7', text: 'Casting all your care upon him; for he careth for you.' },
+    { ref: '1 John 1:9', text: 'If we confess our sins, he is faithful and just to forgive us our sins, and to cleanse us from all unrighteousness.' },
+    { ref: '1 John 4:7', text: 'Beloved, let us love one another: for love is of God; and every one that loveth is born of God, and knoweth God.' },
+    { ref: '1 John 4:18', text: 'There is no fear in love; but perfect love casteth out fear: because fear hath torment. He that feareth is not made perfect in love.' },
+    { ref: '1 John 4:19', text: 'We love him, because he first loved us.' },
+    { ref: 'Revelation 21:4', text: 'And God shall wipe away all tears from their eyes; and there shall be no more death, neither sorrow, nor crying, neither shall there be any more pain: for the former things are passed away.' }
+  ];
+  /* pickVerse(rand in [0,1), exceptRef) -> { ref, text } (never exceptRef when another exists), or null if VERSES is empty.
+     Uniform: rand maps straight onto an index of the verses other than exceptRef. */
+  function pickVerse(rand, exceptRef) {
+    if (!VERSES.length) return null;
+    const pool = exceptRef && VERSES.length > 1 ? VERSES.filter(v => v.ref !== exceptRef) : VERSES;
+    let r = Number(rand);
+    if (!isFinite(r) || r < 0) r = 0;
+    const v = pool[Math.min(pool.length - 1, Math.floor(r * pool.length))];
+    return { ref: v.ref, text: v.text };
+  }
+
+  /* Keyword -> event preset guesses for the one-line quick event input. The
+     first rule that matches wins, so the order matters: "soccer practice" is a
+     practice, "mom's birthday" a birthday and "road trip" a trip. */
+  const EVENT_KEYWORDS = [
+    ['birthday', /\b(b-?days?|birthdays?)\b/],
+    ['noschool', /\b(no school|day off|snow day|teacher work ?day|in-?service( day)?|school (is )?closed)\b/],
+    ['sick', /\b(sick|fever|flu|covid|ill)\b/],
+    ['practice', /\b(practices?|training|workout|work out|rehearsals?|lessons?|drills?)\b/],
+    ['sports', /(\bvs\.?(?=\s|$)|\b(games?|match(es)?|versus|tournaments?|tourney|meets?|races?|scrimmages?|playoffs?|championships?|soccer|football|basketball|baseball|softball|volleyball|hockey|tennis|lacrosse|wrestling|golf|cross country|track)\b)/],
+    ['vacation', /\b(vacations?|vacay|spring break|summer break|winter break|beach|cruise|camping|resort)\b/],
+    ['trip', /\b(trips?|flights?|fly|flying|airport|travel|traveling|travelling|roadtrip|visiting)\b/],
+    ['holiday', /\b(holidays?|christmas|xmas|thanksgiving|easter|halloween|new years?|hanukkah|diwali|eid|fourth of july|july 4th|passover|kwanzaa)\b/],
+    ['test', /\b(tests?|exams?|quiz|quizzes|midterms?|finals?|sat|psat|act)\b/],
+    ['concert', /\b(concerts?|recitals?|musicals?|plays?|shows?|performances?|gigs?|band|choir|orchestra|theater|theatre)\b/],
+    ['volunteer', /\b(volunteer|volunteering|community service|food bank|fundraiser|charity)\b/],
+    ['church', /\b(church|mass|worship|youth group|bible study|sunday school|service|small group)\b/],
+    ['appointment', /\b(appointments?|appt|doctor|dr|dentist|orthodontist|checkup|check-up|therapy|haircut|physical)\b/],
+    ['work', /\b(work|shift|job|babysit|babysitting|interview)\b/],
+    ['club', /\b(clubs?|meetings?|robotics|debate|student council|fbla|deca|nhs|model un|scouts?)\b/],
+    ['family', /\b(family|mom|dad|grandma|grandpa|grandparents|cousins?|aunt|uncle|reunion)\b/],
+    ['friends', /\b(hang ?out|hanging out|friends?|sleepover|party|movies?|mall|bowling)\b/]
+  ];
+  /* guessEventType(text) -> a preset type ('sports', 'birthday', ...) or null when nothing matches. */
+  function guessEventType(text) {
+    const t = String(text || '').toLowerCase().replace(/’/g, "'");
+    for (const [type, re] of EVENT_KEYWORDS) if (re.test(t)) return type;
+    return null;
+  }
+  /* parseEventInput('Soccer game vs Central 6pm') -> { type, guessed, label, time: 'HH:MM' | '' }.
+     Times: 6pm, 6:30 pm, 6p, 18:00, noon and midnight, optionally after "at" or "@". */
+  function parseEventInput(text) {
+    let s = String(text || '').replace(/\s+/g, ' ').trim();
+    let time = '';
+    const take = (m, h, mi) => { time = pad2(h) + ':' + pad2(mi); s = (s.slice(0, m.index) + ' ' + s.slice(m.index + m[0].length)).replace(/\s+/g, ' ').trim(); };
+    let m = /(^|\s)(?:at\s+|@\s*)?(\d{1,2})(?::([0-5]\d))?\s*([ap])\.?(?:m\.?)?(?=[\s,.;!)]|$)/i.exec(s);
+    if (m && +m[2] >= 1 && +m[2] <= 12) take(m, (+m[2] % 12) + (/p/i.test(m[4]) ? 12 : 0), m[3] ? +m[3] : 0);
+    else if ((m = /(^|\s)(?:at\s+|@\s*)?([01]?\d|2[0-3]):([0-5]\d)(?=[\s,.;!)]|$)/.exec(s))) take(m, +m[2], +m[3]);
+    else if ((m = /(^|\s)(?:at\s+|@\s*)?(noon|midnight)\b/i.exec(s))) take(m, /noon/i.test(m[2]) ? 12 : 0, 0);
+    s = s.replace(/(?:\s+(?:at|@))+$/i, '').replace(/^[\s,;:@-]+|[\s,;:@-]+$/g, '').trim();
+    const g = guessEventType(s);
+    const type = g || 'other';
+    return { type, guessed: !!g, label: s.slice(0, 120) || eventPreset(type).label, time };
+  }
+
+  /* Weights are stored in the unit they were entered in (day.weightUnit). */
+  const LB_PER_KG = 2.20462262;
+  function convertWeight(value, from, to) {
+    const v = Number(value);
+    if (value == null || value === '' || !isFinite(v)) return null;
+    if (!from || !to || from === to) return v;
+    return from === 'kg' ? v * LB_PER_KG : v / LB_PER_KG;
+  }
+  /* weightSeries(days, uptoKey, limit, unit) -> the last `limit` weighed days up to
+     uptoKey (inclusive), oldest first, converted to `unit` and rounded to 0.1.
+     A day without its own unit is taken to be in `unit`. */
+  function weightSeries(days, uptoKey, limit, unit) {
+    const keys = Object.keys(days || {}).filter(k => (!uptoKey || k <= uptoKey) && days[k] && days[k].weight != null).sort();
+    return keys.slice(-(limit || 30)).map(k => ({ key: k, value: Math.round(convertWeight(days[k].weight, days[k].weightUnit || unit, unit) * 10) / 10 }));
+  }
+  /* logStreak(days, todayKey): consecutive logged days ending today, or ending
+     yesterday while today is still unlogged (the streak is still alive). */
+  function logStreak(days, todayKey) {
+    const has = k => !!(days && days[k]);
+    let d = fromDayKey(todayKey); if (!d) return 0;
+    if (!has(todayKey)) d = addDays(d, -1);
+    let n = 0;
+    while (has(dayKey(d)) && n < 100000) { n++; d = addDays(d, -1); }
+    return n;
+  }
+  /* moodCounts(days, prefix) -> { good, medium, bad, logged } over the keys starting with prefix (e.g. '2026-10-'). */
+  function moodCounts(days, prefix) {
+    const out = { good: 0, medium: 0, bad: 0, logged: 0 };
+    for (const k in days || {}) {
+      if (prefix && k.indexOf(prefix) !== 0) continue;
+      out.logged++;
+      const md = days[k] && days[k].mood;
+      if (md === 'good' || md === 'medium' || md === 'bad') out[md]++;
+    }
+    return out;
+  }
+  /* The Core export list lives outside this region, so the log helpers ride on
+     the exported eventPreset function (same pattern as parseTodoPaste.norm). */
+  eventPreset.log = { EVENT_KEYWORDS, guessEventType, parseEventInput, convertWeight, weightSeries, logStreak, moodCounts, LB_PER_KG };
   /* === FEATURE:LOG:CORE:END === */
 
   /* === FEATURE:CATALOG:CORE:START === */
@@ -2497,6 +3077,7 @@ const App = (function () {
     const w = Number(d.weight);
     return {
       weight: d.weight === '' || d.weight == null || !isFinite(w) || w <= 0 ? null : Math.round(w * 10) / 10,
+      weightUnit: (d.weightUnit === 'kg' || d.weightUnit === 'lb') && !(d.weight === '' || d.weight == null || !isFinite(w) || w <= 0) ? d.weightUnit : null,
       mood: ['good', 'medium', 'bad'].includes(d.mood) ? d.mood : null,
       note: typeof d.note === 'string' ? d.note : '',
       verse: d.verse && typeof d.verse.ref === 'string' && typeof d.verse.text === 'string' ? { ref: d.verse.ref, text: d.verse.text } : null,
@@ -3298,7 +3879,35 @@ const App = (function () {
     s += items.length ? items.length + ' assignment' + (items.length === 1 ? '' : 's') : 'no assignments';
     if (w.minutes) s += ', about ' + C.formatDuration(w.minutes) + ' of work';
     if (od) s += ', ' + od + ' overdue';
-    return s;
+    return s + monthLogAria(C.dayKey(d));
+  }
+  /* Daily-log marks: a mood dot plus up to three event symbols for days that
+     have a log entry (a faint dot when the entry is only a note, verse or weight). */
+  const MONTH_LOG_MOOD = { good: 'ok', medium: 'warn', bad: 'danger' };
+  function monthLogMarks(key, extraClass) {
+    const lg = logDay(key); if (!lg) return '';
+    const icons = lg.events.slice(0, 3).map(e => C.eventPreset(e.type).icon);
+    const mood = lg.mood ? html`<i class="mlog-mood" style="--mc: var(--${MONTH_LOG_MOOD[lg.mood]})"></i>` : '';
+    return html`<span class="mlog ${extraClass || ''}" aria-hidden="true">${mood || (icons.length ? '' : html`<i class="mlog-mood is-plain"></i>`)}${icons.length ? html`<span class="mlog-ev">${icons.map(i => html`<i>${i}</i>`)}</span>` : ''}</span>`;
+  }
+  function monthLogAria(key) {
+    const lg = logDay(key); if (!lg) return '';
+    const bits = [];
+    if (lg.mood) bits.push((C.MOODS.find(m => m.key === lg.mood) || {}).label || lg.mood);
+    for (const e of lg.events.slice(0, 3)) bits.push(e.label || C.eventPreset(e.type).label);
+    if (lg.events.length > 3) bits.push((lg.events.length - 3) + ' more events');
+    return '. Daily log' + (bits.length ? ': ' + bits.join(', ') : ' entry');
+  }
+  function monthLogPanelHtml(key) {
+    const lg = logDay(key);
+    const mood = lg && lg.mood ? C.MOODS.find(m => m.key === lg.mood) : null;
+    return html`<div class="mday-log">
+      <div class="mday-log-head"><span class="mday-log-title">📓 Daily log</span>${mood ? html`<span class="mday-log-mood" style="--mc: var(--${MONTH_LOG_MOOD[mood.key]})">${mood.icon} ${mood.label}</span>` : ''}</div>
+      ${lg && lg.events.length ? html`<ul class="mday-log-events">${lg.events.map(e => html`<li><span aria-hidden="true">${C.eventPreset(e.type).icon}</span><span class="mday-log-label">${e.label || C.eventPreset(e.type).label}</span>${e.time ? html`<span class="mday-log-time num">${C.formatTime(new Date(2000, 0, 1, +e.time.slice(0, 2), +e.time.slice(3)))}</span>` : ''}</li>`)}</ul>` : ''}
+      ${lg && lg.verse ? html`<p class="mday-log-verse">📖 ${lg.verse.ref}</p>` : ''}
+      ${!lg ? html`<p class="mday-log-empty">Nothing logged for this day yet.</p>` : ''}
+      <button class="btn btn-sm mday-log-open" type="button" data-action="month-open-log" data-day="${key}"><span aria-hidden="true">📓</span> Open daily log</button>
+    </div>`;
   }
   function dayHeatTitle(d, w, n) {
     return longDayName(d, n) + ' · ' + (w.minutes ? w.minutes + ' min (' + C.formatDuration(w.minutes) + ') of estimated work' : 'no open work');
@@ -3361,6 +3970,7 @@ const App = (function () {
       return html`<div class="mcell ${out ? 'is-out' : ''} ${isToday ? 'is-today' : ''} ${past ? 'is-past' : ''}" data-action="month-day" data-day="${k}" data-min="${w.minutes}" style="--heat-a:${heatAlpha(w.minutes).toFixed(3)}" title="${dayHeatTitle(d, w, n)}">
         <button class="mcell-day" type="button" data-action="month-day" data-day="${k}" tabindex="${k === focusKey ? '0' : '-1'}" aria-label="${dayAriaLabel(d, items, w, n)}" ${isToday ? raw('aria-current="date"') : ''}>
           <span class="mcell-num num">${d.getDate() === 1 ? C.MONTHS[d.getMonth()] + ' 1' : d.getDate()}</span>
+          ${monthLogMarks(k)}
           ${w.minutes ? html`<span class="mcell-load num" aria-hidden="true">${C.formatDuration(w.minutes)}</span>` : ''}
         </button>
         <div class="mcell-items">${shown.map(a => pill(a, { showTime: true }))}</div>
@@ -3393,6 +4003,7 @@ const App = (function () {
           <button class="magenda-date" type="button" data-action="month-day" data-day="${k}" aria-label="${dayAriaLabel(d, items, w, n)}">
             <span class="magenda-dnum num">${d.getDate()}</span>
             <span class="magenda-wd"><b>${isToday ? 'Today' : C.WEEKDAYS_LONG[d.getDay()]}</b><span>${isToday ? C.WEEKDAYS[d.getDay()] + ', ' : ''}${C.MONTHS[d.getMonth()]} ${d.getDate()}</span></span>
+            ${monthLogMarks(k, 'mlog-agenda')}
           </button>
           ${w.minutes ? html`<span class="magenda-load num" aria-hidden="true">~${C.formatDuration(w.minutes)}</span>` : ''}
           <button class="btn btn-icon btn-sm btn-ghost" type="button" data-action="month-add" data-day="${k}" aria-label="Add an assignment due ${longDayName(d, n)}" title="Add for this day"><svg><use href="#i-plus"/></svg></button>
@@ -3488,7 +4099,8 @@ const App = (function () {
         ${w.defaulted && def ? html`<p class="tiny faint">Includes ${C.formatDuration(def)} each for ${w.defaulted} item${w.defaulted === 1 ? '' : 's'} without an estimate.</p>` : ''}
       </div>
       <div class="mday-items stack-items">${items.length ? items.map(a => itemRow(a)) : html`<div class="empty"><div class="big">Nothing due</div>A free day. Plan something ahead, or enjoy it.</div>`}</div>
-      <button class="btn btn-primary mday-add" type="button" data-action="month-add" data-day="${key}"><svg><use href="#i-plus"/></svg> Add for this day</button>`;
+      <button class="btn btn-primary mday-add" type="button" data-action="month-add" data-day="${key}"><svg><use href="#i-plus"/></svg> Add for this day</button>
+      ${monthLogPanelHtml(key)}`;
   }
   function openDayPanel(key) {
     const d = C.fromDayKey(key); if (!d) return;
@@ -3540,6 +4152,7 @@ const App = (function () {
   registerAction('month-day', (id, el) => { if (el && el.dataset.day) openDayPanel(el.dataset.day); });
   registerAction('month-add', (id, el) => { if (el && el.dataset.day) addForDay(el.dataset.day); });
   registerAction('month-overdue', () => openOverduePanel());
+  registerAction('month-open-log', (id, el) => { if (!el || !el.dataset.day) return; monthReturnFocus = null; closePanel(); openLogDay(el.dataset.day); });
   on('render', refreshMonthPanel);
 
   function onMonthKeydown(e) {
@@ -5371,7 +5984,8 @@ const App = (function () {
       .sort((a, b) => b.c - a.c || a.i - b.i).slice(0, 6).map(x => x.p);
   }
   function ovWeights() {
-    return Object.keys(state.log.days).sort().filter(k => state.log.days[k].weight != null).slice(-30).map(k => ({ key: k, w: state.log.days[k].weight }));
+    const unit = state.settings.weightUnit === 'kg' ? 'kg' : 'lb';
+    return C.eventPreset.log.weightSeries(state.log.days, null, 30, unit).map(p => ({ key: p.key, w: p.value }));
   }
   function ovHead(id, icon, title, extra) {
     return html`<div class="ov-head"><h3 id="${id}"><span class="ov-ico" aria-hidden="true">${icon}</span>${title}</h3>${extra || ''}</div>`;
@@ -5476,7 +6090,7 @@ const App = (function () {
       summary = html`<div class="ov-summary" aria-label="Today so far">
         ${mood || d.weight != null || d.events.length ? html`<div class="ov-summary-row">
           ${mood ? html`<span class="strong"><span aria-hidden="true">${mood.icon}</span> ${mood.label}</span>` : ''}
-          ${d.weight != null ? html`<span class="muted">⚖️ <b class="num">${d.weight}</b> ${unit}</span>` : ''}
+          ${d.weight != null ? html`<span class="muted">⚖️ <b class="num">${Math.round(C.eventPreset.log.convertWeight(d.weight, d.weightUnit || unit, unit) * 10) / 10}</b> ${unit}</span>` : ''}
           ${d.events.length ? html`<span class="ov-syms">${syms}</span>` : ''}
         </div>` : ''}
         ${d.verse ? html`<div class="ov-snip">📖 <b>${d.verse.ref}</b> ${ovClip(d.verse.text, 110)}</div>` : ''}
@@ -5709,9 +6323,758 @@ const App = (function () {
   /* === VIEW:OVERVIEW:JS:END === */
 
   /* === VIEW:LOG:JS:START === */
-  function renderLog(root) { root.innerHTML = comingSoon('Daily log'); }
+  /* ---------- Daily log ----------
+     One entry per day: mood, weight, a KJV verse, a note and events. The day
+     shown is state.ui.logCursor ('YYYY-MM-DD'). Keyboard (log view only, never
+     while typing): Left/Right go to the previous/next day; arrows inside the
+     mood group move the selection; arrows on the weight trend move the readout. */
+  const LH = C.eventPreset.log;
+  const LOG_MOOD_VAR = { good: 'ok', medium: 'warn', bad: 'danger' };
+  const LOG_MOOD_SHORT = { good: 'Good', medium: 'Medium', bad: 'Bad' };
+  const LOG_MULTI_DAY = ['vacation', 'trip'];
+  const LOG_STRIP_BACK = 21, LOG_STRIP_AHEAD = 7, LOG_HISTORY = 14, LOG_SPARK_N = 30;
+  const logUi = {
+    lastKey: null, wasActive: false, dir: 0,
+    pop: null, tapped: null, known: null,
+    quick: '', quickType: '', quickDays: 1,
+    repeatOpen: null, repeatDays: 3,
+    note: null, noteTimer: null, noteState: '',
+    weight: null, weightTimer: null,
+    spark: null, pointerDown: false, refreshQueued: false
+  };
+  const logRound1 = v => Math.round(v * 10) / 10;
+  const logUnit = () => (state.settings.weightUnit === 'kg' ? 'kg' : 'lb');
+  const logToday = () => C.dayKey(now());
+  const logMoodColor = m => 'var(--' + LOG_MOOD_VAR[m] + ')';
+  function logMood(m) { return C.MOODS.find(x => x.key === m) || null; }
+  function logDayWeight(d, unit) {
+    if (!d || d.weight == null) return null;
+    return logRound1(LH.convertWeight(d.weight, d.weightUnit || unit, unit));
+  }
+  function logFmtWeight(v) { return v == null ? '' : (Math.round(v * 10) / 10).toFixed(1).replace(/\.0$/, ''); }
+  function logShortDate(k) { const d = C.fromDayKey(k); return C.MONTHS[d.getMonth()] + ' ' + d.getDate(); }
+  function logLongDate(k, withYear) {
+    const d = C.fromDayKey(k), n = now();
+    return C.WEEKDAYS_LONG[d.getDay()] + ', ' + C.MONTHS[d.getMonth()] + ' ' + d.getDate() + (withYear || d.getFullYear() !== n.getFullYear() ? ', ' + d.getFullYear() : '');
+  }
+  function logRel(k) {
+    const diff = C.daysBetween(C.startOfDay(now()), C.fromDayKey(k));
+    return diff === 0 ? 'Today' : diff === -1 ? 'Yesterday' : diff === 1 ? 'Tomorrow' : '';
+  }
+  function logAgo(k) {
+    const diff = C.daysBetween(C.startOfDay(now()), C.fromDayKey(k));
+    return diff < -1 ? -diff + ' days ago' : diff > 1 ? 'in ' + diff + ' days' : '';
+  }
+
+  /* The cursor is remembered across reloads, but a day picked on an earlier date
+     falls back to today so the log always opens on the current day. */
+  function logCursor() {
+    const t = logToday();
+    const k = state.ui.logCursor;
+    const set = state.ui.logCursorSet;
+    if (!k || !C.fromDayKey(k)) return t;
+    if (set && set.key === k && set.on && set.on !== t) { state.ui.logCursor = t; state.ui.logCursorSet = { key: t, on: t }; return t; }
+    return k;
+  }
+  function logStoreCursor(key) { state.ui.logCursor = key; state.ui.logCursorSet = { key, on: logToday() }; }
+  function setLogCursor(key) {
+    if (!key || !C.fromDayKey(key)) return;
+    logFlushAll();
+    const cur = logCursor();
+    logUi.dir = key > cur ? 1 : key < cur ? -1 : 0;
+    logUi.repeatOpen = null;
+    logStoreCursor(key);
+    save(); render();
+    logAnnounce(key);
+  }
+  function logShift(delta, from) { setLogCursor(C.dayKey(C.addDays(C.fromDayKey(from || logCursor()), delta))); }
   /* openLogDay(key) opens the log entry for a day (used by the overview's Daily log button and the month view). */
-  function openLogDay(key) { state.ui.logCursor = key || C.dayKey(now()); setView('log'); }
+  function openLogDay(key) {
+    logFlushAll();
+    key = key && C.fromDayKey(key) ? key : logToday();
+    const cur = state.ui.view === 'log' ? logCursor() : null;
+    logUi.dir = cur && key !== cur ? (key > cur ? 1 : -1) : 0;
+    logStoreCursor(key);
+    setView('log');
+    logAnnounce(key);
+  }
+  function logAnnounce(key) {
+    const live = document.getElementById('log-live'); if (!live) return;
+    const d = logDay(key);
+    const rel = logRel(key);
+    let s = (rel ? rel + ', ' : '') + logLongDate(key) + '. ';
+    if (!d) s += 'Nothing logged yet.';
+    else {
+      const bits = [];
+      if (d.mood) bits.push(logMood(d.mood).label);
+      if (d.events.length) bits.push(d.events.length + ' event' + (d.events.length === 1 ? '' : 's'));
+      if (d.weight != null) bits.push('weight logged');
+      if (d.verse) bits.push('verse ' + d.verse.ref);
+      if (d.note.trim()) bits.push('a note');
+      s += bits.join(', ') + '.';
+    }
+    live.textContent = '';
+    setTimeout(() => { live.textContent = s; }, 30);
+  }
+  function logNewEventId() { return 'e_' + now().getTime().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+  /* ---------- pieces ---------- */
+  function logHeroHtml(key) {
+    const rel = logRel(key), ago = logAgo(key);
+    const isToday = key === logToday();
+    return html`<header class="log-hero">
+      <div class="log-hero-main">
+        <div class="log-eyebrow"><span aria-hidden="true">📓</span> Daily log</div>
+        <h2 class="log-title" id="log-title">${rel ? html`<span class="log-title-rel">${rel}</span><span class="log-title-sep" aria-hidden="true"> · </span>` : ''}<span class="log-title-date">${logLongDate(key)}</span></h2>
+        <div class="log-sub" id="log-sub">${logSubHtml(key, ago)}</div>
+      </div>
+      <div class="log-nav" role="group" aria-label="Choose a day">
+        <button class="btn btn-icon log-nav-btn" type="button" data-action="log-prev" data-fk="prev" aria-label="Previous day" title="Previous day (←)"><svg><use href="#i-chev-l"/></svg></button>
+        <button class="btn log-nav-today ${isToday ? 'is-current' : ''}" type="button" data-action="log-today" data-fk="today" title="Jump to today">Today</button>
+        <button class="btn btn-icon log-nav-btn" type="button" data-action="log-next" data-fk="next" aria-label="Next day" title="Next day (→)"><svg><use href="#i-chev-r"/></svg></button>
+        <label class="log-date"><span class="sr-only">Jump to a date</span><input class="input log-date-input" type="date" id="log-date" data-fk="date" value="${key}" min="1970-01-01" max="2100-12-31"></label>
+      </div>
+    </header>`;
+  }
+  function logSubHtml(key, ago) {
+    const d = logDay(key);
+    const streak = LH.logStreak(state.log.days, logToday());
+    const parts = [];
+    if (ago) parts.push(html`<span>${ago}</span>`);
+    if (!d) parts.push(html`<span>${key > logToday() ? 'Plan ahead: add the events you know are coming.' : 'Nothing logged yet. Start with how the day felt.'}</span>`);
+    else {
+      const bits = [];
+      if (d.mood) bits.push(logMood(d.mood).icon + ' ' + logMood(d.mood).label);
+      if (d.events.length) bits.push(d.events.length + ' event' + (d.events.length === 1 ? '' : 's'));
+      if (d.verse) bits.push('📖 ' + d.verse.ref);
+      parts.push(html`<span class="log-sub-logged"><span class="log-sub-check" aria-hidden="true">✓</span> Logged${bits.length ? ' · ' + bits.join(' · ') : ''}</span>`);
+    }
+    if (streak > 1) parts.push(html`<span class="log-sub-streak">🔥 ${streak}-day logging streak</span>`);
+    return html`${parts}`;
+  }
+  function logStripHtml(key) {
+    const t = logToday();
+    const base = C.fromDayKey(t);
+    const chips = [];
+    for (let i = -LOG_STRIP_BACK; i <= LOG_STRIP_AHEAD; i++) {
+      const dt = C.addDays(base, i);
+      const k = C.dayKey(dt);
+      const d = logDay(k);
+      const sel = k === key;
+      const icons = d ? d.events.slice(0, 2).map(e => C.eventPreset(e.type).icon) : [];
+      const extra = !!(d && (d.note.trim() || d.verse));
+      const label = (k === t ? 'Today, ' : '') + logLongDate(k) + (d ? ': ' + [d.mood ? logMood(d.mood).label : '', d.events.length ? d.events.length + ' event' + (d.events.length === 1 ? '' : 's') : '', extra ? 'note or verse' : ''].filter(Boolean).join(', ') : ': not logged');
+      chips.push(html`<button class="log-chip ${sel ? 'is-selected' : ''} ${k === t ? 'is-today' : ''} ${k > t ? 'is-future' : ''} ${d ? 'is-logged' : ''} ${dt.getDate() === 1 ? 'is-month-start' : ''}" type="button" data-action="log-go" data-day="${k}" data-fk="chip:${k}" aria-pressed="${sel ? 'true' : 'false'}" aria-label="${label}" title="${logLongDate(k)}">
+        <span class="log-chip-wd">${dt.getDate() === 1 ? C.MONTHS[dt.getMonth()] : C.WEEKDAYS[dt.getDay()].charAt(0)}</span>
+        <span class="log-chip-num">${dt.getDate()}</span>
+        <span class="log-chip-marks" aria-hidden="true">${d && d.mood ? html`<i class="log-chip-mood" style="--mc:${raw(logMoodColor(d.mood))}"></i>` : ''}${icons.length ? html`<span class="log-chip-ev">${icons.join('')}</span>` : ''}${extra ? html`<i class="log-chip-dot"></i>` : ''}</span>
+      </button>`);
+    }
+    return html`<div class="log-strip-wrap" id="log-strip-wrap"><div class="log-strip" role="group" aria-label="Pick a day: the last three weeks and the week ahead">${chips}</div></div>`;
+  }
+  function logIntroHtml() {
+    return html`<section class="card log-intro log-card" style="--i:0" aria-label="About the daily log">
+      <div class="log-intro-art" aria-hidden="true"><span>📓</span></div>
+      <div class="log-intro-body">
+        <h3>Your daily log</h3>
+        <p>A tiny check-in for each day. Every part is optional, takes a few seconds, and stays in this browser. Use ← and → to flip through days.</p>
+        <ul class="log-intro-list">
+          <li><span aria-hidden="true">😊</span>How the day felt</li>
+          <li><span aria-hidden="true">🏆</span>Games, birthdays, trips</li>
+          <li><span aria-hidden="true">📖</span>A verse to carry with you</li>
+          <li><span aria-hidden="true">⚖️</span>Weight, if you track it</li>
+        </ul>
+      </div>
+    </section>`;
+  }
+  function logMoodHtml(key, d) {
+    const cur = d ? d.mood : null;
+    return html`<section class="card log-card log-mood" style="--i:1" aria-labelledby="log-mood-h">
+      <div class="log-card-head"><h3 id="log-mood-h">How was your day?</h3><span class="log-hint">${cur ? 'Tap again to clear' : 'Pick one'}</span></div>
+      <div class="log-moods" role="radiogroup" aria-labelledby="log-mood-h">${C.MOODS.map((m, i) => {
+        const on = cur === m.key;
+        const stop = cur ? on : i === 0;
+        return html`<button class="log-mood-btn ${on ? 'is-on' : ''} ${on && logUi.pop === 'mood' ? 'is-pop' : ''}" type="button" role="radio" aria-checked="${on ? 'true' : 'false'}" tabindex="${stop ? '0' : '-1'}" data-action="log-mood" data-mood="${m.key}" data-fk="mood:${m.key}" style="--mc:${raw(logMoodColor(m.key))}" title="${on ? 'Selected. Tap again to clear' : m.label}">
+          <span class="log-mood-emoji" aria-hidden="true">${m.icon}</span><span class="log-mood-label">${LOG_MOOD_SHORT[m.key]}</span>
+        </button>`;
+      })}</div>
+    </section>`;
+  }
+  function logEventRowHtml(e, i, fresh) {
+    const p = C.eventPreset(e.type);
+    const multi = LOG_MULTI_DAY.includes(e.type);
+    const open = logUi.repeatOpen === e.id;
+    const name = e.label || p.label;
+    return html`<li class="log-ev ${fresh ? 'is-new' : ''}" data-ev="${e.id}" style="--i:${i}">
+      <span class="log-ev-ico" title="${p.label}" aria-hidden="true">${p.icon}</span>
+      <label class="sr-only" for="log-ev-l-${e.id}">${p.label}: name</label>
+      <input class="log-ev-label" id="log-ev-l-${e.id}" data-fk="ev-label:${e.id}" data-ev="${e.id}" value="${e.label}" placeholder="${p.label}" maxlength="120" autocomplete="off">
+      <label class="sr-only" for="log-ev-t-${e.id}">Time for ${name} (optional)</label>
+      <input class="log-ev-time" type="time" id="log-ev-t-${e.id}" data-fk="ev-time:${e.id}" data-ev="${e.id}" value="${e.time}">
+      ${multi ? html`<button class="btn btn-sm btn-ghost log-ev-rep" type="button" data-action="log-ev-repeat" data-ev="${e.id}" data-fk="ev-repeat:${e.id}" aria-expanded="${open ? 'true' : 'false'}" title="Repeat for several days">↻<span class="log-ev-rep-l"> Repeat</span></button>` : ''}
+      <button class="btn btn-icon btn-sm btn-ghost log-ev-remove" type="button" data-action="log-ev-remove" data-ev="${e.id}" data-fk="ev-remove:${e.id}" aria-label="Remove ${name}" title="Remove"><svg><use href="#i-x"/></svg></button>
+      ${open ? html`<div class="log-ev-repeat-row"><label for="log-ev-r-${e.id}">Repeat for</label><input class="input log-days-input" type="number" min="2" max="30" id="log-ev-r-${e.id}" data-fk="ev-rdays:${e.id}" data-ev="${e.id}" value="${logUi.repeatDays}"><span>days in a row</span><button class="btn btn-sm btn-primary" type="button" data-action="log-ev-repeat-go" data-ev="${e.id}" data-fk="ev-repeat-go:${e.id}">Add days</button></div>` : ''}
+    </li>`;
+  }
+  function logQuickState() {
+    const p = LH.parseEventInput(logUi.quick);
+    const type = logUi.quickType || p.type;
+    const multi = LOG_MULTI_DAY.includes(type);
+    return { p, type, preset: C.eventPreset(type), multi, days: multi ? Math.max(1, Math.min(30, Math.round(Number(logUi.quickDays) || 1))) : 1 };
+  }
+  function logQuickPreviewHtml(q) {
+    if (!logUi.quick.trim()) return html`<span class="faint">Tip: type something like <b>Basketball game 7pm</b> and press Enter. The symbol is guessed for you.</span>`;
+    const t = q.p.time ? C.formatTime(new Date(2000, 0, 1, +q.p.time.slice(0, 2), +q.p.time.slice(3))) : '';
+    return html`<span class="log-qp-ico" aria-hidden="true">${q.preset.icon}</span><span><b>${q.p.label}</b> · ${q.preset.label}${logUi.quickType ? '' : q.p.guessed ? ' (guessed)' : ' (no match, pick a type)'}${t ? ' · ' + t : ''}${q.days > 1 ? ' · ' + q.days + ' days' : ''}</span><span class="log-qp-enter faint">Enter ↵</span>`;
+  }
+  function logEventsHtml(key, d) {
+    const events = d ? d.events : [];
+    const known = logUi.known && logUi.known.key === key ? logUi.known.ids : null;
+    const q = logQuickState();
+    const rel = logRel(key);
+    return html`<section class="card log-card log-events" style="--i:2" aria-labelledby="log-ev-h">
+      <div class="log-card-head"><h3 id="log-ev-h">Events</h3><span class="log-hint">One tap adds it to ${rel ? rel.toLowerCase() : logShortDate(key)}</span></div>
+      <div class="log-presets" role="group" aria-label="Add an event">${C.EVENT_PRESETS.map((p, i) => html`<button class="log-preset ${logUi.tapped === p.type ? 'is-tap' : ''}" type="button" data-action="log-preset" data-type="${p.type}" data-fk="preset:${p.type}" aria-label="Add ${p.label}" title="Add ${p.label}" style="--i:${i}"><span class="log-preset-ico" aria-hidden="true">${p.icon}</span><span class="log-preset-label">${p.label}</span></button>`)}</div>
+      <form class="log-quick" id="log-quick" autocomplete="off">
+        <div class="log-quick-field">
+          <span class="log-quick-ico" id="log-quick-ico" aria-hidden="true">${logUi.quick.trim() || logUi.quickType ? q.preset.icon : '✨'}</span>
+          <label class="sr-only" for="log-quick-input">Add an event by typing it</label>
+          <input class="input log-quick-input" id="log-quick-input" data-fk="quick" value="${logUi.quick}" placeholder="Or type it: Soccer game vs Central 6pm" aria-describedby="log-quick-preview" maxlength="160">
+        </div>
+        <label class="sr-only" for="log-quick-type">Event symbol</label>
+        <select class="select log-quick-type" id="log-quick-type" data-fk="quick-type" title="Change the symbol">
+          <option value="" ${logUi.quickType ? '' : 'selected'}>Auto · ${q.p.guessed ? C.eventPreset(q.p.type).icon + ' ' + C.eventPreset(q.p.type).label : 'guess for me'}</option>
+          ${C.EVENT_PRESETS.map(p => html`<option value="${p.type}" ${logUi.quickType === p.type ? 'selected' : ''}>${p.icon} ${p.label}</option>`)}
+        </select>
+        <span class="log-quick-days" id="log-quick-days-wrap" ${q.multi ? '' : raw('hidden')}><label for="log-quick-days">Repeat for</label><input class="input log-days-input" type="number" min="1" max="30" id="log-quick-days" data-fk="quick-days" value="${q.days}"><span>day${q.days === 1 ? '' : 's'}</span></span>
+        <button class="btn btn-primary log-quick-add" type="submit" data-fk="quick-add"><svg><use href="#i-plus"/></svg> Add</button>
+      </form>
+      <div class="log-quick-preview" id="log-quick-preview" aria-live="polite">${logQuickPreviewHtml(q)}</div>
+      ${events.length
+        ? html`<ul class="log-ev-list" aria-label="Events on ${logLongDate(key)}">${events.map((e, i) => logEventRowHtml(e, i, !!known && !known.has(e.id)))}</ul>`
+        : html`<div class="log-ev-empty">No events ${rel === 'Today' ? 'today' : 'on this day'} yet. Tap a symbol above.</div>`}
+    </section>`;
+  }
+  function logVerseHtml(key, d) {
+    const v = d && d.verse;
+    return html`<section class="card log-card log-verse ${v ? 'has-verse' : ''}" style="--i:3" aria-labelledby="log-verse-h">
+      <div class="log-card-head"><h3 id="log-verse-h">Verse of the day</h3>${v ? html`<span class="log-hint">King James Version</span>` : ''}</div>
+      ${v ? html`<figure class="log-quote ${logUi.pop === 'verse' ? 'is-flip' : ''}" data-ref="${v.ref}">
+          <span class="log-quote-mark" aria-hidden="true">“</span>
+          <blockquote class="log-quote-text">${v.text}</blockquote>
+          <figcaption class="log-quote-ref">${v.ref}</figcaption>
+        </figure>
+        <div class="log-verse-actions">
+          <button class="btn btn-sm log-verse-new" type="button" data-action="log-verse" data-fk="verse-new"><span aria-hidden="true">↻</span> New verse</button>
+          <button class="btn btn-sm btn-ghost log-verse-remove" type="button" data-action="log-verse-remove" data-fk="verse-remove" aria-label="Remove the verse from this day">Remove</button>
+        </div>`
+      : html`<div class="log-verse-empty">
+          <p>Draw a random Bible verse to carry with you ${key === logToday() ? 'today' : 'on this day'}. It stays with the day.</p>
+          <button class="btn btn-lg btn-primary log-verse-get" type="button" data-action="log-verse" data-fk="verse-get"><span aria-hidden="true">✨</span> Get a verse</button>
+        </div>`}
+    </section>`;
+  }
+  function logWeightStatsHtml(key) {
+    const unit = logUnit();
+    const d = logDay(key);
+    const cur = logDayWeight(d, unit);
+    const prevKey = C.dayKey(C.addDays(C.fromDayKey(key), -1));
+    const prevSeries = LH.weightSeries(state.log.days, prevKey, 1, unit);
+    const prev = prevSeries.length ? prevSeries[prevSeries.length - 1] : null;
+    let delta;
+    if (cur != null && prev) {
+      const diff = logRound1(cur - prev.value);
+      delta = diff === 0
+        ? html`<span class="log-delta is-flat"><span aria-hidden="true">＝</span> Same as ${logShortDate(prev.key)}</span>`
+        : html`<span class="log-delta ${diff < 0 ? 'is-down' : 'is-up'}"><span aria-hidden="true">${diff < 0 ? '▼' : '▲'}</span><span class="sr-only">${diff < 0 ? 'Down' : 'Up'}</span> ${logFmtWeight(Math.abs(diff))} ${unit} since ${logShortDate(prev.key)}</span>`;
+    } else if (cur != null) delta = html`<span class="log-delta is-flat">First weigh-in logged. Nice start.</span>`;
+    else if (prev) delta = html`<span class="log-delta is-flat">Last: ${logFmtWeight(prev.value)} ${unit} on ${logShortDate(prev.key)}</span>`;
+    else delta = html`<span class="log-delta is-flat">Optional. Track it if you like.</span>`;
+    const series = LH.weightSeries(state.log.days, key, LOG_SPARK_N, unit);
+    logUi.spark = { series, unit };
+    return html`<div class="log-wstats" id="log-wstats">${delta}${logSparkHtml(series, key, unit)}</div>`;
+  }
+  /* Hand-written sparkline: 2px line, 10% area wash, end/selected dots with a
+     surface ring, a crosshair that snaps to the nearest weigh-in, and the same
+     readout on keyboard focus (arrow keys step through the points). */
+  function logSparkHtml(series, key, unit) {
+    if (series.length < 2) return html`<p class="log-spark-empty">${series.length ? 'Log your weight on another day to see a trend line.' : 'Your 30-entry trend appears here after a couple of weigh-ins.'}</p>`;
+    const W = 300, H = 64, PY = 8;
+    const vals = series.map(p => p.value);
+    let lo = Math.min(...vals), hi = Math.max(...vals);
+    if (hi - lo < 1) { const mid = (hi + lo) / 2; lo = mid - 0.5; hi = mid + 0.5; }
+    const xp = i => (series.length === 1 ? 50 : 2 + i * 96 / (series.length - 1));
+    const yp = v => (PY + (hi - v) * (H - 2 * PY) / (hi - lo)) / H * 100;
+    const pts = series.map((p, i) => [xp(i) / 100 * W, yp(p.value) / 100 * H]);
+    const line = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
+    const area = line + ' L' + pts[pts.length - 1][0].toFixed(1) + ' ' + H + ' L' + pts[0][0].toFixed(1) + ' ' + H + ' Z';
+    const selIdx = series.findIndex(p => p.key === key);
+    const lowP = series[vals.indexOf(Math.min(...vals))], highP = series[vals.indexOf(Math.max(...vals))];
+    const first = series[0], last = series[series.length - 1];
+    const aria = 'Weight trend, ' + series.length + ' weigh-ins from ' + logShortDate(first.key) + ' to ' + logShortDate(last.key) + ': ' + logFmtWeight(first.value) + ' to ' + logFmtWeight(last.value) + ' ' + unit + ', low ' + logFmtWeight(lowP.value) + ', high ' + logFmtWeight(highP.value) + '. Use the arrow keys to read each value.';
+    return html`<div class="log-spark" data-fk="spark" tabindex="0" role="img" aria-label="${aria}">
+        <svg class="log-spark-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+          <path class="log-spark-area" d="${area}"/>
+          <path class="log-spark-line" d="${line}"/>
+        </svg>
+        <span class="log-spark-cross" hidden></span>
+        ${series.map((p, i) => (i === series.length - 1 || i === selIdx) ? html`<span class="log-spark-dot ${i === selIdx ? 'is-sel' : ''}" style="left:${xp(i).toFixed(2)}%;top:${yp(p.value).toFixed(2)}%"></span>` : '')}
+        <span class="log-spark-dot log-spark-hover" hidden></span>
+        <span class="log-spark-tip" hidden></span>
+      </div>
+      <div class="log-spark-legend"><span>${series.length} weigh-ins</span><span>low <b>${logFmtWeight(lowP.value)}</b></span><span>high <b>${logFmtWeight(highP.value)}</b> ${unit}</span></div>`;
+  }
+  function logWeightHtml(key, d) {
+    const unit = logUnit();
+    const cur = logDayWeight(d, unit);
+    return html`<section class="card log-card log-weight" style="--i:4" aria-labelledby="log-w-h">
+      <div class="log-card-head"><h3 id="log-w-h">Weight</h3>
+        <div class="log-units" role="group" aria-label="Weight unit">${['lb', 'kg'].map(u => html`<button class="log-unit ${unit === u ? 'is-on' : ''} ${unit === u && logUi.pop === 'unit' ? 'is-pop' : ''}" type="button" data-action="log-unit" data-unit="${u}" data-fk="unit:${u}" aria-pressed="${unit === u ? 'true' : 'false'}" title="${u === 'lb' ? 'Pounds' : 'Kilograms'}">${u}</button>`)}</div>
+      </div>
+      <div class="log-w-row">
+        <div class="log-w-field">
+          <label class="sr-only" for="log-weight">Weight in ${unit === 'lb' ? 'pounds' : 'kilograms'}</label>
+          <input class="input log-w-input" type="number" id="log-weight" data-fk="weight" step="0.1" min="0" max="2000" inputmode="decimal" placeholder="—" value="${cur == null ? '' : logFmtWeight(cur)}">
+          <span class="log-w-unit" aria-hidden="true">${unit}</span>
+        </div>
+      </div>
+      ${logWeightStatsHtml(key)}
+    </section>`;
+  }
+  function logNoteHtml(key, d) {
+    const note = d ? d.note : '';
+    const st = logUi.noteState;
+    return html`<section class="card log-card log-note" style="--i:5">
+      <div class="log-card-head"><h3><label for="log-note">Description</label></h3><span class="log-saved ${st ? 'is-' + st : ''}" id="log-note-status" aria-live="polite">${st === 'saving' ? 'Saving…' : st === 'saved' ? '✓ Saved' : note.trim() ? '✓ Saved' : 'Optional'}</span></div>
+      <textarea class="textarea log-note-input" id="log-note" data-fk="note" rows="4" maxlength="5000" placeholder="${key === logToday() ? 'Anything you want to remember about today? (optional)' : 'Anything you want to remember about this day? (optional)'}">${raw('\n')}${note}</textarea>
+    </section>`;
+  }
+  function logHistoryHtml(key) {
+    const t = logToday();
+    const unit = logUnit();
+    const keys = Object.keys(state.log.days).filter(k => k <= t).sort().reverse().slice(0, LOG_HISTORY);
+    const cd = C.fromDayKey(key);
+    const prefix = key.slice(0, 8);
+    const mc = LH.moodCounts(state.log.days, prefix);
+    const moods = mc.good + mc.medium + mc.bad;
+    const streak = LH.logStreak(state.log.days, t);
+    const monthName = C.MONTHS_LONG[cd.getMonth()];
+    const seg = m => mc[m] ? html`<span class="log-moodbar-seg" style="flex-grow:${mc[m]};--mc:${raw(logMoodColor(m))}" title="${LOG_MOOD_SHORT[m]}: ${mc[m]}"></span>` : '';
+    return html`<section class="card log-card log-history" id="log-hist" style="--i:6" aria-labelledby="log-hist-h">
+      <div class="log-card-head"><h3 id="log-hist-h">Recent days</h3><span class="log-hint">${keys.length ? 'Tap a day to open it' : ''}</span></div>
+      <div class="log-summary">
+        <div class="log-stat"><span class="log-stat-n">${mc.logged}</span><span class="log-stat-l">day${mc.logged === 1 ? '' : 's'} logged in ${monthName}</span></div>
+        <div class="log-stat log-stat-moods">
+          <div class="log-moodbar ${moods ? '' : 'is-empty'}" role="img" aria-label="${monthName} moods: ${mc.good} good, ${mc.medium} medium, ${mc.bad} bad">${seg('good')}${seg('medium')}${seg('bad')}</div>
+          <div class="log-moodbar-legend">${['good', 'medium', 'bad'].map(m => html`<span><i style="--mc:${raw(logMoodColor(m))}"></i>${LOG_MOOD_SHORT[m]} <b>${mc[m]}</b></span>`)}</div>
+        </div>
+        <div class="log-stat"><span class="log-stat-n">${streak ? '🔥 ' : ''}${streak}</span><span class="log-stat-l">day logging streak</span></div>
+      </div>
+      ${keys.length ? html`<ul class="log-hist-list">${keys.map((k, i) => {
+        const d = state.log.days[k];
+        const m = d.mood ? logMood(d.mood) : null;
+        const w = logDayWeight(d, unit);
+        const icons = d.events.slice(0, 4).map(e => C.eventPreset(e.type).icon).join('') + (d.events.length > 4 ? '+' : '');
+        const first = (d.note || '').split('\n').map(s => s.trim()).find(Boolean) || (d.verse ? '📖 ' + d.verse.ref : '');
+        const dt = C.fromDayKey(k);
+        const rel = logRel(k);
+        return html`<li style="--i:${i}"><button class="log-hist-row ${k === key ? 'is-selected' : ''}" type="button" data-action="log-go" data-day="${k}" data-fk="hist:${k}" aria-label="Open ${logLongDate(k)}">
+          <span class="log-hist-date"><b>${rel === 'Today' || rel === 'Yesterday' ? rel : C.WEEKDAYS[dt.getDay()]}</b><span>${logShortDate(k)}</span></span>
+          <span class="log-hist-mood" ${m ? raw('') : raw('aria-hidden="true"')} title="${m ? m.label : 'No mood'}" style="--mc:${raw(m ? logMoodColor(m.key) : 'var(--border-strong)')}">${m ? m.icon : ''}</span>
+          <span class="log-hist-weight num">${w == null ? '' : logFmtWeight(w) + ' ' + unit}</span>
+          <span class="log-hist-ev" aria-hidden="true">${icons}</span>
+          <span class="log-hist-note">${first}</span>
+        </button></li>`;
+      })}</ul>` : html`<div class="log-hist-empty"><span aria-hidden="true">🌱</span> Your logged days show up here. Today is a great first one.</div>`}
+    </section>`;
+  }
+
+  /* ---------- render ---------- */
+  function logCaptureFocus(root) {
+    const ae = document.activeElement;
+    if (!ae || !root.contains(ae)) return null;
+    const host = ae.closest('[data-fk]'); if (!host) return null;
+    const f = { fk: host.dataset.fk };
+    try { if (typeof ae.selectionStart === 'number') { f.s = ae.selectionStart; f.e = ae.selectionEnd; } } catch (e) { /* number inputs */ }
+    return f;
+  }
+  function logRestoreFocus(root, f, changed) {
+    if (!f) return;
+    let fk = f.fk;
+    if (changed && fk.indexOf('chip:') === 0) fk = 'chip:' + logCursor();
+    const q = k => root.querySelector('[data-fk="' + CSS.escape(k) + '"]');
+    const alt = { 'verse-get': 'verse-new', 'verse-new': 'verse-get', 'verse-remove': 'verse-get' };
+    let el = q(fk) || (alt[fk] && q(alt[fk]));
+    if (!el && fk.indexOf('ev-') === 0) el = root.querySelector('.log-ev-remove') || q('quick');
+    if (!el && fk.indexOf('hist:') === 0) el = root.querySelector('.log-hist-row.is-selected') || root.querySelector('.log-hist-row');
+    if (!el && fk.indexOf('chip:') === 0) el = q('chip:' + logCursor());
+    if (!el) return;
+    el.focus({ preventScroll: true });
+    if (f.s != null && el.value != null) { try { el.setSelectionRange(f.s, f.e); } catch (e) { /* ignore */ } }
+  }
+  function logScrollStrip(root, smooth) {
+    const strip = root.querySelector('.log-strip');
+    const sel = strip && strip.querySelector('.log-chip.is-selected');
+    if (!strip || !sel) return;
+    const left = sel.offsetLeft - (strip.clientWidth - sel.offsetWidth) / 2;
+    const max = strip.scrollWidth - strip.clientWidth;
+    const target = Math.max(0, Math.min(max, left));
+    if (Math.abs(strip.scrollLeft - target) < 2) return;
+    try { strip.scrollTo({ left: target, behavior: smooth && !reducedMotion() ? 'smooth' : 'auto' }); } catch (e) { strip.scrollLeft = target; }
+  }
+  function renderLog(root) {
+    let mount = root.querySelector('#log-mount');
+    if (!mount) {
+      root.innerHTML = '<div id="log-live" class="sr-only" aria-live="polite" aria-atomic="true"></div><div id="log-mount"></div>';
+      mount = root.querySelector('#log-mount');
+    }
+    const key = logCursor();
+    const entering = !logUi.wasActive;
+    const changed = logUi.lastKey !== null && logUi.lastKey !== key;
+    if (changed || entering) { logUi.known = null; logUi.noteState = ''; }
+    const focus = logCaptureFocus(mount);
+    const oldStrip = mount.querySelector('.log-strip');
+    const stripScroll = oldStrip ? oldStrip.scrollLeft : null;
+    const d = logDay(key);
+    const anyLogged = Object.keys(state.log.days).length > 0;
+    mount.innerHTML = html`<div class="log ${entering ? 'is-entering' : ''}">
+      ${logHeroHtml(key)}
+      ${logStripHtml(key)}
+      ${anyLogged ? '' : logIntroHtml()}
+      <div class="log-entry ${changed && !entering ? 'is-swap' : ''}" data-dir="${logUi.dir < 0 ? 'prev' : 'next'}">
+        <div class="log-col">${logMoodHtml(key, d)}${logEventsHtml(key, d)}</div>
+        <div class="log-col">${logVerseHtml(key, d)}${logWeightHtml(key, d)}${logNoteHtml(key, d)}</div>
+      </div>
+      ${logHistoryHtml(key)}
+    </div>`;
+    const strip = mount.querySelector('.log-strip');
+    if (strip && stripScroll != null && !entering) strip.scrollLeft = stripScroll;
+    if (changed || entering || stripScroll == null) logScrollStrip(mount, changed && !entering);
+    logRestoreFocus(mount, focus, changed);
+    /* One-shot entrance and day-swap animations: drop the classes once played so
+       partial refreshes never replay them. */
+    const shell = mount.firstElementChild;
+    if (shell && (entering || changed)) setTimeout(() => { shell.classList.remove('is-entering'); const en = shell.querySelector('.log-entry'); if (en) en.classList.remove('is-swap'); }, 1200);
+    logUi.known = { key, ids: new Set((d ? d.events : []).map(e => e.id)) };
+    logUi.lastKey = key; logUi.pop = null; logUi.tapped = null; logUi.dir = 0;
+  }
+  /* Refresh only the read-only parts (strip, header line, weight stats, history)
+     after a silent save, so the field being typed in keeps focus and caret. */
+  function logRefreshParts() {
+    if (state.ui.view !== 'log') return;
+    if (logUi.pointerDown) { logUi.refreshQueued = true; return; }
+    const mount = $('#log-mount'); if (!mount) return;
+    const key = logCursor();
+    const swap = (sel, markup) => {
+      const el = mount.querySelector(sel); if (!el) return;
+      if (el.contains(document.activeElement)) return;
+      const tmp = document.createElement('div'); tmp.innerHTML = String(markup);
+      const next = tmp.firstElementChild; if (!next) return;
+      if (next.classList.contains('log-card')) next.style.animation = 'none';
+      if (el.outerHTML !== next.outerHTML) el.replaceWith(next);
+    };
+    const strip = mount.querySelector('.log-strip');
+    const sl = strip ? strip.scrollLeft : 0;
+    swap('#log-strip-wrap', logStripHtml(key));
+    const ns = mount.querySelector('.log-strip'); if (ns) ns.scrollLeft = sl;
+    const sub = mount.querySelector('#log-sub'); if (sub) sub.innerHTML = String(logSubHtml(key, logAgo(key)));
+    swap('#log-wstats', logWeightStatsHtml(key));
+    swap('#log-hist', logHistoryHtml(key));
+  }
+
+  /* ---------- saving ---------- */
+  function logSaveNote(key, value) {
+    updateLogDay(key, { note: value }, { silent: true });
+    logUi.noteState = 'saved';
+    const st = $('#log-note-status');
+    if (st && logCursor() === key) { st.textContent = '✓ Saved'; st.className = 'log-saved is-saved'; }
+    logRefreshParts();
+  }
+  function logFlushNote() {
+    if (!logUi.noteTimer) return;
+    clearTimeout(logUi.noteTimer); logUi.noteTimer = null;
+    const p = logUi.note; logUi.note = null;
+    if (p) logSaveNote(p.key, p.value);
+  }
+  function logSaveWeight(key, rawValue) {
+    const unit = logUnit();
+    const s = String(rawValue == null ? '' : rawValue).trim();
+    const v = s === '' ? null : Number(s);
+    if (v != null && (!isFinite(v) || v <= 0 || v > 2000)) return false;
+    const cur = logDayWeight(logDay(key), unit);
+    if (v === cur || (v != null && cur != null && logRound1(v) === cur)) return true;
+    updateLogDay(key, { weight: v, weightUnit: v == null ? null : unit }, { silent: true });
+    logRefreshParts();
+    return true;
+  }
+  function logFlushWeight() {
+    if (!logUi.weightTimer) return;
+    clearTimeout(logUi.weightTimer); logUi.weightTimer = null;
+    const p = logUi.weight; logUi.weight = null;
+    if (p) logSaveWeight(p.key, p.value);
+  }
+  function logFlushAll() { logFlushNote(); logFlushWeight(); }
+  function logPatchEvent(key, id, patch) {
+    const d = logDay(key); if (!d) return;
+    const e = d.events.find(x => x.id === id); if (!e) return;
+    if (Object.keys(patch).every(k => e[k] === patch[k])) return;
+    updateLogDay(key, { events: d.events.map(x => x.id === id ? Object.assign({}, x, patch) : x) }, { silent: true });
+    logRefreshParts();
+  }
+
+  /* ---------- events: add, undo, multi-day ---------- */
+  function logEventToastName(type, label) { const p = C.eventPreset(type); return p.icon + ' ' + (label || p.label); }
+  function logDayPhrase(key) { const r = logRel(key); return r ? r.toLowerCase() : logShortDate(key); }
+  function logAddEvents(startKey, ev, days) {
+    const added = [];
+    const start = C.fromDayKey(startKey);
+    for (let i = 0; i < days; i++) {
+      const k = C.dayKey(C.addDays(start, i));
+      const day = logDayOrEmpty(k);
+      if (i > 0 && day.events.some(e => e.type === ev.type && (e.label || '') === (ev.label || ''))) continue;
+      const e = { id: logNewEventId(), type: ev.type, label: ev.label, time: ev.time || '' };
+      updateLogDay(k, { events: day.events.concat([e]) }, { silent: true });
+      added.push({ key: k, id: e.id });
+    }
+    render();
+    return added;
+  }
+  function logUndoAdded(added) {
+    for (const a of added) { const d = logDay(a.key); if (d) updateLogDay(a.key, { events: d.events.filter(e => e.id !== a.id) }, { silent: true }); }
+    render();
+  }
+  function logToastAdded(added, type, label) {
+    if (!added.length) { toast('Already on those days.', ''); return; }
+    const where = added.length > 1 ? added.length + ' days (' + logShortDate(added[0].key) + ' – ' + logShortDate(added[added.length - 1].key) + ')' : logDayPhrase(added[0].key);
+    toast('Added ' + logEventToastName(type, label) + ' to ' + where, 'ok', { label: 'Undo', fn: () => logUndoAdded(added) });
+  }
+  function logQuickSubmit() {
+    const key = logCursor();
+    const q = logQuickState();
+    if (!logUi.quick.trim() && !logUi.quickType) { toast('Type an event first, or tap one of the symbols.', ''); const i = $('#log-quick-input'); if (i) i.focus(); return; }
+    const label = logUi.quick.trim() ? q.p.label : q.preset.label;
+    const ev = { type: q.type, label: label === C.eventPreset(q.p.type).label && logUi.quickType ? q.preset.label : label, time: q.p.time };
+    logUi.quick = ''; logUi.quickType = ''; logUi.quickDays = 1;
+    logUi.tapped = q.type;
+    const added = q.days > 1 ? logAddEvents(key, ev, q.days) : [{ key, id: addLogEvent(key, ev).id }];
+    logToastAdded(added, ev.type, ev.label);
+  }
+  function logUpdateQuickPreview() {
+    const q = logQuickState();
+    const ico = $('#log-quick-ico'); if (ico) ico.textContent = logUi.quick.trim() || logUi.quickType ? q.preset.icon : '✨';
+    const sel = $('#log-quick-type');
+    if (sel && sel.options[0]) sel.options[0].textContent = 'Auto · ' + (q.p.guessed ? C.eventPreset(q.p.type).icon + ' ' + C.eventPreset(q.p.type).label : 'guess for me');
+    const wrap = $('#log-quick-days-wrap');
+    if (wrap) { wrap.hidden = !q.multi; const unitEl = wrap.querySelector('span'); if (unitEl) unitEl.textContent = 'day' + (q.days === 1 ? '' : 's'); }
+    const pv = $('#log-quick-preview'); if (pv) pv.innerHTML = String(logQuickPreviewHtml(q));
+  }
+
+  /* ---------- weight trend interaction ---------- */
+  function logSparkShow(el, i) {
+    const sp = logUi.spark; if (!el || !sp || !sp.series.length) return;
+    i = Math.max(0, Math.min(sp.series.length - 1, i));
+    el.dataset.idx = i;
+    const p = sp.series[i];
+    const n = sp.series.length;
+    const x = n === 1 ? 50 : 2 + i * 96 / (n - 1);
+    const vals = sp.series.map(s => s.value);
+    let lo = Math.min(...vals), hi = Math.max(...vals);
+    if (hi - lo < 1) { const mid = (hi + lo) / 2; lo = mid - 0.5; hi = mid + 0.5; }
+    const H = 64, PY = 8;
+    const y = (PY + (hi - p.value) * (H - 2 * PY) / (hi - lo)) / H * 100;
+    const cross = el.querySelector('.log-spark-cross'), dot = el.querySelector('.log-spark-hover'), tip = el.querySelector('.log-spark-tip');
+    if (cross) { cross.hidden = false; cross.style.left = x + '%'; }
+    if (dot) { dot.hidden = false; dot.style.left = x + '%'; dot.style.top = y + '%'; }
+    if (tip) {
+      tip.hidden = false;
+      tip.textContent = '';
+      const b = document.createElement('b'); b.textContent = logFmtWeight(p.value) + ' ' + sp.unit;
+      const s = document.createElement('span'); s.textContent = logLongDate(p.key);
+      tip.appendChild(b); tip.appendChild(s);
+      tip.style.left = Math.max(14, Math.min(86, x)) + '%';
+    }
+  }
+  function logSparkHide(el) {
+    if (!el || el === document.activeElement) return;
+    for (const c of el.querySelectorAll('.log-spark-cross, .log-spark-hover, .log-spark-tip')) c.hidden = true;
+  }
+  function logSparkIndexAt(el, clientX) {
+    const sp = logUi.spark; if (!sp) return 0;
+    const r = el.getBoundingClientRect();
+    const frac = ((clientX - r.left) / r.width * 100 - 2) / 96;
+    return Math.round(Math.max(0, Math.min(1, frac)) * (sp.series.length - 1));
+  }
+
+  /* ---------- actions ---------- */
+  registerAction('log-prev', () => logShift(-1));
+  registerAction('log-next', () => logShift(1));
+  registerAction('log-today', () => setLogCursor(logToday()));
+  registerAction('log-go', (id, el) => { if (el && el.dataset.day) setLogCursor(el.dataset.day); });
+  registerAction('log-mood', (id, el) => {
+    const key = logCursor(); const m = el && el.dataset.mood; if (!LOG_MOOD_VAR[m]) return;
+    const cur = logDayOrEmpty(key).mood;
+    logUi.pop = cur === m ? null : 'mood';
+    updateLogDay(key, { mood: cur === m ? null : m });
+  });
+  registerAction('log-unit', (id, el) => {
+    const u = el && el.dataset.unit; if (u !== 'lb' && u !== 'kg' || u === logUnit()) return;
+    logFlushWeight();
+    state.settings.weightUnit = u; logUi.pop = 'unit';
+    save(); render();
+  });
+  registerAction('log-verse', () => {
+    const key = logCursor(); const cur = logDayOrEmpty(key).verse;
+    const v = C.pickVerse(Math.random(), cur ? cur.ref : null); if (!v) return;
+    logUi.pop = 'verse';
+    updateLogDay(key, { verse: v });
+  });
+  registerAction('log-verse-remove', () => {
+    const key = logCursor(); const old = logDayOrEmpty(key).verse; if (!old) return;
+    updateLogDay(key, { verse: null });
+    toast('Removed ' + old.ref, '', { label: 'Undo', fn: () => { logUi.pop = 'verse'; updateLogDay(key, { verse: old }); } });
+  });
+  registerAction('log-preset', (id, el) => {
+    const p = C.EVENT_PRESETS.find(x => x.type === (el && el.dataset.type)); if (!p) return;
+    const key = logCursor();
+    logUi.tapped = p.type;
+    const e = addLogEvent(key, { type: p.type, label: p.label, time: '' });
+    logToastAdded([{ key, id: e.id }], p.type, p.label);
+  });
+  registerAction('log-ev-remove', (id, el) => {
+    const key = logCursor(); const d = logDay(key); if (!d) return;
+    const idx = d.events.findIndex(e => e.id === (el && el.dataset.ev)); if (idx < 0) return;
+    const ev = d.events[idx];
+    if (logUi.repeatOpen === ev.id) logUi.repeatOpen = null;
+    removeLogEvent(key, ev.id);
+    toast('Removed ' + logEventToastName(ev.type, ev.label), '', { label: 'Undo', fn: () => { const cur = logDayOrEmpty(key).events.slice(); cur.splice(Math.min(idx, cur.length), 0, ev); updateLogDay(key, { events: cur }); } });
+  });
+  registerAction('log-ev-repeat', (id, el) => { const evId = el && el.dataset.ev; logUi.repeatOpen = logUi.repeatOpen === evId ? null : evId; render(); const inp = $('#log-ev-r-' + CSS.escape(evId || '')); if (inp) { inp.focus(); inp.select(); } });
+  registerAction('log-ev-repeat-go', (id, el) => {
+    const key = logCursor(); const d = logDay(key); if (!d) return;
+    const ev = d.events.find(e => e.id === (el && el.dataset.ev)); if (!ev) return;
+    const inp = $('#log-ev-r-' + CSS.escape(ev.id));
+    const n = Math.max(2, Math.min(30, Math.round(Number(inp ? inp.value : logUi.repeatDays) || 2)));
+    logUi.repeatDays = n; logUi.repeatOpen = null;
+    const added = logAddEvents(C.dayKey(C.addDays(C.fromDayKey(key), 1)), { type: ev.type, label: ev.label, time: ev.time }, n - 1);
+    logToastAdded(added, ev.type, ev.label);
+  });
+
+  /* ---------- field events (delegated once) ---------- */
+  const inLogView = el => !!(el && el.closest && el.closest('.view[data-view="log"]'));
+  document.addEventListener('input', e => {
+    const t = e.target; if (!inLogView(t)) return;
+    const key = logCursor();
+    if (t.id === 'log-note') {
+      logUi.note = { key, value: t.value };
+      logUi.noteState = 'saving';
+      const st = $('#log-note-status'); if (st) { st.textContent = 'Saving…'; st.className = 'log-saved is-saving'; }
+      clearTimeout(logUi.noteTimer);
+      logUi.noteTimer = setTimeout(() => { logUi.noteTimer = null; const p = logUi.note; logUi.note = null; if (p) logSaveNote(p.key, p.value); }, 400);
+    } else if (t.id === 'log-weight') {
+      logUi.weight = { key, value: t.value };
+      clearTimeout(logUi.weightTimer);
+      logUi.weightTimer = setTimeout(() => { logUi.weightTimer = null; const p = logUi.weight; logUi.weight = null; if (p) logSaveWeight(p.key, p.value); }, 700);
+    } else if (t.id === 'log-quick-input') { logUi.quick = t.value; logUpdateQuickPreview(); }
+    else if (t.id === 'log-quick-days') { logUi.quickDays = t.value; logUpdateQuickPreview(); }
+    else if (t.classList.contains('log-days-input') && t.dataset.ev) logUi.repeatDays = t.value;
+  });
+  document.addEventListener('change', e => {
+    const t = e.target; if (!inLogView(t)) return;
+    const key = logCursor();
+    if (t.id === 'log-date') {
+      const m = /^(\d{4})-\d{2}-\d{2}$/.exec(t.value || '');
+      if (m && +m[1] >= 1970 && +m[1] <= 2100) setLogCursor(t.value);
+    } else if (t.id === 'log-weight') { clearTimeout(logUi.weightTimer); logUi.weightTimer = null; logUi.weight = null; logSaveWeight(key, t.value); }
+    else if (t.id === 'log-quick-type') { logUi.quickType = t.value; logUpdateQuickPreview(); }
+    else if (t.classList.contains('log-ev-label')) {
+      const d = logDay(key); const ev = d && d.events.find(x => x.id === t.dataset.ev);
+      const v = t.value.replace(/\s+/g, ' ').trim();
+      if (ev && !v) t.value = C.eventPreset(ev.type).label;
+      logPatchEvent(key, t.dataset.ev, { label: v || (ev ? C.eventPreset(ev.type).label : '') });
+    } else if (t.classList.contains('log-ev-time')) logPatchEvent(key, t.dataset.ev, { time: /^\d{2}:\d{2}$/.test(t.value) ? t.value : '' });
+  });
+  document.addEventListener('focusout', e => {
+    const t = e.target; if (!inLogView(t)) return;
+    if (t.id === 'log-note') logFlushNote();
+    if (t.classList && t.classList.contains('log-spark')) logSparkHide(t);
+  });
+  document.addEventListener('submit', e => {
+    if (!e.target || e.target.id !== 'log-quick') return;
+    e.preventDefault();
+    logQuickSubmit();
+  });
+  document.addEventListener('pointerdown', () => { logUi.pointerDown = true; }, true);
+  const logPointerUp = () => {
+    logUi.pointerDown = false;
+    if (logUi.refreshQueued) { logUi.refreshQueued = false; setTimeout(logRefreshParts, 0); }
+  };
+  document.addEventListener('pointerup', logPointerUp, true);
+  document.addEventListener('pointercancel', logPointerUp, true);
+  document.addEventListener('pointermove', e => {
+    const el = e.target && e.target.closest ? e.target.closest('.log-spark') : null;
+    if (el) logSparkShow(el, logSparkIndexAt(el, e.clientX));
+  });
+  document.addEventListener('pointerout', e => {
+    const el = e.target && e.target.closest ? e.target.closest('.log-spark') : null;
+    if (el && !(e.relatedTarget && el.contains(e.relatedTarget))) logSparkHide(el);
+  });
+  document.addEventListener('click', e => {
+    const el = e.target && e.target.closest ? e.target.closest('.log-spark') : null;
+    if (!el || !logUi.spark) return;
+    const p = logUi.spark.series[logSparkIndexAt(el, e.clientX)];
+    if (p && p.key !== logCursor()) setLogCursor(p.key);
+  });
+  document.addEventListener('focusin', e => {
+    const el = e.target;
+    if (el && el.classList && el.classList.contains('log-spark') && logUi.spark) {
+      const sel = logUi.spark.series.findIndex(p => p.key === logCursor());
+      logSparkShow(el, sel >= 0 ? sel : logUi.spark.series.length - 1);
+    }
+  });
+  document.addEventListener('keydown', e => {
+    if (state.ui.view !== 'log' || e.metaKey || e.ctrlKey || e.altKey || modalOpen() || panelOpen()) return;
+    const t = e.target;
+    const typing = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable);
+    if (typing) {
+      if (e.key === 'Enter' && t.classList.contains('log-ev-label')) { e.preventDefault(); t.blur(); }
+      else if (e.key === 'Enter' && t.classList.contains('log-days-input') && t.dataset.ev) { e.preventDefault(); const b = $('[data-action="log-ev-repeat-go"][data-ev="' + CSS.escape(t.dataset.ev) + '"]'); if (b) b.click(); }
+      return;
+    }
+    const arrows = { ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1 };
+    if (!(e.key in arrows) || e.shiftKey) return;
+    const delta = arrows[e.key];
+    const radio = t && t.closest ? t.closest('.log-moods [role="radio"]') : null;
+    if (radio) {
+      e.preventDefault();
+      const all = $$('.log-moods [role="radio"]');
+      const next = all[(all.indexOf(radio) + delta + all.length) % all.length];
+      if (next) { next.focus(); next.click(); }
+      return;
+    }
+    const spark = t && t.classList && t.classList.contains('log-spark') ? t : null;
+    if (spark) {
+      if (e.key === 'ArrowUp' || e.key === 'ArrowDown') return;
+      e.preventDefault();
+      logSparkShow(spark, (Number(spark.dataset.idx) || 0) + delta);
+      const tip = spark.querySelector('.log-spark-tip'), live = $('#log-live');
+      if (tip && live) live.textContent = tip.textContent.replace(/^([\d.]+ (?:lb|kg))/, '$1, ');
+      return;
+    }
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    e.preventDefault();
+    const chip = t && t.closest ? t.closest('.log-chip') : null;
+    logShift(delta, chip ? chip.dataset.day : null);
+  });
+  window.addEventListener('pagehide', () => { if (logUi.noteTimer || logUi.weightTimer) { logFlushAll(); save(true); } });
+  on('render', p => {
+    const active = !!(p && p.view === 'log');
+    if (!active && logUi.wasActive) logFlushAll();
+    logUi.wasActive = active;
+  });
+  on('init', () => {
+    const root = $('.view[data-view="log"]');
+    if (root && !root.querySelector('#log-mount')) root.insertAdjacentHTML('beforeend', '<div id="log-live" class="sr-only" aria-live="polite" aria-atomic="true"></div><div id="log-mount"></div>');
+  });
   /* === VIEW:LOG:JS:END === */
 
   /* === FEATURE:CATALOG:JS:START === */

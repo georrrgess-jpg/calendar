@@ -513,6 +513,125 @@ test('year boundary: a late-December date seen in early January is last year, no
 /* === FEATURE:PASTE:TESTS:END === */
 
 /* === FEATURE:LOG:TESTS:START === */
+console.log('core-lib: daily log');
+const LH = C.eventPreset.log;
+const logSame = (a, b, msg) => assert.deepStrictEqual(JSON.parse(JSON.stringify(a)), JSON.parse(JSON.stringify(b)), msg);
+test('VERSES: at least 120 entries, each with a non-empty ref and text, no duplicate refs', () => {
+  assert.ok(C.VERSES.length >= 120, 'only ' + C.VERSES.length + ' verses');
+  const refs = new Set();
+  for (const v of C.VERSES) {
+    assert.ok(typeof v.ref === 'string' && v.ref.trim().length > 0, 'empty ref');
+    assert.ok(typeof v.text === 'string' && v.text.trim().length > 10, 'empty text for ' + v.ref);
+    assert.ok(/^(\d )?[A-Z][a-z]+( of [A-Z][a-z]+)? \d+:\d+(-\d+)?$/.test(v.ref), 'odd ref ' + v.ref);
+    assert.strictEqual(v.text, v.text.trim(), 'untrimmed text ' + v.ref);
+    assert.ok(!/\s{2}/.test(v.text), 'double space in ' + v.ref);
+    assert.ok(!refs.has(v.ref), 'duplicate ref ' + v.ref);
+    refs.add(v.ref);
+  }
+});
+test('VERSES: spot-check exact KJV wording', () => {
+  const by = r => C.VERSES.find(v => v.ref === r);
+  assert.strictEqual(by('Philippians 4:13').text, 'I can do all things through Christ which strengtheneth me.');
+  assert.strictEqual(by('Psalm 23:1').text, 'The LORD is my shepherd; I shall not want.');
+  assert.strictEqual(by('John 3:16').text, 'For God so loved the world, that he gave his only begotten Son, that whosoever believeth in him should not perish, but have everlasting life.');
+  assert.strictEqual(by('Joshua 1:9').text.slice(0, 33), 'Have not I commanded thee? Be str');
+});
+test('pickVerse is deterministic for a given rand and maps [0,1) uniformly onto the list', () => {
+  logSame(C.pickVerse(0.42), C.pickVerse(0.42));
+  logSame(C.pickVerse(0), { ref: C.VERSES[0].ref, text: C.VERSES[0].text });
+  const n = C.VERSES.length;
+  assert.strictEqual(C.pickVerse(0.999999).ref, C.VERSES[n - 1].ref);
+  assert.strictEqual(C.pickVerse(1).ref, C.VERSES[n - 1].ref, 'rand = 1 is clamped');
+  assert.strictEqual(C.pickVerse(-3).ref, C.VERSES[0].ref, 'negative rand is clamped');
+  assert.strictEqual(C.pickVerse(NaN).ref, C.VERSES[0].ref);
+  /* Every verse is reachable and equally likely: n equal-width buckets map to n distinct verses. */
+  const seen = new Set();
+  for (let i = 0; i < n; i++) seen.add(C.pickVerse((i + 0.5) / n).ref);
+  assert.strictEqual(seen.size, n);
+  const v = C.pickVerse(0.3); v.text = 'changed';
+  assert.notStrictEqual(C.pickVerse(0.3).text, 'changed', 'returns a copy');
+});
+test('pickVerse never returns exceptRef and stays uniform over the rest', () => {
+  const n = C.VERSES.length;
+  for (const except of [C.VERSES[0].ref, C.VERSES[5].ref, C.VERSES[n - 1].ref]) {
+    const seen = new Set();
+    for (let i = 0; i < n - 1; i++) {
+      const v = C.pickVerse((i + 0.5) / (n - 1), except);
+      assert.notStrictEqual(v.ref, except);
+      seen.add(v.ref);
+    }
+    assert.strictEqual(seen.size, n - 1, 'every other verse reachable');
+    for (const r of [0, 0.25, 0.5, 0.75, 0.9999]) assert.notStrictEqual(C.pickVerse(r, except).ref, except);
+  }
+  assert.ok(C.pickVerse(0.5, 'Not a ref'), 'unknown exceptRef is ignored');
+});
+test('guessEventType maps keywords to presets', () => {
+  const cases = {
+    'Soccer game vs Central': 'sports', 'Basketball game': 'sports', 'Volleyball match': 'sports', 'Lions vs Tigers': 'sports', 'track meet': 'sports',
+    'Soccer practice': 'practice', "Mom's bday": 'birthday', 'Jake birthday party': 'birthday', 'b-day dinner': 'birthday',
+    'Road trip to Austin': 'trip', 'Flight to Denver': 'trip', 'Beach vacation': 'vacation', 'Spring break': 'vacation',
+    'Thanksgiving': 'holiday', 'No school - teacher workday': 'noschool', 'Snow day!': 'noschool', 'Chem exam': 'test', 'SAT': 'test',
+    'Band concert': 'concert', 'School play': 'concert', 'Youth group': 'church', 'Dentist appointment': 'appointment',
+    'Work shift': 'work', 'Robotics club': 'club', 'Food bank volunteering': 'volunteer', 'Family dinner': 'family',
+    'Sleepover at Ana’s': 'friends', 'Stayed home sick': 'sick'
+  };
+  for (const k in cases) assert.strictEqual(LH.guessEventType(k), cases[k], k);
+  assert.strictEqual(LH.guessEventType('homework'), null, 'word boundaries: homework is not work');
+  assert.strictEqual(LH.guessEventType('gamer night'), null, 'gamer is not a game');
+  assert.strictEqual(LH.guessEventType(''), null);
+  assert.strictEqual(LH.guessEventType('Something random'), null);
+  for (const [type] of LH.EVENT_KEYWORDS) assert.ok(C.EVENT_PRESETS.some(p => p.type === type), 'unknown preset ' + type);
+});
+test('parseEventInput pulls out the time and keeps the rest as the label', () => {
+  logSame(LH.parseEventInput('Soccer game vs Central 6pm'), { type: 'sports', guessed: true, label: 'Soccer game vs Central', time: '18:00' });
+  logSame(LH.parseEventInput('Basketball game 7pm'), { type: 'sports', guessed: true, label: 'Basketball game', time: '19:00' });
+  assert.strictEqual(LH.parseEventInput('Dentist at 3:30 PM').time, '15:30');
+  assert.strictEqual(LH.parseEventInput('Dentist at 3:30 PM').label, 'Dentist');
+  assert.strictEqual(LH.parseEventInput('Practice 7:15a').time, '07:15');
+  assert.strictEqual(LH.parseEventInput('Flight @ 18:45').time, '18:45');
+  assert.strictEqual(LH.parseEventInput('Flight @ 18:45').label, 'Flight');
+  assert.strictEqual(LH.parseEventInput('Lunch with grandma noon').time, '12:00');
+  assert.strictEqual(LH.parseEventInput('Party 12am').time, '00:00');
+  assert.strictEqual(LH.parseEventInput('Party 12pm').time, '12:00');
+  assert.strictEqual(LH.parseEventInput('Game 13pm').time, '', 'invalid 12h hour ignored');
+  assert.strictEqual(LH.parseEventInput('Room 205 meeting').time, '', 'bare numbers are not times');
+  const other = LH.parseEventInput('  Something   fun  ');
+  logSame(other, { type: 'other', guessed: false, label: 'Something fun', time: '' });
+  logSame(LH.parseEventInput('7pm'), { type: 'other', guessed: false, label: 'Other', time: '19:00' });
+  assert.strictEqual(LH.parseEventInput('x'.repeat(300)).label.length, 120);
+});
+test('convertWeight and weightSeries convert per-day units and keep the last N, oldest first', () => {
+  assert.strictEqual(LH.convertWeight(100, 'kg', 'kg'), 100);
+  assert.ok(Math.abs(LH.convertWeight(100, 'kg', 'lb') - 220.462) < 0.001);
+  assert.ok(Math.abs(LH.convertWeight(220.462262, 'lb', 'kg') - 100) < 0.0001);
+  assert.strictEqual(LH.convertWeight(null, 'kg', 'lb'), null);
+  const days = {
+    '2026-10-01': { weight: 150 }, '2026-10-02': { weight: null }, '2026-10-03': { weight: 70, weightUnit: 'kg' },
+    '2026-10-05': { weight: 151.4, weightUnit: 'lb' }, '2026-10-20': { weight: 149 }
+  };
+  const s = LH.weightSeries(days, '2026-10-14', 30, 'lb');
+  logSame(s.map(p => p.key), ['2026-10-01', '2026-10-03', '2026-10-05']);
+  logSame(s.map(p => p.value), [150, 154.3, 151.4]);
+  logSame(LH.weightSeries(days, '2026-10-14', 2, 'kg').map(p => p.value), [70, 68.7]);
+  const many = {};
+  for (let i = 1; i <= 40; i++) many['2026-09-' + String(i % 30 + 1).padStart(2, '0') + (i > 30 ? 'x' : '')] = { weight: 100 + i };
+  assert.strictEqual(LH.weightSeries(many, null, 30, 'lb').length, 30);
+});
+test('logStreak counts consecutive logged days ending today (or yesterday)', () => {
+  const d = { '2026-10-14': {}, '2026-10-13': {}, '2026-10-12': {}, '2026-10-10': {} };
+  assert.strictEqual(LH.logStreak(d, '2026-10-14'), 3);
+  assert.strictEqual(LH.logStreak(d, '2026-10-15'), 3, 'today not logged yet keeps the streak alive');
+  assert.strictEqual(LH.logStreak(d, '2026-10-16'), 0);
+  assert.strictEqual(LH.logStreak({}, '2026-10-14'), 0);
+  assert.strictEqual(LH.logStreak({ '2026-11-01': {}, '2026-10-31': {}, '2026-10-30': {} }, '2026-11-01'), 3, 'crosses month ends');
+  assert.strictEqual(LH.logStreak(d, 'nope'), 0);
+});
+test('moodCounts tallies one month', () => {
+  const d = { '2026-10-01': { mood: 'good' }, '2026-10-02': { mood: 'good' }, '2026-10-03': { mood: 'bad' }, '2026-10-04': { mood: null }, '2026-09-30': { mood: 'medium' } };
+  logSame(LH.moodCounts(d, '2026-10-'), { good: 2, medium: 0, bad: 1, logged: 4 });
+  logSame(LH.moodCounts(d, '2026-09-'), { good: 0, medium: 1, bad: 0, logged: 1 });
+  logSame(LH.moodCounts(null, '2026-09-'), { good: 0, medium: 0, bad: 0, logged: 0 });
+});
 /* === FEATURE:LOG:TESTS:END === */
 
 /* === FEATURE:CATALOG:TESTS:START === */
