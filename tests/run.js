@@ -635,6 +635,80 @@ test('moodCounts tallies one month', () => {
 /* === FEATURE:LOG:TESTS:END === */
 
 /* === FEATURE:CATALOG:TESTS:START === */
+console.log('core-lib: class catalog & symbols');
+test('CLASS_SYMBOLS: ~50 unique symbols, each with a label and keywords', () => {
+  assert.ok(C.CLASS_SYMBOLS.length >= 45 && C.CLASS_SYMBOLS.length <= 64, 'count ' + C.CLASS_SYMBOLS.length);
+  const seen = new Set();
+  for (const s of C.CLASS_SYMBOLS) {
+    assert.ok(typeof s.symbol === 'string' && s.symbol.length > 0, JSON.stringify(s));
+    assert.ok(!seen.has(s.symbol), 'duplicate ' + s.symbol); seen.add(s.symbol);
+    assert.ok(s.label && Array.isArray(s.keywords) && s.keywords.length, 'label/keywords for ' + s.symbol);
+  }
+  for (const want of ['📐', '➗', '📊', '🧮', '🧬', '⚗️', '🧪', '🔬', '🌍', '🪐', '⚛️', '🦠', '🌱', '📚', '✍️', '📖', '🏛️', '🗺️', '⚖️', '💰',
+    '🇪🇸', '🇫🇷', '🇩🇪', '🇨🇳', '🇯🇵', '🇮🇹', '🌐', '🎨', '🎭', '🎵', '🎸', '🎻', '📷', '🎬', '💻', '🤖', '⌨️', '🔧', '⚽', '🏀', '🏃', '🍎', '❤️',
+    '💼', '📈', '✝️', '🙏', '🍳', '🧠', '🗣️', '📝', '⭐']) assert.ok(seen.has(want), 'missing ' + want);
+});
+test('suggestSymbol guesses from keywords, preferring the most specific match', () => {
+  const cases = {
+    'AP Chemistry': '⚗️', 'Spanish II': '🇪🇸', 'AP Biology - Period 3': '🧬', 'Algebra I': '➗', 'Geometry': '📐', 'AP Statistics': '📊', 'Calculus BC': '🧮',
+    'AP Computer Science A': '💻', 'Earth Science': '🌍', 'Physical Science': '🧪', 'Physical Education': '🏃', 'PE': '🏃', 'Physics': '⚛️',
+    'Language Arts': '📚', 'AP Lit': '📚', 'AP English Language & Composition': '✍️', 'AP Spanish Language': '🇪🇸', 'AP Chinese Language': '🇨🇳', 'Latin II': '🌐',
+    'World History': '🗺️', 'AP US History': '🏛️', 'Art History': '🎨', 'Español 3': '🇪🇸', 'Français 2': '🇫🇷', "Driver's Ed": '🚗', 'Culinary Arts I': '🍳',
+    'Intro to Engineering Design': '🔧', 'Theology IV: Christian Ethics': '✝️', 'Health': '❤️', 'Marching Band': '🎺',
+    'AP Spanish Literature': '🇪🇸', 'French Cinema': '🇫🇷'
+  };
+  for (const [name, sym] of Object.entries(cases)) assert.strictEqual(C.suggestSymbol(name), sym, name);
+  assert.strictEqual(C.suggestSymbol('Holidays in United States'), '');
+  assert.strictEqual(C.suggestSymbol(''), '');
+  assert.strictEqual(C.suggestSymbol(null), '');
+  /* Short keywords are whole words: "pe" never matches "personal", "art" never matches "Martin". */
+  assert.notStrictEqual(C.suggestSymbol('Personal Finance'), '🏃');
+  assert.strictEqual(C.suggestSymbol('Mr Martin'), '');
+});
+test('CLASS_CATALOG: grades 9-12 and college, 25-45 unique courses each, every symbol known', () => {
+  assert.deepStrictEqual([...C.CLASS_CATALOG.map(g => g.grade)], ['9', '10', '11', '12', 'college']);
+  const symbols = new Set(C.CLASS_SYMBOLS.map(s => s.symbol));
+  for (const g of C.CLASS_CATALOG) {
+    assert.ok(g.label && g.short, 'labels for ' + g.grade);
+    assert.ok(g.courses.length >= 25 && g.courses.length <= 45, g.grade + ': ' + g.courses.length + ' courses');
+    const names = new Set();
+    for (const c of g.courses) {
+      const k = C.normalizeName(c.name);
+      assert.ok(!names.has(k), 'duplicate in ' + g.grade + ': ' + c.name); names.add(k);
+      assert.ok(symbols.has(c.symbol), c.name + ' uses unknown symbol ' + c.symbol);
+      assert.ok(c.subject && typeof c.subject === 'string', 'subject for ' + c.name);
+    }
+  }
+  const all = g => C.CLASS_CATALOG.find(x => x.grade === g).courses.map(c => c.name);
+  for (const n of ['English 9', 'Algebra I', 'Biology', 'Spanish I', 'Health', 'Physical Education', 'Band', 'Choir']) assert.ok(all('9').includes(n), '9th: ' + n);
+  for (const n of ['AP US History', 'AP Chemistry', 'AP English Language & Composition', 'Precalculus']) assert.ok(all('11').includes(n), '11th: ' + n);
+  for (const n of ['AP Calculus BC', 'AP English Literature & Composition', 'AP US Government & Politics', 'Economics']) assert.ok(all('12').includes(n), '12th: ' + n);
+  for (const n of ['Calculus I', 'General Chemistry I', 'Organic Chemistry I', 'Intro to Psychology', 'English Composition I', 'Data Structures', 'Anatomy & Physiology I']) assert.ok(all('college').includes(n), 'college: ' + n);
+});
+test('the catalog symbols agree with suggestSymbol (so custom names get the same look)', () => {
+  const off = [];
+  for (const g of C.CLASS_CATALOG) for (const c of g.courses) if (C.suggestSymbol(c.name) !== c.symbol) off.push(c.name);
+  assert.deepStrictEqual(off, []);
+});
+test('searchCatalog finds courses across grades, once each, with their grades', () => {
+  const r = C.searchCatalog('chem');
+  const names = r.map(x => x.name);
+  assert.ok(names.includes('Chemistry') && names.includes('AP Chemistry') && names.includes('Organic Chemistry I'), names.join(', '));
+  assert.strictEqual(new Set(names).size, names.length, 'no duplicates');
+  assert.deepStrictEqual([...r.find(x => x.name === 'AP Chemistry').grades], ['11', '12']);
+  assert.strictEqual(names[0], 'Chemistry', 'names starting with the query first');
+  assert.strictEqual(C.searchCatalog('   ').length, 0);
+  assert.ok(C.searchCatalog('ap calc').every(x => /calc/i.test(x.name)));
+  assert.ok(C.searchCatalog('spanish').length >= 4);
+  assert.strictEqual(C.searchCatalog('<img src=x>').length, 0);
+});
+test('searchSymbols filters by label and keywords', () => {
+  assert.strictEqual(C.searchSymbols('').length, C.CLASS_SYMBOLS.length);
+  assert.ok(C.searchSymbols('chem').some(s => s.symbol === '⚗️'));
+  assert.ok(C.searchSymbols('orchestra').map(s => s.symbol).includes('🎻'));
+  assert.deepStrictEqual([...C.searchSymbols('🧬').map(s => s.symbol)], ['🧬']);
+  assert.strictEqual(C.searchSymbols('qqqzzz').length, 0);
+});
 /* === FEATURE:CATALOG:TESTS:END === */
 
 console.log('\n' + passed + ' passed, ' + failed + ' failed');

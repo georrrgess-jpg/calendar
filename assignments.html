@@ -854,20 +854,51 @@ body.board-pointer-drag, body.board-pointer-drag * { cursor: grabbing !important
 /* === VIEW:BOARD:CSS:END === */
 
 /* === VIEW:CLASSES:CSS:START === */
-.cls-head-note { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; color: var(--text-3); }
+.cls-head { row-gap: 8px; }
+.cls-head .count-badge { margin-left: -2px; }
+.cls-add-btn { margin-left: auto; }
+.cls-add-btn:active { transform: scale(0.96); }
+.cls-head-note { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex: 1 1 100%; font-size: 13px; color: var(--text-3); }
 .cls-head-note .btn { padding: 3px 8px; }
 .cls-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr)); gap: 14px; align-items: stretch; }
-.cls-card { --c: var(--text-3); position: relative; display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
+.cls-card {
+  --c: var(--text-3); position: relative; display: flex; flex-direction: column; min-width: 0; overflow: hidden;
+  transition: transform 220ms var(--ease), box-shadow 220ms var(--ease), border-color 220ms var(--ease);
+}
+.cls-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-2), 0 0 0 1px color-mix(in srgb, var(--c) 30%, transparent); border-color: color-mix(in srgb, var(--c) 35%, var(--border)); }
 .cls-card::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: var(--c); opacity: 0.9; }
 .cls-card.is-unclassed::before { background: repeating-linear-gradient(90deg, var(--text-3) 0 8px, transparent 8px 14px); opacity: 0.5; }
+/* Entrance: cards rise in one after another and the rings fill (only when the view opens). */
+.cls-grid.is-entering > .cls-card { animation: cls-card-in 440ms var(--ease) backwards; animation-delay: calc(var(--i, 0) * 55ms); }
+.cls-grid.is-entering .ring-arc { animation: cls-ring-fill 1000ms cubic-bezier(0.25, 0.8, 0.25, 1) backwards; animation-delay: calc(160ms + var(--i, 0) * 55ms); }
+@keyframes cls-card-in { from { opacity: 0; transform: translateY(14px) scale(0.985); } }
+@keyframes cls-ring-fill { from { stroke-dashoffset: var(--circ); } }
+.cls-card.is-fresh { animation: cls-fresh 1600ms var(--ease); }
+.cls-grid.is-entering > .cls-card.is-fresh { animation: cls-card-in 440ms var(--ease) backwards, cls-fresh 1600ms var(--ease); }
+@keyframes cls-fresh { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--c) 70%, transparent); } 60% { box-shadow: 0 0 0 10px transparent; } 100% { box-shadow: var(--shadow-1); } }
 .cls-top {
   display: flex; align-items: flex-start; gap: 12px; padding: 18px 14px 12px 16px;
   background: radial-gradient(460px 150px at 0% 0%, color-mix(in srgb, var(--c) 15%, transparent), transparent 72%);
 }
 .cls-emoji {
-  width: 42px; height: 42px; border-radius: 13px; flex: none; display: grid; place-items: center; font-size: 21px; line-height: 1;
+  position: relative; width: 42px; height: 42px; border-radius: 13px; flex: none; display: grid; place-items: center; font-size: 21px; line-height: 1;
   background: color-mix(in srgb, var(--c) 18%, var(--surface-2)); border: 1px solid color-mix(in srgb, var(--c) 38%, transparent);
 }
+button.cls-emoji { padding: 0; color: var(--text); cursor: pointer; transition: transform 180ms var(--ease), box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease); }
+button.cls-emoji:hover { transform: scale(1.06) rotate(-3deg); border-color: var(--c); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 22%, transparent); }
+button.cls-emoji:active { transform: scale(0.94); }
+button.cls-emoji[aria-expanded="true"] { border-color: var(--c); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 30%, transparent); }
+button.cls-emoji:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 13px; }
+.cls-emoji.is-popped .cls-glyph, .cls-emoji.is-popped .cls-initial { display: inline-block; animation: cls-pop 420ms cubic-bezier(0.3, 1.6, 0.5, 1); }
+@keyframes cls-pop { 0% { transform: scale(0.4) rotate(-12deg); } 60% { transform: scale(1.18); } 100% { transform: none; } }
+.cls-sym-badge {
+  position: absolute; right: -5px; bottom: -5px; width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--surface-1); border: 1px solid var(--border-strong); color: var(--text-2); box-shadow: var(--shadow-1);
+  opacity: 0; transform: scale(0.6); transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+.cls-sym-badge svg { width: 10px; height: 10px; }
+button.cls-emoji:hover .cls-sym-badge, button.cls-emoji:focus-visible .cls-sym-badge, .cls-card.is-editing button.cls-emoji .cls-sym-badge { opacity: 1; transform: none; }
+@media (hover: none) { .cls-sym-badge { opacity: 1; transform: none; } }
 .cls-emoji .cls-initial { font-size: 17px; font-weight: 750; color: var(--c); }
 .cls-title { flex: 1 1 auto; min-width: 0; padding-top: 1px; }
 .cls-name { font-size: 16px; font-weight: 700; line-height: 1.25; letter-spacing: -0.01em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-word; }
@@ -875,23 +906,28 @@ body.board-pointer-drag, body.board-pointer-drag * { cursor: grabbing !important
 .cls-sub b { color: var(--text-2); font-weight: 600; }
 .cls-edit-btn { flex: none; margin: -2px -2px 0 0; }
 .cls-edit-btn[aria-expanded="true"] { background: var(--surface-3); color: var(--text); }
-.cls-edit { flex: 1 1 auto; min-width: 0; display: grid; grid-template-columns: 54px minmax(0, 1fr); gap: 8px; align-items: end; }
+.cls-edit { flex: 1 1 auto; min-width: 0; display: grid; grid-template-columns: 54px minmax(0, 1fr); gap: 8px; align-items: end; animation: cls-edit-in 200ms var(--ease); }
+@keyframes cls-edit-in { from { opacity: 0; transform: translateY(-4px); } }
 .cls-edit .field > label { font-size: 11.5px; }
 .cls-edit .input { padding: 7px 10px; font-size: 14px; }
 .cls-edit .emoji-input { width: 100% !important; }
 .cls-edit-foot { grid-column: 1 / -1; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.cls-edit-foot .hint { font-size: 11.5px; color: var(--text-3); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1 1 120px; }
+.cls-edit-foot .hint { font-size: 11.5px; color: var(--text-3); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1 1 100%; margin-top: -2px; }
+.cls-del-btn { color: var(--danger); margin-right: auto; padding-left: 6px; }
+.cls-del-btn:hover { background: var(--danger-soft); color: var(--danger); }
+.cls-del-btn svg { width: 13px; height: 13px; }
 .cls-summary { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; align-items: center; padding: 2px 16px 14px; }
 .cls-ring { position: relative; width: 88px; height: 88px; flex: none; }
 .cls-ring svg { display: block; width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
 .cls-ring .ring-track { fill: none; stroke: color-mix(in srgb, var(--c) 13%, var(--surface-3)); }
-.cls-ring .ring-arc { fill: none; stroke: var(--c); stroke-linecap: round; transition: stroke-dashoffset 500ms var(--ease); }
+.cls-ring .ring-arc { fill: none; stroke: var(--c); stroke-linecap: round; transition: stroke-dashoffset 500ms var(--ease); filter: drop-shadow(0 0 4px color-mix(in srgb, var(--c) 45%, transparent)); }
 .cls-ring-label { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.1; pointer-events: none; }
 .cls-ring-frac { font-size: 19px; font-weight: 760; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; color: var(--text); }
 .cls-ring-frac small { font-size: 13px; font-weight: 600; color: var(--text-3); }
 .cls-ring-pct { margin-top: 2px; font-size: 10.5px; font-weight: 650; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-3); }
 .cls-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin: 0; }
-.cls-stat { min-width: 0; padding: 7px 10px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border); display: flex; flex-direction: column-reverse; gap: 1px; }
+.cls-stat { min-width: 0; padding: 7px 10px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border); display: flex; flex-direction: column-reverse; gap: 1px; transition: background var(--dur) var(--ease); }
+.cls-card:hover .cls-stat { background: color-mix(in srgb, var(--c) 5%, var(--surface-2)); }
 .cls-stat dd { margin: 0; font-size: 17px; font-weight: 720; line-height: 1.2; font-variant-numeric: tabular-nums; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cls-stat dt { font-size: 10.5px; font-weight: 650; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cls-stat.is-danger { background: var(--danger-soft); border-color: color-mix(in srgb, var(--danger) 35%, transparent); }
@@ -900,8 +936,13 @@ body.board-pointer-drag, body.board-pointer-drag * { cursor: grabbing !important
 .cls-items { flex: 1 1 auto; display: flex; flex-direction: column; gap: 6px; padding: 12px 10px 10px; border-top: 1px solid var(--border); }
 .cls-items-label { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 4px 2px; font-size: 11.5px; font-weight: 650; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); }
 .cls-items .empty { padding: 16px 8px; font-size: 13.5px; }
+.cls-more-items { display: flex; flex-direction: column; gap: 6px; }
+.cls-more-items.is-anim > .cls-more-row { animation: cls-row-in 300ms var(--ease) backwards; animation-delay: calc(var(--j, 0) * 40ms); }
+@keyframes cls-row-in { from { opacity: 0; transform: translateY(-6px); } }
 .cls-more { align-self: flex-start; margin: 2px 0 0 2px; color: var(--accent-text); }
 .cls-more:hover { color: var(--accent-text); }
+.cls-more-chev { width: 13px !important; height: 13px !important; transform: rotate(90deg); transition: transform 240ms var(--ease); }
+.cls-more[aria-expanded="true"] .cls-more-chev { transform: rotate(-90deg); }
 .cls-foot { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; flex-wrap: wrap; padding: 10px 12px 10px 16px; border-top: 1px solid var(--border); background: color-mix(in srgb, var(--surface-2) 55%, transparent); }
 .cls-swatches { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; border: 0; margin: 0; padding: 0; min-width: 0; }
 .cls-sw { position: relative; display: inline-grid; place-items: center; width: 20px; height: 20px; cursor: pointer; }
@@ -912,6 +953,43 @@ body.board-pointer-drag, body.board-pointer-drag * { cursor: grabbing !important
 .cls-sw input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 5px; }
 .cls-foot-note { font-size: 12px; color: var(--text-3); }
 .cls-empty { padding: 36px 16px; }
+/* First-run empty state: an invitation to the catalog. */
+.cls-empty-start { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 40px 18px 30px; background: radial-gradient(520px 220px at 50% 0%, var(--accent-soft), transparent 70%), var(--surface-1); }
+.cls-empty-start .big { font-size: 20px; font-weight: 750; color: var(--text); margin: 4px 0 0; }
+.cls-empty-lead { max-width: 440px; color: var(--text-2); font-size: 14.5px; }
+.cls-empty-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 10px 0 6px; }
+.cls-empty-actions .btn-lg { white-space: normal; text-align: center; }
+.cls-empty-art { display: flex; gap: 8px; margin-bottom: 6px; }
+.cls-empty-art span {
+  width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; font-size: 23px;
+  background: var(--surface-2); border: 1px solid var(--border-strong); box-shadow: var(--shadow-1);
+  animation: cls-float 3.2s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.6s);
+}
+.cls-empty-art span:nth-child(2) { --k: 1; } .cls-empty-art span:nth-child(3) { --k: 2; } .cls-empty-art span:nth-child(4) { --k: 3; } .cls-empty-art span:nth-child(5) { --k: 4; }
+@keyframes cls-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+
+/* Symbol picker popover (anchored to a card's tile; a bottom sheet on phones). */
+.sym-scrim { position: fixed; inset: 0; z-index: 120; background: transparent; }
+.sym-scrim.is-sheet { background: rgba(4, 6, 14, 0.5); animation: fade-in 160ms var(--ease); }
+.sym-pop {
+  position: fixed; z-index: 121; left: 12px; top: 12px; width: min(340px, calc(100vw - 24px)); max-height: min(460px, calc(100vh - 24px));
+  display: flex; flex-direction: column; overflow: hidden; background: var(--surface-1); border: 1px solid var(--border-strong);
+  border-radius: 16px; box-shadow: var(--shadow-2); animation: sym-pop-in 200ms var(--ease); transform-origin: top left;
+}
+@keyframes sym-pop-in { from { opacity: 0; transform: translateY(-6px) scale(0.96); } }
+.sym-pop.is-sheet { left: 0; right: 0; top: auto; bottom: 0; width: 100%; max-height: 72vh; border-radius: 20px 20px 0 0; animation: sym-sheet-in 260ms var(--ease); padding-bottom: env(safe-area-inset-bottom, 0px); }
+@keyframes sym-sheet-in { from { transform: translateY(40px); opacity: 0.4; } }
+.sym-pop-head { display: flex; align-items: center; gap: 8px; padding: 12px 10px 8px 14px; }
+.sym-pop-title { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; font-weight: 650; font-size: 14px; }
+.sym-pop-title .faint { font-size: 12px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sym-pop-search { position: relative; padding: 0 12px 8px; }
+.sym-pop-search svg { position: absolute; left: 23px; top: calc(50% - 4px); transform: translateY(-50%); width: 15px; height: 15px; color: var(--text-3); pointer-events: none; }
+.sym-pop-search .input { padding-left: 34px; height: 38px; }
+.sym-pop .sym-grid { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 3px 12px 12px; grid-template-columns: repeat(auto-fill, minmax(42px, 1fr)); }
+.sym-pop .sym-opt { height: 42px; background: var(--surface-2); }
+.sym-pop-foot { display: flex; align-items: flex-end; gap: 6px; padding: 10px 12px; border-top: 1px solid var(--border); background: var(--surface-2); }
+.sym-free { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 4px; font-size: 11.5px; font-weight: 650; color: var(--text-3); }
+.sym-free .input { height: 34px; padding: 5px 10px; }
 @media (pointer: coarse) { .cls-sw { width: 24px; height: 24px; } .cls-swatches { gap: 9px; } }
 @media (max-width: 400px) {
   .cls-summary { gap: 12px; padding-left: 14px; padding-right: 14px; }
@@ -919,6 +997,7 @@ body.board-pointer-drag, body.board-pointer-drag * { cursor: grabbing !important
   .cls-ring-frac { font-size: 17px; }
   .cls-top { padding-left: 14px; }
   .cls-foot { padding-left: 14px; }
+  .cls-empty-art span { width: 40px; height: 40px; font-size: 20px; }
 }
 /* === VIEW:CLASSES:CSS:END === */
 
@@ -1588,6 +1667,186 @@ body:has(#pomo-chip) .footer { padding-bottom: 84px; }
 /* === VIEW:LOG:CSS:END === */
 
 /* === FEATURE:CATALOG:CSS:START === */
+/* "Add classes" picker: segmented grade tabs, search, a scrolling course grid,
+   a custom-class side panel and a sticky footer. A bottom sheet at phone widths. */
+.modal.cp-modal { max-width: 1000px; height: min(800px, calc(100vh - 6vh - 24px)); display: flex; flex-direction: column; overflow: hidden; }
+.cp-modal .modal-head { flex: none; }
+.cp-modal .modal-body { flex: 1 1 auto; min-height: 0; padding: 0; gap: 0; overflow: hidden; }
+.cp-modal .modal-foot { flex: none; flex-wrap: nowrap; gap: 10px; background: var(--surface-1); box-shadow: 0 -12px 24px -20px rgba(0, 0, 0, 0.55); position: relative; z-index: 2; }
+.cp { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.cp-top { flex: none; display: flex; flex-direction: column; gap: 10px; padding: 14px 20px 12px; border-bottom: 1px solid var(--border); }
+
+/* Segmented grade control with a sliding thumb */
+.cp-seg { position: relative; display: grid; grid-template-columns: repeat(var(--n, 5), minmax(0, 1fr)); padding: 4px; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--border); }
+.cp-seg-thumb {
+  position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc((100% - 8px) / var(--n, 5)); border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-strong)); box-shadow: 0 6px 18px rgba(124, 58, 237, 0.35);
+  transform: translateX(calc(var(--i, 0) * 100%)); transition: transform 300ms cubic-bezier(0.3, 1.25, 0.5, 1), opacity var(--dur) var(--ease);
+}
+.cp-seg-btn {
+  position: relative; z-index: 1; border: 0; background: none; padding: 8px 4px; border-radius: 10px; min-width: 0;
+  font-weight: 650; font-size: 14px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  transition: color var(--dur) var(--ease), transform 120ms var(--ease);
+}
+.cp-seg-btn:hover { color: var(--text); }
+.cp-seg-btn[aria-selected="true"] { color: #fff; }
+.cp-seg-btn:active { transform: scale(0.95); }
+.cp-seg-btn:focus-visible { outline: 2px solid var(--accent-text); outline-offset: -2px; border-radius: 10px; }
+.cp.is-searching .cp-seg-thumb { opacity: 0.28; }
+.cp.is-searching .cp-seg-btn[aria-selected="true"] { color: var(--text); }
+
+.cp-searchrow { display: flex; gap: 8px; align-items: stretch; }
+.cp-search { position: relative; flex: 1 1 auto; min-width: 0; }
+.cp-search svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 17px; height: 17px; color: var(--text-3); pointer-events: none; }
+.cp-search .input { padding-left: 38px; height: 42px; }
+.cp-search-sm .input { height: 38px; }
+.cp-custom-toggle { display: none; }
+.cp-custom-toggle[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-text); }
+
+.cp-main { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 320px; }
+.cp-catalog { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+.cp-list-head { flex: none; display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 20px 6px; font-size: 12.5px; font-weight: 650; color: var(--text-2); }
+.cp-keys { display: inline-flex; align-items: center; gap: 5px; font-weight: 500; font-size: 12px; color: var(--text-3); white-space: nowrap; }
+.cp-keys .kbd + .kbd { margin-left: 4px; }
+.cp-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; padding: 4px 20px 20px; scroll-padding: 12px; }
+.cp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(208px, 100%), 1fr)); gap: 8px; }
+
+/* Course cards */
+.cp-card {
+  --sc: var(--class-7); position: relative; display: flex; align-items: center; gap: 10px; min-width: 0;
+  padding: 9px 11px 9px 9px; border-radius: 14px; background: var(--surface-2); border: 1.5px solid var(--border);
+  cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent;
+  transition: transform 160ms var(--ease), background var(--dur) var(--ease), border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.cp-card:hover { background: var(--surface-3); border-color: var(--border-strong); transform: translateY(-1px); }
+.cp-card:active { transform: scale(0.97); }
+.cp-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 14px; }
+.cp-card.is-on { background: color-mix(in srgb, var(--accent) 13%, var(--surface-2)); border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.cp-sym {
+  width: 38px; height: 38px; border-radius: 11px; flex: none; display: grid; place-items: center; font-size: 20px; line-height: 1;
+  background: color-mix(in srgb, var(--sc) 17%, var(--surface-1)); border: 1px solid color-mix(in srgb, var(--sc) 34%, transparent);
+}
+.cp-txt { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.cp-name { font-weight: 650; font-size: 14px; line-height: 1.25; color: var(--text); overflow-wrap: anywhere; }
+.cp-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 5px; font-size: 12px; color: var(--text-3); }
+.cp-grade { padding: 0 6px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-text); font-weight: 700; font-size: 10.5px; line-height: 17px; letter-spacing: 0.02em; }
+.cp-check {
+  width: 22px; height: 22px; flex: none; border-radius: 50%; border: 2px solid var(--border-strong); display: grid; place-items: center; color: #fff;
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.cp-check svg { width: 13px; height: 13px; opacity: 0; transform: scale(0.3); transition: opacity 150ms var(--ease), transform 260ms cubic-bezier(0.3, 1.7, 0.5, 1); }
+.cp-card:hover .cp-check { border-color: var(--accent); }
+.cp-card.is-on .cp-check { background: var(--accent); border-color: var(--accent); }
+.cp-card.is-on .cp-check svg { opacity: 1; transform: none; }
+.cp-card.is-pop .cp-check, .cp-card.is-pop .cp-sym { animation: cp-pop 340ms cubic-bezier(0.3, 1.6, 0.5, 1); }
+@keyframes cp-pop { 0% { transform: scale(1); } 40% { transform: scale(1.22); } 100% { transform: scale(1); } }
+.cp-card.is-added { cursor: default; background: transparent; border-style: dashed; }
+.cp-card.is-added .cp-sym, .cp-card.is-added .cp-txt { opacity: 0.55; }
+.cp-card.is-added:hover { transform: none; background: transparent; border-color: var(--border); }
+.cp-card.is-nudge { animation: cp-nudge 320ms var(--ease); }
+@keyframes cp-nudge { 20% { transform: translateX(-4px); } 60% { transform: translateX(4px); } 100% { transform: none; } }
+.cp-added { flex: none; padding: 2px 8px; border-radius: 999px; background: var(--ok-soft); color: var(--ok); font-size: 11.5px; font-weight: 700; white-space: nowrap; }
+.cp-grid.is-in .cp-card { animation: cp-card-in 300ms var(--ease) backwards; animation-delay: calc(var(--i, 0) * 16ms); }
+@keyframes cp-card-in { from { opacity: 0; transform: translateY(8px) scale(0.98); } }
+.cp-none { grid-column: 1 / -1; padding: 36px 16px; text-align: center; color: var(--text-3); display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.cp-none .big { color: var(--text-2); font-weight: 650; font-size: 15px; overflow-wrap: anywhere; }
+.cp-none-ico { font-size: 28px; }
+.cp-none .btn { margin-top: 6px; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+
+/* Custom class panel */
+.cp-custom { min-height: 0; min-width: 0; overflow-y: auto; overscroll-behavior: contain; padding: 14px 18px 18px; border-left: 1px solid var(--border); background: color-mix(in srgb, var(--surface-2) 55%, transparent); }
+.cp-custom-form { display: flex; flex-direction: column; gap: 12px; }
+.cp-custom-headrow { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.cp-custom h3 { font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-2); font-weight: 700; }
+.cp-back { display: none; }
+.cp-preview { display: flex; align-items: flex-end; gap: 10px; }
+.cp-preview-sym {
+  --c: var(--class-1); width: 50px; height: 50px; border-radius: 15px; flex: none; display: grid; place-items: center; font-size: 25px; line-height: 1;
+  background: color-mix(in srgb, var(--c) 20%, var(--surface-1)); border: 1.5px solid color-mix(in srgb, var(--c) 55%, transparent);
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.cp-preview-sym.is-pop { animation: cp-pop 340ms cubic-bezier(0.3, 1.6, 0.5, 1); }
+.cp-initial { font-size: 20px; font-weight: 750; color: var(--c); }
+#cp-name.is-shake { animation: cp-nudge 320ms var(--ease); }
+#cp-name[aria-invalid="true"] { border-color: var(--danger); box-shadow: 0 0 0 3px var(--danger-soft); }
+.cp-suggest { min-height: 22px; display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; font-size: 12.5px; color: var(--text-3); margin-top: -4px; }
+.cp-suggest .btn { padding: 2px 8px; }
+.cp-sug-on { display: inline-flex; align-items: center; gap: 6px; color: var(--text-2); }
+.cp-syms { max-height: 196px; overflow-y: auto; overscroll-behavior: contain; padding: 3px; margin: -3px; border-radius: 12px; }
+.cp-colors { border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.cp-colors legend { padding: 0; margin-bottom: 7px; }
+.cp-swatches { display: flex; flex-wrap: wrap; gap: 9px; }
+.cp-sw { position: relative; display: inline-grid; place-items: center; width: 26px; height: 26px; cursor: pointer; }
+.cp-sw input { position: absolute; inset: -2px; width: auto; height: auto; margin: 0; opacity: 0; cursor: pointer; }
+.cp-sw span { width: 100%; height: 100%; border-radius: 50%; background: var(--sc); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18); pointer-events: none; transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease); }
+.cp-sw:hover span { transform: scale(1.12); }
+.cp-sw input:checked + span { box-shadow: 0 0 0 2px var(--surface-1), 0 0 0 4px var(--sc); transform: scale(1.04); }
+.cp-sw input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 5px; }
+.cp-custom-add { width: 100%; margin-top: 2px; }
+
+/* Shared symbol grid (picker and the class-card popover) */
+.sym-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap: 4px; }
+.sym-opt {
+  position: relative; height: 40px; padding: 0; border-radius: 10px; border: 1.5px solid transparent; background: var(--surface-1);
+  display: grid; place-items: center; font-size: 20px; line-height: 1;
+  transition: transform 140ms var(--ease), background var(--dur) var(--ease), border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.sym-opt:hover { background: var(--surface-3); transform: scale(1.1); }
+.sym-opt:active { transform: scale(0.9); }
+.sym-opt:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.sym-opt[aria-selected="true"] { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 0 0 3px var(--accent-soft); animation: cp-pop 300ms cubic-bezier(0.3, 1.6, 0.5, 1); }
+.sym-opt.is-suggested::after { content: ""; position: absolute; top: 4px; right: 4px; width: 7px; height: 7px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 2px var(--surface-1); }
+.sym-none { grid-column: 1 / -1; padding: 14px 6px; text-align: center; font-size: 13px; color: var(--text-3); }
+
+/* Sticky footer */
+.cp-tray { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 10px; font-size: 13.5px; color: var(--text-2); }
+.cp-tray-syms { display: flex; flex: none; }
+.cp-tray-syms span { width: 30px; height: 30px; margin-left: -9px; border-radius: 50%; display: grid; place-items: center; font-size: 15px; background: var(--surface-3); border: 2px solid var(--surface-1); animation: cp-chip-in 260ms cubic-bezier(0.3, 1.5, 0.5, 1) backwards; }
+.cp-tray-syms span:first-child { margin-left: 0; }
+@keyframes cp-chip-in { from { transform: scale(0.4); opacity: 0; } }
+.cp-tray-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cp-tray-text b { color: var(--text); font-weight: 650; }
+.cp-tray-names { color: var(--text-3); }
+.cp-clear { flex: none; }
+.cp-cancel { flex: none; }
+.cp-add { flex: none; min-width: 150px; }
+.cp-add:disabled { box-shadow: none; }
+.cp-add.is-bump { animation: cp-bump 260ms var(--ease); }
+@keyframes cp-bump { 40% { transform: scale(1.05); } }
+.cp-add:active:not(:disabled) { transform: scale(0.97); }
+
+@media (max-width: 860px) {
+  .cp-main { grid-template-columns: minmax(0, 1fr); }
+  .cp-custom-toggle, .cp-back { display: inline-flex; }
+  .cp[data-pane="catalog"] .cp-custom { display: none; }
+  .cp[data-pane="custom"] .cp-catalog { display: none; }
+  .cp[data-pane="custom"] .cp-custom { animation: cp-pane-in 220ms var(--ease); }
+  .cp-custom { border-left: 0; background: none; padding: 14px 20px 20px; }
+  .cp-syms { max-height: none; overflow: visible; }
+}
+@keyframes cp-pane-in { from { opacity: 0; transform: translateX(14px); } }
+@media (max-width: 720px) {
+  .modal.cp-modal { max-width: none; height: 92vh; height: 92dvh; max-height: 92dvh; animation: cp-sheet-in 300ms var(--ease); }
+  .cp-modal::before { content: ""; position: absolute; top: 6px; left: 50%; width: 38px; height: 4px; margin-left: -19px; border-radius: 999px; background: var(--border-strong); }
+  .cp-modal { position: relative; }
+  .cp-modal .modal-head { padding: 14px 14px 10px; }
+  .cp-modal .modal-body { overflow: hidden; }
+  .cp-top { padding: 10px 14px; gap: 8px; }
+  .cp-seg-btn { font-size: 13px; padding: 8px 2px; }
+  .cp-list-head { padding: 8px 14px 4px; }
+  .cp-keys { display: none; }
+  .cp-scroll { padding: 4px 14px 16px; }
+  .cp-grid { gap: 6px; }
+  .cp-custom { padding: 12px 14px 18px; }
+  .cp-modal .modal-foot { padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px)); }
+  .cp-tray-names { display: none; }
+  .cp-add { min-width: 0; }
+}
+@media (max-width: 480px) {
+  .cp-cancel { display: none; }
+  .cp-tray-syms span:nth-child(n+4) { display: none; }
+}
+@keyframes cp-sheet-in { from { transform: translateY(40px); opacity: 0.4; } }
 /* === FEATURE:CATALOG:CSS:END === */
 
 /* ==========================================================================
@@ -2861,9 +3120,216 @@ const Core = (function () {
   /* === FEATURE:LOG:CORE:END === */
 
   /* === FEATURE:CATALOG:CORE:START === */
-  /* Preset class catalog by grade level and the subject symbol set. */
-  const CLASS_CATALOG = [];
-  const CLASS_SYMBOLS = [];
+  /* Preset class catalog by grade level and the subject symbol set.
+     CLASS_SYMBOLS: [{ symbol, label, keywords[] }]. A keyword is matched as a
+     whole word or phrase of the normalised class name; a trailing '*' makes it
+     a word-start stem ("chem*" matches "chemistry"). suggestSymbol(name)
+     returns the symbol whose longest keyword matches, or '' when none does.
+     A leading '~' marks a generic keyword that loses to any specific one; a leading '!'
+     marks a language name that beats any subject word. */
+  const CLASS_SYMBOLS = [
+    /* Math */
+    { symbol: '📐', label: 'Geometry & math', keywords: ['math', 'maths', 'mathematics', 'geometry', 'trigonometry', 'trig', 'precalculus', 'precalc', 'pre calculus', 'integrated math*', 'drafting', 'cad'] },
+    { symbol: '➗', label: 'Algebra', keywords: ['algebra', 'pre algebra', 'prealgebra', 'arithmetic', 'linear algebra', 'college algebra', 'quantitative*'] },
+    { symbol: '📊', label: 'Statistics', keywords: ['statistics', 'stats', 'stat', 'probability', 'data science', 'data analysis', 'biostatistics'] },
+    { symbol: '🧮', label: 'Calculus', keywords: ['calculus', 'calc', 'differential equations', 'discrete math*', 'number theory', 'real analysis', 'multivariable*'] },
+    /* Sciences */
+    { symbol: '🧬', label: 'Biology', keywords: ['biology', 'bio', 'genetics', 'life science', 'biotech*', 'molecular*', 'cell biology', 'zoology', 'marine biology', 'evolution'] },
+    { symbol: '⚗️', label: 'Chemistry', keywords: ['chemistry', 'chem', 'organic chemistry', 'biochem*', 'general chemistry'] },
+    { symbol: '🧪', label: 'Lab & physical science', keywords: ['physical science', '~lab', '~labs', 'forensic*', 'materials science', 'integrated science'] },
+    { symbol: '🔬', label: 'Science', keywords: ['~science', '~sciences', 'stem', 'steam', 'research', 'scientific*'] },
+    { symbol: '🌍', label: 'Earth science', keywords: ['earth science', 'earth', 'geology', 'oceanography', 'meteorology', 'climate*', 'earth and space'] },
+    { symbol: '🪐', label: 'Astronomy', keywords: ['astronomy', 'astrophysics', 'space science', 'planetary', 'cosmology'] },
+    { symbol: '⚛️', label: 'Physics', keywords: ['physics', 'mechanics', 'electricity and magnetism', 'quantum*', 'thermodynamics'] },
+    { symbol: '🦠', label: 'Microbiology', keywords: ['microbiology', 'immunology', 'epidemiology', 'virology', 'pathology'] },
+    { symbol: '🌱', label: 'Environment & agriculture', keywords: ['environmental*', 'ecology', 'botany', 'plant*', 'agriculture', 'agri*', 'horticulture', 'sustainability', 'animal science', 'apes'] },
+    { symbol: '🩺', label: 'Health science & nursing', keywords: ['anatomy', 'physiology', 'nursing', 'medical*', 'medicine', 'pre med', 'health science', 'pharmacology', 'emt', 'sports medicine', 'kinesiology'] },
+    { symbol: '🧠', label: 'Psychology', keywords: ['psychology', 'psych', 'neuroscience', 'cognitive*', 'behavior*', 'behaviour*'] },
+    /* English and reading */
+    { symbol: '📚', label: 'English & literature', keywords: ['english', 'literature', 'lit', 'language arts', 'ela', 'british literature', 'american literature', 'world literature', 'english literature'] },
+    { symbol: '✍️', label: 'Writing', keywords: ['writing', 'composition', 'comp', 'creative writing', 'rhetoric', 'journalism', 'english language', 'lang', 'essay*', 'newspaper'] },
+    { symbol: '📖', label: 'Reading', keywords: ['reading', 'poetry', 'novel*', 'mythology', 'humanities', 'classics', 'shakespeare', 'intro to literature'] },
+    { symbol: '🗣️', label: 'Speech & debate', keywords: ['speech', 'debate', 'public speaking', 'communication*', 'oral*', 'model un'] },
+    /* History and social studies */
+    { symbol: '🏛️', label: 'History', keywords: ['~history', 'apush', 'ancient*', 'civilization*', 'western civ*', 'european history', 'us history', 'american history', 'medieval'] },
+    { symbol: '🗺️', label: 'World & geography', keywords: ['geography', 'world history', 'world studies', 'global studies', 'human geography', 'world cultures', 'international*'] },
+    { symbol: '⚖️', label: 'Government & law', keywords: ['government', 'gov', 'civics', 'law', 'legal', 'political science', 'politics', 'criminal justice', 'constitution*', 'business law'] },
+    { symbol: '💰', label: 'Economics & finance', keywords: ['economics', 'econ', 'microeconomics', 'macroeconomics', 'personal finance', 'financial*', 'finance', 'accounting', 'money'] },
+    { symbol: '👥', label: 'Sociology', keywords: ['sociology', 'anthropology', 'social studies', 'social science', 'social sciences', 'gender studies', 'ethnic studies', 'family studies'] },
+    { symbol: '🤔', label: 'Philosophy & ethics', keywords: ['philosophy', 'ethics', 'logic', 'critical thinking', 'theory of knowledge', 'tok'] },
+    /* Languages */
+    { symbol: '🇪🇸', label: 'Spanish', keywords: ['!spanish', '!espanol'] },
+    { symbol: '🇫🇷', label: 'French', keywords: ['!french', '!francais'] },
+    { symbol: '🇩🇪', label: 'German', keywords: ['!german', '!deutsch'] },
+    { symbol: '🇨🇳', label: 'Chinese', keywords: ['!chinese', '!mandarin', '!cantonese'] },
+    { symbol: '🇯🇵', label: 'Japanese', keywords: ['!japanese', '!nihongo'] },
+    { symbol: '🇮🇹', label: 'Italian', keywords: ['!italian', '!italiano'] },
+    { symbol: '🌐', label: 'Other languages', keywords: ['~language', '~languages', 'latin', 'arabic', 'russian', 'korean', 'portuguese', 'hebrew', 'greek', 'hindi', 'asl', 'sign language', 'linguistics', 'esl', 'ell', 'world language*', 'foreign language*'] },
+    /* Arts */
+    { symbol: '🎨', label: 'Art & design', keywords: ['~art', '~arts', 'studio art', 'visual art*', 'painting', 'drawing', 'ceramics', 'sculpture', '~design', 'graphic design', 'art history', 'fashion*', 'textiles'] },
+    { symbol: '🎭', label: 'Theatre', keywords: ['theatre', 'theater', 'drama', 'acting', 'stagecraft', 'musical theatre', 'improv', 'theatre arts', 'theater arts'] },
+    { symbol: '🎵', label: 'Music & choir', keywords: ['music', 'choir', 'chorus', 'vocal*', 'music theory', 'singing', 'a cappella', 'music appreciation'] },
+    { symbol: '🎺', label: 'Band', keywords: ['band', 'marching band', 'jazz band', 'concert band', 'wind ensemble', 'symphonic band', 'percussion', 'brass'] },
+    { symbol: '🎸', label: 'Guitar & modern music', keywords: ['guitar', 'piano', 'music production', 'music technology', 'songwriting', 'rock'] },
+    { symbol: '🎻', label: 'Orchestra', keywords: ['orchestra', 'strings', 'violin', 'viola', 'cello', 'string ensemble'] },
+    { symbol: '📷', label: 'Photography', keywords: ['photography', 'photo', 'yearbook', 'digital photography'] },
+    { symbol: '🎬', label: 'Film & media', keywords: ['film', 'video', 'cinema', 'film studies', '~media', 'broadcast*', 'animation', 'tv production'] },
+    { symbol: '💃', label: 'Dance', keywords: ['dance', 'ballet', 'choreography'] },
+    /* Tech */
+    { symbol: '💻', label: 'Computer science', keywords: ['computer science', 'cs', 'csa', 'csp', 'programming', 'coding', 'software*', 'web design', 'web development', 'computing', 'information technology', 'it', 'data structures', 'algorithms', 'cybersecurity', 'python', 'java'] },
+    { symbol: '🤖', label: 'Robotics & AI', keywords: ['robotics', 'robot*', 'ai', 'artificial intelligence', 'machine learning', 'automation'] },
+    { symbol: '⌨️', label: 'Keyboarding & computer skills', keywords: ['keyboarding', 'typing', 'computer applications', 'digital literacy', 'microsoft office', 'computer literacy'] },
+    { symbol: '🔧', label: 'Engineering & shop', keywords: ['engineering', 'shop', 'woodworking', 'woodshop', 'automotive', 'auto tech*', 'manufacturing', 'welding', 'construction', 'electronics', 'technology education', 'pltw', 'cte'] },
+    /* PE and health */
+    { symbol: '⚽', label: 'Sports', keywords: ['sports', 'soccer', 'athletics', 'football', 'lifetime sports', 'team sports', 'lacrosse', 'tennis'] },
+    { symbol: '🏀', label: 'Basketball & court sports', keywords: ['basketball', 'volleyball', 'badminton'] },
+    { symbol: '🏃', label: 'PE & fitness', keywords: ['pe', 'p e', 'physical education', 'phys ed', 'gym', 'fitness', 'exercise', 'weight training', 'weightlifting', 'strength*', 'track', 'cross country', 'conditioning', 'yoga'] },
+    { symbol: '🍎', label: 'Nutrition & teaching', keywords: ['nutrition', 'education', 'teaching', 'child development', 'early childhood', 'dietetics'] },
+    { symbol: '❤️', label: 'Health & wellness', keywords: ['health', 'wellness', 'health education', 'cpr', 'first aid', 'mental health'] },
+    { symbol: '🍳', label: 'Culinary', keywords: ['culinary', 'cooking', 'foods', 'baking', 'food science', 'family and consumer science*', 'fcs', 'hospitality'] },
+    /* Business */
+    { symbol: '💼', label: 'Business & careers', keywords: ['business', 'management', 'career*', 'office', 'internship', 'work study', 'leadership', 'administration'] },
+    { symbol: '📈', label: 'Marketing & entrepreneurship', keywords: ['marketing', 'entrepreneurship', 'entrepreneur*', 'investing', 'sales', 'advertising', 'deca', 'fbla'] },
+    /* Religion */
+    { symbol: '✝️', label: 'Theology & Bible', keywords: ['theology', 'bible', 'biblical', 'scripture', 'christian*', 'catholic*', 'church', 'old testament', 'new testament', 'ministry', 'catechism'] },
+    { symbol: '🙏', label: 'Religion & faith', keywords: ['religion', 'religions', 'religious*', 'world religions', 'faith', 'spirituality', 'chapel'] },
+    /* Everything else */
+    { symbol: '🎓', label: 'Seminar & college prep', keywords: ['seminar', 'capstone', 'senior project', 'college prep', 'college and career*', 'first year*', 'freshman seminar', 'orientation', 'avid', 'ap seminar', 'ap research'] },
+    { symbol: '📝', label: 'Study skills & test prep', keywords: ['study skills', 'study hall', 'test prep', 'sat', 'act', 'tutoring', 'advisory', 'homeroom', 'academic support'] },
+    { symbol: '🚗', label: 'Driver’s ed', keywords: ['driver*', 'drivers ed', 'drivers education', 'driver education', 'driving'] },
+    { symbol: '⭐', label: 'Elective', keywords: ['elective', 'enrichment', 'gifted', 'independent study'] }
+  ];
+  /* Accents fold to ASCII so "Español" and "Français" match their keywords. */
+  const foldName = s => normalizeName(String(s || '').normalize ? String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/['’]/g, '') : s);
+  let SYMBOL_MATCHERS = null;
+  function symbolMatchers() {
+    const out = [];
+    CLASS_SYMBOLS.forEach((s, idx) => {
+      for (const kw of s.keywords) {
+        const stem = /\*$/.test(kw), weak = /^~/.test(kw), strong = /^!/.test(kw);
+        const norm = foldName(kw.replace(/^[~!]|\*$/g, ''));
+        if (!norm) continue;
+        /* Longer keywords win; whole words beat stems of the same length; '~' marks a generic word
+           ("language", "science") that only counts when nothing more specific matches, and '!' a
+           language name that wins over the subject ("AP Spanish Literature" is Spanish). */
+        out.push({ re: new RegExp('(^| )' + norm + (stem ? '' : '(?= |$)')), len: (weak ? 1 : norm.length) + (strong ? 40 : 0) + (stem ? 0 : 0.5), idx });
+      }
+    });
+    return out;
+  }
+  /* suggestSymbol('AP Chemistry') -> '⚗️'; suggestSymbol('Spanish II') -> '🇪🇸'; '' when nothing fits. */
+  function suggestSymbol(name) {
+    const n = foldName(name);
+    if (!n) return '';
+    if (!SYMBOL_MATCHERS) SYMBOL_MATCHERS = symbolMatchers();
+    let best = null;
+    for (const m of SYMBOL_MATCHERS) {
+      if (m.re.test(n) && (!best || m.len > best.len || (m.len === best.len && m.idx < best.idx))) best = m;
+    }
+    return best ? CLASS_SYMBOLS[best.idx].symbol : '';
+  }
+  /* searchSymbols('chem') -> the symbols whose label or keywords contain every word of the query. */
+  function searchSymbols(query) {
+    const raw = String(query || '').trim();
+    const q = foldName(raw);
+    if (!q) return raw ? CLASS_SYMBOLS.filter(s => s.symbol === raw) : CLASS_SYMBOLS.slice();
+    const hay = s => foldName(s.label) + ' ' + s.keywords.map(k => foldName(k.replace(/^[~!]|\*$/g, ''))).join(' ');
+    return CLASS_SYMBOLS.filter(s => q.split(' ').every(t => hay(s).includes(t)));
+  }
+
+  /* Grade groups '9', '10', '11', '12' and 'college'; each course is { name, symbol, subject }. */
+  const course = (name, symbol, subject) => ({ name, symbol, subject });
+  const CLASS_CATALOG = [
+    { grade: '9', label: '9th grade', short: '9th', courses: [
+      course('English 9', '📚', 'English'), course('Honors English 9', '📚', 'English'),
+      course('Algebra I', '➗', 'Math'), course('Honors Algebra I', '➗', 'Math'), course('Geometry', '📐', 'Math'), course('Honors Geometry', '📐', 'Math'),
+      course('Biology', '🧬', 'Science'), course('Honors Biology', '🧬', 'Science'), course('Earth Science', '🌍', 'Science'), course('Physical Science', '🧪', 'Science'),
+      course('World History', '🗺️', 'Social Studies'), course('World Geography', '🗺️', 'Social Studies'), course('AP Human Geography', '🗺️', 'Social Studies'), course('Civics', '⚖️', 'Social Studies'),
+      course('Spanish I', '🇪🇸', 'World Languages'), course('Spanish II', '🇪🇸', 'World Languages'), course('French I', '🇫🇷', 'World Languages'), course('French II', '🇫🇷', 'World Languages'),
+      course('German I', '🇩🇪', 'World Languages'), course('Chinese I', '🇨🇳', 'World Languages'), course('Japanese I', '🇯🇵', 'World Languages'), course('Italian I', '🇮🇹', 'World Languages'),
+      course('Latin I', '🌐', 'World Languages'), course('American Sign Language I', '🌐', 'World Languages'),
+      course('Health', '❤️', 'PE & Health'), course('Physical Education', '🏃', 'PE & Health'),
+      course('Art I', '🎨', 'Arts'), course('Band', '🎺', 'Arts'), course('Choir', '🎵', 'Arts'), course('Orchestra', '🎻', 'Arts'), course('Theatre Arts I', '🎭', 'Arts'),
+      course('Intro to Computer Science', '💻', 'Technology'), course('Keyboarding & Computer Applications', '⌨️', 'Technology'), course('Intro to Engineering Design', '🔧', 'Technology'),
+      course('Intro to Business', '💼', 'Business'), course('Culinary Arts I', '🍳', 'Electives'), course('Freshman Seminar', '🎓', 'Electives'), course('Study Skills', '📝', 'Electives'),
+      course('Theology I', '✝️', 'Religion')
+    ] },
+    { grade: '10', label: '10th grade', short: '10th', courses: [
+      course('English 10', '📚', 'English'), course('Honors English 10', '📚', 'English'), course('Speech & Debate', '🗣️', 'English'), course('Journalism', '✍️', 'English'),
+      course('Geometry', '📐', 'Math'), course('Algebra II', '➗', 'Math'), course('Honors Algebra II', '➗', 'Math'),
+      course('Chemistry', '⚗️', 'Science'), course('Honors Chemistry', '⚗️', 'Science'), course('Biology', '🧬', 'Science'), course('Environmental Science', '🌱', 'Science'), course('AP Biology', '🧬', 'Science'),
+      course('World History', '🗺️', 'Social Studies'), course('AP World History', '🗺️', 'Social Studies'), course('AP European History', '🏛️', 'Social Studies'), course('Psychology', '🧠', 'Social Studies'),
+      course('Spanish II', '🇪🇸', 'World Languages'), course('Spanish III', '🇪🇸', 'World Languages'), course('French II', '🇫🇷', 'World Languages'), course('French III', '🇫🇷', 'World Languages'),
+      course('German II', '🇩🇪', 'World Languages'), course('Chinese II', '🇨🇳', 'World Languages'), course('Japanese II', '🇯🇵', 'World Languages'), course('Latin II', '🌐', 'World Languages'),
+      course('Health', '❤️', 'PE & Health'), course('Physical Education', '🏃', 'PE & Health'), course('Driver’s Education', '🚗', 'PE & Health'),
+      course('Art II', '🎨', 'Arts'), course('Ceramics', '🎨', 'Arts'), course('Band', '🎺', 'Arts'), course('Choir', '🎵', 'Arts'), course('Orchestra', '🎻', 'Arts'), course('Digital Photography', '📷', 'Arts'),
+      course('AP Computer Science Principles', '💻', 'Technology'), course('Web Design', '💻', 'Technology'), course('Robotics', '🤖', 'Technology'),
+      course('Personal Finance', '💰', 'Business'), course('Culinary Arts II', '🍳', 'Electives'), course('AP Seminar', '🎓', 'Electives'), course('Theology II', '✝️', 'Religion')
+    ] },
+    { grade: '11', label: '11th grade', short: '11th', courses: [
+      course('English 11', '📚', 'English'), course('American Literature', '📚', 'English'), course('AP English Language & Composition', '✍️', 'English'),
+      course('Algebra II', '➗', 'Math'), course('Precalculus', '📐', 'Math'), course('Honors Precalculus', '📐', 'Math'), course('AP Precalculus', '📐', 'Math'), course('AP Calculus AB', '🧮', 'Math'), course('Statistics', '📊', 'Math'),
+      course('Chemistry', '⚗️', 'Science'), course('AP Chemistry', '⚗️', 'Science'), course('Physics', '⚛️', 'Science'), course('Honors Physics', '⚛️', 'Science'), course('AP Physics 1', '⚛️', 'Science'),
+      course('AP Biology', '🧬', 'Science'), course('Anatomy & Physiology', '🩺', 'Science'), course('AP Environmental Science', '🌱', 'Science'), course('Forensic Science', '🧪', 'Science'),
+      course('US History', '🏛️', 'Social Studies'), course('AP US History', '🏛️', 'Social Studies'), course('Psychology', '🧠', 'Social Studies'), course('AP Psychology', '🧠', 'Social Studies'),
+      course('Spanish III', '🇪🇸', 'World Languages'), course('Spanish IV', '🇪🇸', 'World Languages'), course('French III', '🇫🇷', 'World Languages'), course('French IV', '🇫🇷', 'World Languages'),
+      course('German III', '🇩🇪', 'World Languages'), course('Chinese III', '🇨🇳', 'World Languages'),
+      course('Physical Education', '🏃', 'PE & Health'), course('AP Computer Science A', '💻', 'Technology'), course('AP Computer Science Principles', '💻', 'Technology'),
+      course('AP Art & Design', '🎨', 'Arts'), course('AP Music Theory', '🎵', 'Arts'), course('Band', '🎺', 'Arts'), course('Choir', '🎵', 'Arts'), course('Theatre Arts III', '🎭', 'Arts'),
+      course('Accounting', '💰', 'Business'), course('Marketing', '📈', 'Business'), course('SAT / ACT Prep', '📝', 'Electives'), course('World Religions', '🙏', 'Religion')
+    ] },
+    { grade: '12', label: '12th grade', short: '12th', courses: [
+      course('English 12', '📚', 'English'), course('AP English Literature & Composition', '📚', 'English'), course('British Literature', '📚', 'English'), course('Creative Writing', '✍️', 'English'),
+      course('Precalculus', '📐', 'Math'), course('Calculus', '🧮', 'Math'), course('AP Calculus AB', '🧮', 'Math'), course('AP Calculus BC', '🧮', 'Math'), course('Statistics', '📊', 'Math'), course('AP Statistics', '📊', 'Math'),
+      course('Physics', '⚛️', 'Science'), course('AP Physics 2', '⚛️', 'Science'), course('AP Physics C: Mechanics', '⚛️', 'Science'), course('AP Chemistry', '⚗️', 'Science'), course('AP Biology', '🧬', 'Science'),
+      course('Astronomy', '🪐', 'Science'), course('Marine Biology', '🧬', 'Science'),
+      course('Government', '⚖️', 'Social Studies'), course('AP US Government & Politics', '⚖️', 'Social Studies'), course('Economics', '💰', 'Social Studies'), course('AP Macroeconomics', '💰', 'Social Studies'),
+      course('AP Microeconomics', '💰', 'Social Studies'), course('Sociology', '👥', 'Social Studies'), course('AP Psychology', '🧠', 'Social Studies'), course('Philosophy', '🤔', 'Social Studies'),
+      course('Spanish IV', '🇪🇸', 'World Languages'), course('AP Spanish Language', '🇪🇸', 'World Languages'), course('AP French Language', '🇫🇷', 'World Languages'), course('AP Chinese Language', '🇨🇳', 'World Languages'),
+      course('Physical Education', '🏃', 'PE & Health'), course('Weight Training', '🏃', 'PE & Health'),
+      course('AP Art & Design', '🎨', 'Arts'), course('Band', '🎺', 'Arts'), course('Choir', '🎵', 'Arts'), course('Film Studies', '🎬', 'Arts'),
+      course('AP Computer Science A', '💻', 'Technology'), course('Cybersecurity', '💻', 'Technology'),
+      course('Entrepreneurship', '📈', 'Business'), course('Senior Seminar', '🎓', 'Electives'), course('AP Research', '🎓', 'Electives'), course('Theology IV: Christian Ethics', '✝️', 'Religion')
+    ] },
+    { grade: 'college', label: 'College', short: 'College', courses: [
+      course('English Composition I', '✍️', 'English'), course('English Composition II', '✍️', 'English'), course('Intro to Literature', '📖', 'English'), course('Public Speaking', '🗣️', 'English'),
+      course('College Algebra', '➗', 'Math'), course('Calculus I', '🧮', 'Math'), course('Calculus II', '🧮', 'Math'), course('Calculus III', '🧮', 'Math'), course('Linear Algebra', '➗', 'Math'),
+      course('Differential Equations', '🧮', 'Math'), course('Discrete Mathematics', '🧮', 'Math'), course('Statistics', '📊', 'Math'),
+      course('General Chemistry I', '⚗️', 'Science'), course('General Chemistry II', '⚗️', 'Science'), course('Organic Chemistry I', '⚗️', 'Science'), course('Organic Chemistry II', '⚗️', 'Science'),
+      course('Biology I', '🧬', 'Science'), course('Biology II', '🧬', 'Science'), course('Microbiology', '🦠', 'Science'), course('Anatomy & Physiology I', '🩺', 'Science'), course('Anatomy & Physiology II', '🩺', 'Science'),
+      course('Physics I', '⚛️', 'Science'), course('Physics II', '⚛️', 'Science'), course('Intro to Astronomy', '🪐', 'Science'),
+      course('Intro to Psychology', '🧠', 'Social Science'), course('Developmental Psychology', '🧠', 'Social Science'), course('Intro to Sociology', '👥', 'Social Science'),
+      course('Microeconomics', '💰', 'Social Science'), course('Macroeconomics', '💰', 'Social Science'), course('US History I', '🏛️', 'Social Science'), course('Western Civilization', '🏛️', 'Social Science'),
+      course('American Government', '⚖️', 'Social Science'), course('Intro to Philosophy', '🤔', 'Humanities'), course('World Religions', '🙏', 'Humanities'), course('Art History', '🎨', 'Humanities'),
+      course('Intro to Programming', '💻', 'Computer Science'), course('Data Structures', '💻', 'Computer Science'),
+      course('Financial Accounting', '💰', 'Business'), course('Principles of Management', '💼', 'Business'), course('Principles of Marketing', '📈', 'Business'),
+      course('Nursing Fundamentals', '🩺', 'Health'), course('Nutrition', '🍎', 'Health'),
+      course('Spanish 101', '🇪🇸', 'Languages'), course('French 101', '🇫🇷', 'Languages'), course('First-Year Seminar', '🎓', 'Electives')
+    ] }
+  ];
+  /* searchCatalog('chem') -> [{ name, symbol, subject, grades: ['10', '11', ...] }] across every grade,
+     one entry per course name, names that start with the query first. Matches every word of the
+     query inside the name or subject, or the course initials ("apush" style acronyms aside). */
+  function searchCatalog(query) {
+    const q = foldName(query);
+    if (!q) return [];
+    const toks = q.split(' ');
+    const byName = new Map();
+    for (const g of CLASS_CATALOG) {
+      for (const c of g.courses) {
+        const key = normalizeName(c.name);
+        const hay = key + ' ' + normalizeName(c.subject);
+        const initials = key.split(' ').map(w => w[0]).join('');
+        if (!toks.every(t => hay.includes(t)) && !(q.length > 2 && initials === q.replace(/ /g, ''))) continue;
+        const cur = byName.get(key);
+        if (cur) { if (!cur.grades.includes(g.grade)) cur.grades.push(g.grade); }
+        else byName.set(key, { name: c.name, symbol: c.symbol, subject: c.subject, grades: [g.grade] });
+      }
+    }
+    const rank = r => { const k = normalizeName(r.name); return k.startsWith(q) ? 0 : k.split(' ').some(w => w.startsWith(toks[0])) ? 1 : 2; };
+    const order = CLASS_CATALOG.map(g => g.grade);
+    return Array.from(byName.values()).sort((a, b) => (rank(a) - rank(b)) || (order.indexOf(a.grades[0]) - order.indexOf(b.grades[0])) || a.name.localeCompare(b.name));
+  }
   /* === FEATURE:CATALOG:CORE:END === */
 
   /* ---------- merge ---------- */
@@ -2967,7 +3433,7 @@ const Core = (function () {
     unfoldICS, decodeICSBytes, parseICSLine, parseICSDateTime, cleanCalendarName, isNonClassCalendar, parseICS, extractClassroomUrl, dueFromEvent, eventToAssignment,
     keywordWeight, priorityScore, scoreToPriority,
     parseQuickAdd, parseTodoPaste, mergeImported, computeStreak, last7Days, demoData,
-    MOODS, EVENT_PRESETS, eventPreset, VERSES, pickVerse, CLASS_CATALOG, CLASS_SYMBOLS
+    MOODS, EVENT_PRESETS, eventPreset, VERSES, pickVerse, CLASS_CATALOG, CLASS_SYMBOLS, suggestSymbol, searchSymbols, searchCatalog
   };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = Core;
@@ -3163,7 +3629,7 @@ const App = (function () {
     const norm = C.normalizeName(clean);
     let c = state.classes.find(x => C.normalizeName(x.sourceName || '') === norm) || state.classes.find(x => C.normalizeName(x.name) === norm);
     if (!c) {
-      c = { id: 'c_' + C.hash(norm), name: clean, sourceName: (opts.source === 'ics' || opts.source === 'paste') ? clean : '', color: nextColor(), emoji: '', hidden: false };
+      c = { id: 'c_' + C.hash(norm), name: clean, sourceName: (opts.source === 'ics' || opts.source === 'paste') ? clean : '', color: nextColor(), emoji: (C.suggestSymbol && C.suggestSymbol(clean)) || '', hidden: false };
       state.classes.push(c);
     } else if (opts.source === 'ics' && !c.sourceName) c.sourceName = clean;
     return c;
@@ -5014,11 +5480,17 @@ const App = (function () {
   /* === VIEW:CLASSES:JS:START === */
   /* By class view (spec 3.5): one card per class with a progress ring for the
      term, a stats row, its open items, a colour picker and inline rename.
+     The symbol tile opens a symbol picker (C.CLASS_SYMBOLS, free-text emoji as a
+     fallback), "Add classes" opens the catalog picker, and a class can be
+     deleted from its rename form (its assignments move to "No class").
      UI-only state (expanded lists, the card being edited) lives in memory. */
-  const clsUi = { expanded: new Set(), editing: null, draft: null, focus: null };
+  const clsUi = { expanded: new Set(), editing: null, draft: null, focus: null, justExpanded: null, popped: null };
   const CLS_NONE = '__none';
   const CLS_LIST_LIMIT = 5;
   const CLS_COLOR_NAMES = ['Blue', 'Orange', 'Teal', 'Amber', 'Pink', 'Green', 'Violet', 'Red'];
+  /* Classes just added from the catalog get a one-off highlight on their next render. */
+  const clsFresh = new Set();
+  let clsPrevView = null;
   /* Same mapping as classColorVar, so the checked swatch always matches the colour shown. */
   const classColorIndex = c => ((Number(c && c.color) || 1) - 1) % 8 + 1;
   /* Class ids can come from imported backups, so DOM ids are derived from a hash. */
@@ -5071,7 +5543,8 @@ const App = (function () {
     const pct = g.termTotal ? Math.round(g.termDone / g.termTotal * 100) : 0;
     const frac = g.termTotal ? g.termDone / g.termTotal : 0;
     const label = g.termTotal ? `${g.termDone} of ${g.termTotal} done this term, ${pct}%` : 'Nothing due this term yet';
-    const arc = frac > 0 ? html`<circle class="ring-arc" cx="44" cy="44" r="${R}" stroke-width="${SW}" stroke-dasharray="${CIRC.toFixed(2)}" stroke-dashoffset="${(CIRC * (1 - frac)).toFixed(2)}"/>` : '';
+    /* --circ lets the first render animate the arc from empty to its value. */
+    const arc = frac > 0 ? html`<circle class="ring-arc" cx="44" cy="44" r="${R}" stroke-width="${SW}" stroke-dasharray="${CIRC.toFixed(2)}" stroke-dashoffset="${(CIRC * (1 - frac)).toFixed(2)}" style="--circ: ${CIRC.toFixed(2)}"/>` : '';
     return html`<div class="cls-ring" role="img" aria-label="${label}" data-done="${g.termDone}" data-total="${g.termTotal}">
       <svg viewBox="0 0 88 88" aria-hidden="true" focusable="false"><circle class="ring-track" cx="44" cy="44" r="${R}" stroke-width="${SW}"/>${arc}</svg>
       <div class="cls-ring-label" aria-hidden="true"><span class="cls-ring-frac">${g.termDone}<small>/${g.termTotal}</small></span><span class="cls-ring-pct">${g.termTotal ? pct + '%' : 'term'}</span></div>
@@ -5080,20 +5553,29 @@ const App = (function () {
   function classStat(label, value, cls) {
     return html`<div class="cls-stat ${cls || ''}"><dt>${label}</dt><dd>${value}</dd></div>`;
   }
+  function classIcon(name, emoji) {
+    return emoji ? html`<span class="cls-glyph" aria-hidden="true">${emoji}</span>` : html`<span class="cls-initial" aria-hidden="true">${(String(name).match(/[A-Za-z0-9]/) || ['?'])[0].toUpperCase()}</span>`;
+  }
+  /* The symbol tile: a button that opens the symbol picker for real classes. */
+  function classSymTile(c, name, emoji) {
+    if (!c) return html`<div class="cls-emoji">${classIcon(name, emoji)}</div>`;
+    const pop = clsUi.popped === c.id ? 'is-popped' : '';
+    return html`<button type="button" class="cls-emoji cls-sym-btn ${pop}" data-action="classes-symbol" data-class="${c.id}" aria-haspopup="dialog" aria-expanded="${clsPop && clsPop.cid === c.id ? 'true' : 'false'}" aria-label="Change symbol for ${name}${emoji ? ' (now ' + emoji + ')' : ''}" title="Change symbol">${classIcon(name, emoji)}<span class="cls-sym-badge" aria-hidden="true"><svg><use href="#i-edit"/></svg></span></button>`;
+  }
   function classCardHead(g, n) {
     const c = g.cls;
     const name = c ? c.name : 'No class';
     const emoji = c ? (c.emoji || '') : '📥';
-    const icon = emoji ? html`<span aria-hidden="true">${emoji}</span>` : html`<span class="cls-initial" aria-hidden="true">${(name.match(/[A-Za-z0-9]/) || ['?'])[0].toUpperCase()}</span>`;
     if (c && clsUi.editing === c.id) {
       const d = clsUi.draft && clsUi.draft.id === c.id ? clsUi.draft : { name: c.name, emoji: c.emoji || '' };
       return html`<div class="cls-top">
-        <div class="cls-emoji">${icon}</div>
+        ${classSymTile(c, d.name || c.name, d.emoji)}
         <form class="cls-edit" data-class="${c.id}" aria-label="Rename ${c.name}">
-          <div class="field"><label for="${clsDomId('cls-emoji-', c.id)}">Emoji</label><input class="input emoji-input" id="${clsDomId('cls-emoji-', c.id)}" name="emoji" value="${d.emoji}" placeholder="🙂" maxlength="16" autocomplete="off"></div>
+          <div class="field"><label for="${clsDomId('cls-emoji-', c.id)}">Emoji</label><input class="input emoji-input" id="${clsDomId('cls-emoji-', c.id)}" name="emoji" value="${d.emoji}" placeholder="🙂" maxlength="16" autocomplete="off" title="Type any emoji, or tap the tile to pick a symbol"></div>
           <div class="field"><label for="${clsDomId('cls-name-', c.id)}">Class name</label><input class="input" id="${clsDomId('cls-name-', c.id)}" name="name" value="${d.name}" maxlength="80" required autocomplete="off"></div>
           <div class="cls-edit-foot">
             <span class="hint" title="${c.sourceName || ''}">${c.sourceName && c.sourceName !== d.name ? 'Calendar: ' + c.sourceName : 'Shown everywhere in the app'}</span>
+            <button type="button" class="btn btn-sm btn-ghost cls-del-btn" data-action="classes-delete" data-class="${c.id}"><svg aria-hidden="true"><use href="#i-x"/></svg>Delete<span class="sr-only"> class ${c.name}</span></button>
             <button type="button" class="btn btn-sm btn-ghost" data-action="classes-edit-cancel" data-class="${c.id}">Cancel</button>
             <button type="submit" class="btn btn-sm btn-primary">Save</button>
           </div>
@@ -5106,28 +5588,30 @@ const App = (function () {
     else if (g.open.length) sub = html`${g.open.length} open, no due date`;
     else sub = g.termTotal ? 'All caught up' : 'Nothing assigned yet';
     return html`<div class="cls-top">
-      <div class="cls-emoji">${icon}</div>
+      ${classSymTile(c, name, emoji)}
       <div class="cls-title">
         <h3 class="cls-name" id="${clsDomId('cls-h-', g.key)}" title="${name}">${name}</h3>
         <div class="cls-sub">${sub}</div>
       </div>
-      ${c ? html`<button class="btn btn-icon btn-sm btn-ghost cls-edit-btn" data-action="classes-edit" data-class="${c.id}" aria-expanded="false" aria-label="Rename or change emoji for ${name}" title="Rename / emoji"><svg><use href="#i-edit"/></svg></button>` : ''}
+      ${c ? html`<button class="btn btn-icon btn-sm btn-ghost cls-edit-btn" data-action="classes-edit" data-class="${c.id}" aria-expanded="false" aria-label="Rename, change emoji or delete ${name}" title="Rename / emoji / delete"><svg><use href="#i-edit"/></svg></button>` : ''}
     </div>`;
   }
-  function classCard(g, n, visIds) {
+  function classCard(g, n, visIds, idx) {
     const c = g.cls;
     const name = c ? c.name : 'No class';
     const list = classOpenSorted(g.open.filter(a => visIds.has(a.id)), n);
     const hiddenByFilter = g.open.length - list.length;
     const expanded = clsUi.expanded.has(g.key);
-    const shown = expanded ? list : list.slice(0, CLS_LIST_LIMIT);
     const est = C.formatDuration(g.estMin) || '0m';
     const estTitle = g.unestimated ? `${g.unestimated} item${g.unestimated === 1 ? '' : 's'} without an estimate counted as ${C.formatDuration(state.settings.defaultEstimateMin) || '0m'} each` : 'Sum of estimates for open items';
+    /* Items past the first five sit in their own group so "Show all" can ease them in. */
+    const extra = expanded ? list.slice(CLS_LIST_LIMIT) : [];
     const items = list.length
-      ? html`${shown.map(a => itemRow(a, { hideClass: true }))}${list.length > CLS_LIST_LIMIT ? html`<button class="btn btn-sm btn-ghost cls-more" data-action="classes-more" data-class="${g.key}" aria-expanded="${expanded ? 'true' : 'false'}">${expanded ? 'Show fewer' : 'Show all ' + list.length}</button>` : ''}`
+      ? html`${list.slice(0, CLS_LIST_LIMIT).map(a => itemRow(a, { hideClass: true }))}${extra.length ? html`<div class="cls-more-items ${clsUi.justExpanded === g.key ? 'is-anim' : ''}">${extra.map((a, j) => html`<div class="cls-more-row" style="--j: ${Math.min(j, 12)}">${itemRow(a, { hideClass: true })}</div>`)}</div>` : ''}${list.length > CLS_LIST_LIMIT ? html`<button class="btn btn-sm btn-ghost cls-more" data-action="classes-more" data-class="${g.key}" aria-expanded="${expanded ? 'true' : 'false'}">${expanded ? 'Show fewer' : 'Show all ' + list.length}<svg class="cls-more-chev" aria-hidden="true"><use href="#i-chev-r"/></svg></button>` : ''}`
       : html`<div class="empty">${hiddenByFilter ? 'Open items are hidden by your filters.' : g.termTotal ? 'All caught up here. 🎉' : 'Nothing assigned yet.'}</div>`;
     const swatches = c ? html`<fieldset class="cls-swatches" role="radiogroup" aria-label="Colour for ${name}">${PALETTE.map(i => html`<label class="cls-sw" style="--sc: var(--class-${i})" title="${CLS_COLOR_NAMES[i - 1]}"><input type="radio" name="${clsDomId('cls-color-', c.id)}" value="${i}" data-class="${c.id}" ${classColorIndex(c) === i ? 'checked' : ''} aria-label="${CLS_COLOR_NAMES[i - 1]}"><span></span></label>`)}</fieldset>` : html`<span class="cls-foot-note">Give these a class from each item’s edit dialog.</span>`;
-    return html`<article class="card cls-card ${c ? '' : 'is-unclassed'}" data-class="${g.key}" style="--c: ${c ? raw(classColorVar(c)) : 'var(--text-3)'}" aria-labelledby="${clsDomId('cls-h-', g.key)}">
+    const fresh = c && clsFresh.has(c.id) ? 'is-fresh' : '';
+    return html`<article class="card cls-card ${c ? '' : 'is-unclassed'} ${fresh} ${c && clsUi.editing === c.id ? 'is-editing' : ''}"data-class="${g.key}" style="--c: ${c ? raw(classColorVar(c)) : 'var(--text-3)'}; --i: ${Math.min(idx || 0, 10)}" aria-labelledby="${clsDomId('cls-h-', g.key)}">
       ${classCardHead(g, n)}
       ${c && clsUi.editing === c.id ? html`<h3 class="sr-only" id="${clsDomId('cls-h-', g.key)}">${name}</h3>` : ''}
       <div class="cls-summary">
@@ -5173,6 +5657,8 @@ const App = (function () {
     const n = now();
     if (clsUi.editing) { const ec = getClass(clsUi.editing); if (!ec || ec.hidden) { clsUi.editing = null; clsUi.draft = null; } }
     const kept = clsUi.focus ? null : classCaptureFocus(root);
+    /* Entrance animations (staggered cards, ring fill) play when the view is opened, not on every re-render. */
+    const entering = clsPrevView !== 'classes';
     const { groups, termStart } = classGroups(n);
     const f = state.ui.filters;
     const visIds = new Set(visible().filter(a => !a.done).map(a => a.id));
@@ -5181,9 +5667,11 @@ const App = (function () {
     if (f.classes.length) list = list.filter(g => f.classes.includes(g.key) || g.open.some(a => visIds.has(a.id) && isOverdue(a, n)));
     list.sort((a, b) => ((b.overdue > 0) - (a.overdue > 0)) || (b.open.length - a.open.length) || ((a.cls ? 0 : 1) - (b.cls ? 0 : 1)) || (a.cls ? a.cls.name : '').localeCompare(b.cls ? b.cls.name : ''));
     const hiddenClasses = state.classes.filter(c => c.hidden).length;
+    const shownClasses = state.classes.filter(c => !c.hidden).length;
     const termLabel = C.MONTHS[termStart.getMonth()] + ' ' + termStart.getDate() + ', ' + termStart.getFullYear();
-    const head = html`<div class="view-head">
-      <h2>By class</h2>
+    const head = html`<div class="view-head cls-head">
+      <h2>By class</h2>${shownClasses ? html`<span class="count-badge" title="${shownClasses} class${shownClasses === 1 ? '' : 'es'}">${shownClasses}</span>` : ''}
+      <button class="btn btn-primary cls-add-btn" data-action="open-class-picker" title="Pick classes from the catalog or make your own"><svg aria-hidden="true"><use href="#i-plus"/></svg>Add classes</button>
       <div class="cls-head-note">
         <span>Progress counts everything due since ${termLabel}.</span>
         ${f.classes.length ? html`<span>· Showing ${list.length} of ${totalCards}</span><button class="btn btn-sm btn-ghost" data-action="clear-filters">Clear filters</button>` : ''}
@@ -5191,12 +5679,20 @@ const App = (function () {
       </div>
     </div>`;
     if (!list.length) {
-      root.innerHTML = html`${head}<div class="card empty cls-empty"><div class="big">${totalCards ? 'No classes match your filters' : 'No classes yet'}</div>
-        <p style="margin-bottom:14px">${totalCards ? 'Clear the class filter to see every class.' : 'Classes appear when you import your Google Calendar .ics files or add an item with a #class tag.'}</p>
-        ${totalCards ? html`<button class="btn" data-action="clear-filters">Clear filters</button>` : html`<button class="btn btn-primary" data-action="open-import"><svg><use href="#i-upload"/></svg> Import calendars</button>`}</div>`;
+      root.innerHTML = totalCards
+        ? html`${head}<div class="card empty cls-empty"><div class="big">No classes match your filters</div>
+          <p style="margin-bottom:14px">Clear the class filter to see every class.</p><button class="btn" data-action="clear-filters">Clear filters</button></div>`
+        : html`${head}<div class="card empty cls-empty cls-empty-start">
+          <div class="cls-empty-art" aria-hidden="true"><span>🧬</span><span>📐</span><span>📚</span><span>🇪🇸</span><span>🎨</span></div>
+          <div class="big">No classes yet</div>
+          <p class="cls-empty-lead">Pick your classes from the catalog: 9th–12th grade and college, with a symbol for each. It takes about 30 seconds.</p>
+          <div class="cls-empty-actions"><button class="btn btn-primary btn-lg" data-action="open-class-picker"><svg aria-hidden="true"><use href="#i-plus"/></svg>Pick your classes from the catalog</button>
+          <button class="btn" data-action="open-import"><svg><use href="#i-upload"/></svg> Import calendars</button></div>
+          <p class="tiny faint">Classes also appear when you import your Google Calendar .ics files or add an item with a #class tag.</p></div>`;
     } else {
-      root.innerHTML = html`${head}<div class="cls-grid">${list.map(g => classCard(g, n, visIds))}</div>`;
+      root.innerHTML = html`${head}<div class="cls-grid ${entering ? 'is-entering' : ''}">${list.map((g, i) => classCard(g, n, visIds, i))}</div>`;
     }
+    clsFresh.clear(); clsUi.justExpanded = null; clsUi.popped = null;
     const want = clsUi.focus; clsUi.focus = null;
     if (want) { const el = root.querySelector(want); if (el) { try { el.focus({ preventScroll: false }); if (el.select && el.tagName === 'INPUT' && el.type === 'text') el.select(); } catch (e) { /* ignore */ } } }
     else if (kept) {
@@ -5223,6 +5719,191 @@ const App = (function () {
     save(); render();
     return true;
   }
+  /* Deleting a class moves its assignments to "No class" (undoable from the toast). */
+  function classDelete(id) {
+    const idx = state.classes.findIndex(c => c.id === id); if (idx < 0) return null;
+    const c = state.classes[idx];
+    const moved = state.assignments.filter(a => a.classId === id);
+    const ts = C.toISO(now());
+    for (const a of moved) { a.classId = null; a.updatedAt = ts; }
+    state.classes.splice(idx, 1);
+    const f = state.ui.filters, hadFilter = f.classes.includes(id);
+    f.classes = f.classes.filter(x => x !== id);
+    if (clsUi.editing === id) { clsUi.editing = null; clsUi.draft = null; }
+    clsUi.expanded.delete(id);
+    clsUi.focus = '.cls-add-btn';
+    recomputePriorities(); save(); render();
+    const undo = () => {
+      if (getClass(id)) return;
+      state.classes.splice(Math.min(idx, state.classes.length), 0, c);
+      for (const a of moved) if (a.classId == null) a.classId = id;
+      if (hadFilter && !state.ui.filters.classes.includes(id)) state.ui.filters.classes.push(id);
+      recomputePriorities(); save(); render();
+    };
+    toast('Deleted ' + (c.emoji ? c.emoji + ' ' : '') + c.name + (moved.length ? ' · ' + moved.length + ' assignment' + (moved.length === 1 ? '' : 's') + ' moved to No class' : ''), 'ok', { label: 'Undo', fn: undo });
+    return { cls: c, moved: moved.length };
+  }
+  async function classDeleteAsk(id) {
+    const c = getClass(id); if (!c) return;
+    const items = state.assignments.filter(a => a.classId === id);
+    const open = items.filter(a => !a.done && !a.archived).length;
+    const msg = items.length
+      ? `Its ${items.length} assignment${items.length === 1 ? '' : 's'} (${open} still open) will move to “No class”. Nothing else is deleted.`
+      : 'It has no assignments, so nothing else changes.';
+    const extra = c.sourceName ? ' It comes back the next time you import its calendar; to keep it out, hide it in Settings instead.' : '';
+    const ok = await confirmModal({ title: 'Delete ' + c.name + '?', message: msg + extra, ok: items.length ? 'Delete and move ' + items.length : 'Delete class', danger: true });
+    if (ok) classDelete(id);
+  }
+
+  /* ---- symbol picker popover (anchored to a card's tile; a bottom sheet on phones) ---- */
+  let clsPop = null;
+  function clsSymAnchor() { return clsPop ? document.querySelector(`.cls-sym-btn${clsSel('data-class', clsPop.cid)}`) : null; }
+  function clsSymClose(refocus) {
+    if (!clsPop) return;
+    const p = clsPop; clsPop = null;
+    p.el.remove(); p.scrim.remove();
+    window.removeEventListener('resize', clsSymPlace); window.removeEventListener('scroll', clsSymPlace, true);
+    const a = document.querySelector(`.cls-sym-btn${clsSel('data-class', p.cid)}`);
+    if (a) { a.setAttribute('aria-expanded', 'false'); if (refocus) a.focus(); }
+  }
+  function clsSymPlace() {
+    if (!clsPop) return;
+    const el = clsPop.el, a = clsSymAnchor();
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const sheet = vw <= 560;
+    el.classList.toggle('is-sheet', sheet); clsPop.scrim.classList.toggle('is-sheet', sheet);
+    if (sheet || !a) { el.style.left = ''; el.style.top = ''; return; }
+    const r = a.getBoundingClientRect(), w = el.offsetWidth, h = el.offsetHeight;
+    let top = r.bottom + 8;
+    if (top + h > vh - 12 && r.top - h - 8 >= 12) top = r.top - h - 8;
+    el.style.left = Math.round(Math.max(12, Math.min(r.left - 4, vw - w - 12))) + 'px';
+    el.style.top = Math.round(Math.max(12, Math.min(top, vh - h - 12))) + 'px';
+  }
+  function clsSymCurrent() {
+    const c = clsPop && getClass(clsPop.cid); if (!c) return '';
+    return clsPop.editing && clsUi.draft && clsUi.draft.id === c.id ? clsUi.draft.emoji : (c.emoji || '');
+  }
+  function clsSymGrid() {
+    const c = clsPop && getClass(clsPop.cid); if (!c) return;
+    const grid = clsPop.el.querySelector('.sym-grid');
+    const q = clsPop.el.querySelector('.sym-pop-search input').value;
+    const syms = C.searchSymbols ? C.searchSymbols(q) : (C.CLASS_SYMBOLS || []);
+    const cur = clsSymCurrent(), sug = C.suggestSymbol ? C.suggestSymbol(c.name) : '';
+    grid.innerHTML = syms.length
+      ? html`${syms.map(s => html`<button type="button" class="sym-opt ${s.symbol === sug ? 'is-suggested' : ''}" role="option" data-sym="${s.symbol}" aria-selected="${s.symbol === cur ? 'true' : 'false'}" aria-label="${s.label}${s.symbol === sug ? ' (suggested)' : ''}" title="${s.label}" tabindex="-1">${s.symbol}</button>`)}`
+      : html`<div class="sym-none">No symbol matches. Type any emoji below.</div>`;
+    const opts = Array.from(grid.querySelectorAll('.sym-opt'));
+    const on = opts.find(o => o.getAttribute('aria-selected') === 'true') || opts[0];
+    if (on) on.tabIndex = 0;
+  }
+  function clsSymOpen(cid) {
+    const c = getClass(cid); if (!c) return;
+    clsSymClose(false);
+    const scrim = document.createElement('div');
+    scrim.className = 'sym-scrim';
+    const el = document.createElement('div');
+    el.className = 'sym-pop';
+    el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true');
+    el.setAttribute('aria-label', 'Choose a symbol for ' + c.name);
+    clsPop = { cid, el, scrim, editing: clsUi.editing === cid };
+    const cur = clsSymCurrent();
+    const isPreset = (C.CLASS_SYMBOLS || []).some(s => s.symbol === cur);
+    el.innerHTML = html`<div class="sym-pop-head"><div class="sym-pop-title"><span>Choose a symbol</span><span class="faint">${c.name}</span></div><button type="button" class="btn btn-icon btn-sm btn-ghost" data-sym-close aria-label="Close"><svg><use href="#i-x"/></svg></button></div>
+      <div class="sym-pop-search"><svg aria-hidden="true"><use href="#i-search"/></svg><input class="input" type="search" placeholder="Search: chem, music, flag…" aria-label="Search symbols" autocomplete="off"></div>
+      <div class="sym-grid" role="listbox" aria-label="Symbols"></div>
+      <form class="sym-pop-foot"><label class="sym-free"><span>Or type any emoji</span><input class="input" name="free" maxlength="16" autocomplete="off" value="${isPreset ? '' : cur}" placeholder="🙂"></label><button type="submit" class="btn btn-sm">Use</button>${cur ? html`<button type="button" class="btn btn-sm btn-ghost" data-sym-clear>Remove</button>` : ''}</form>`;
+    document.body.appendChild(scrim); document.body.appendChild(el);
+    clsSymGrid();
+    const a = clsSymAnchor(); if (a) a.setAttribute('aria-expanded', 'true');
+    clsSymPlace();
+    window.addEventListener('resize', clsSymPlace); window.addEventListener('scroll', clsSymPlace, true);
+    scrim.addEventListener('mousedown', e => { e.preventDefault(); clsSymClose(true); });
+    el.addEventListener('click', e => {
+      const opt = e.target.closest('.sym-opt');
+      if (opt) { clsSymApply(cid, opt.dataset.sym); return; }
+      if (e.target.closest('[data-sym-close]')) { clsSymClose(true); return; }
+      if (e.target.closest('[data-sym-clear]')) clsSymApply(cid, '');
+    });
+    el.querySelector('.sym-pop-search input').addEventListener('input', () => clsSymGrid());
+    el.querySelector('.sym-pop-foot').addEventListener('submit', e => {
+      e.preventDefault();
+      const v = el.querySelector('[name="free"]').value.trim();
+      if (v) clsSymApply(cid, v); else el.querySelector('[name="free"]').focus();
+    });
+    el.addEventListener('keydown', e => {
+      /* Nothing typed here should reach the app's global shortcuts. */
+      e.stopPropagation();
+      if (e.key === 'Escape') { e.preventDefault(); clsSymClose(true); return; }
+      if (e.key === 'Tab') { classTrapTab(e, el); return; }
+      const grid = el.querySelector('.sym-grid');
+      const opts = Array.from(grid.querySelectorAll('.sym-opt'));
+      if (e.target.matches('.sym-pop-search input')) {
+        if (e.key === 'ArrowDown' && opts.length) { e.preventDefault(); classRove(opts, opts.find(o => o.tabIndex === 0) || opts[0]); }
+        else if (e.key === 'Enter') { e.preventDefault(); if (opts.length) clsSymApply(cid, opts[0].dataset.sym); }
+        return;
+      }
+      if (e.target.matches('.sym-opt')) classGridKeys(e, opts, e.target);
+    });
+    const start = el.querySelector('.sym-opt[tabindex="0"]') || el.querySelector('.sym-pop-search input');
+    if (start) start.focus({ preventScroll: true });
+  }
+  function clsSymApply(cid, sym) {
+    const c = getClass(cid); if (!c) { clsSymClose(false); return; }
+    const v = classFirstGrapheme(sym);
+    const editing = clsPop && clsPop.editing && clsUi.editing === cid;
+    clsSymClose(false);
+    clsUi.focus = `.cls-sym-btn${clsSel('data-class', cid)}`;
+    clsUi.popped = cid;
+    if (editing) {
+      const form = document.querySelector(`form.cls-edit${clsSel('data-class', cid)}`);
+      const nm = form ? form.querySelector('[name="name"]').value : (clsUi.draft && clsUi.draft.id === cid ? clsUi.draft.name : c.name);
+      clsUi.draft = { id: cid, name: nm, emoji: v };
+      render();
+      return;
+    }
+    c.emoji = v;
+    save(); render();
+  }
+  /* Shared keyboard helpers: a roving tabindex grid and a Tab trap for popovers. */
+  function classRove(items, el) {
+    for (const x of items) x.tabIndex = x === el ? 0 : -1;
+    el.focus(); el.scrollIntoView({ block: 'nearest' });
+  }
+  function classGridKeys(e, items, cur) {
+    const i = items.indexOf(cur); if (i < 0 || !items.length) return false;
+    let cols = 1; const top0 = items[0].offsetTop;
+    while (cols < items.length && items[cols].offsetTop === top0) cols++;
+    let j = i;
+    if (e.key === 'ArrowRight') j = i + 1; else if (e.key === 'ArrowLeft') j = i - 1;
+    else if (e.key === 'ArrowDown') j = i + cols < items.length ? i + cols : i;
+    else if (e.key === 'ArrowUp') j = i - cols >= 0 ? i - cols : i;
+    else if (e.key === 'Home') j = 0; else if (e.key === 'End') j = items.length - 1;
+    else return false;
+    e.preventDefault();
+    classRove(items, items[Math.max(0, Math.min(items.length - 1, j))]);
+    return true;
+  }
+  function classTrapTab(e, root) {
+    const f = Array.from(root.querySelectorAll('button, input, select, textarea, a[href], [tabindex]'))
+      .filter(x => !x.disabled && x.tabIndex >= 0 && x.offsetParent !== null);
+    if (!f.length) return;
+    const i = f.indexOf(document.activeElement);
+    if (e.shiftKey && i <= 0) { e.preventDefault(); f[f.length - 1].focus(); }
+    else if (!e.shiftKey && i === f.length - 1) { e.preventDefault(); f[0].focus(); }
+  }
+  on('render', p => {
+    clsPrevView = p && p.view;
+    if (!clsPop) return;
+    if (!p || p.view !== 'classes' || !clsSymAnchor()) clsSymClose(false);
+    else { clsSymAnchor().setAttribute('aria-expanded', 'true'); clsSymPlace(); }
+  });
+
+  registerAction('classes-symbol', (id, el) => {
+    const cid = el.dataset.class;
+    if (clsPop && clsPop.cid === cid) { clsSymClose(true); return; }
+    clsSymOpen(cid);
+  });
+  registerAction('classes-delete', (id, el) => { classDeleteAsk(el.dataset.class); });
   registerAction('classes-edit', (id, el) => {
     const cid = el.dataset.class; const c = getClass(cid); if (!c) return;
     clsUi.editing = cid; clsUi.draft = { id: cid, name: c.name, emoji: c.emoji || '' };
@@ -5237,7 +5918,7 @@ const App = (function () {
   });
   registerAction('classes-more', (id, el) => {
     const key = el.dataset.class;
-    if (clsUi.expanded.has(key)) clsUi.expanded.delete(key); else clsUi.expanded.add(key);
+    if (clsUi.expanded.has(key)) clsUi.expanded.delete(key); else { clsUi.expanded.add(key); clsUi.justExpanded = key; }
     clsUi.focus = `.cls-more${clsSel('data-class', key)}`;
     render();
   });
@@ -5825,7 +6506,7 @@ const App = (function () {
     if (n === C.normalizeName(clean)) return ensureClass(clean, { source: 'paste' });
     let c = state.classes.find(x => norm(x.sourceName || '') === n) || state.classes.find(x => norm(x.name) === n);
     if (!c) {
-      c = { id: 'c_' + C.hash(n), name: clean, sourceName: clean, color: nextColor(), emoji: '', hidden: false };
+      c = { id: 'c_' + C.hash(n), name: clean, sourceName: clean, color: nextColor(), emoji: (C.suggestSymbol && C.suggestSymbol(clean)) || '', hidden: false };
       state.classes.push(c);
     }
     return c;
@@ -7078,8 +7759,314 @@ const App = (function () {
   /* === VIEW:LOG:JS:END === */
 
   /* === FEATURE:CATALOG:JS:START === */
-  /* openClassPicker() opens the "Add classes" picker (catalog by grade + symbols). */
-  function openClassPicker() { toast('The class catalog is being built.', ''); }
+  /* openClassPicker() opens the "Add classes" picker: preset courses by grade
+     level (C.CLASS_CATALOG) in a segmented control, a search across every grade,
+     multi-select cards with a sticky "Add N classes" footer, and a custom class
+     form with a symbol grid (C.CLASS_SYMBOLS) and the 8 class colours.
+     Keyboard: Tab moves between regions, arrows move inside the tabs and grids,
+     Space selects a course, Enter adds, Esc clears the search and then closes. */
+  const CP_COLOR_NAMES = ['Blue', 'Orange', 'Teal', 'Amber', 'Pink', 'Green', 'Violet', 'Red'];
+  const CP_TINT = { Math: 1, Science: 3, English: 2, 'Social Studies': 4, 'Social Science': 4, Humanities: 4, 'World Languages': 5, Languages: 5, Arts: 7, Technology: 1, 'Computer Science': 1, 'PE & Health': 8, Health: 8, Business: 6, Electives: 7, Religion: 4 };
+  let cp = null;
+  const cpGroups = () => C.CLASS_CATALOG || [];
+  const cpKey = name => C.normalizeName(name) || ('u:' + String(name || '').trim().toLowerCase());
+  const cpSuggest = name => (C.suggestSymbol ? C.suggestSymbol(name) : '') || '';
+  const cpCoarse = () => !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+  function cpHave() {
+    const s = new Set();
+    for (const c of state.classes) { s.add(cpKey(c.name)); if (c.sourceName) s.add(cpKey(c.sourceName)); }
+    return s;
+  }
+  function cpFind(key) {
+    for (const g of cpGroups()) for (const c of g.courses) if (cpKey(c.name) === key) return c;
+    return null;
+  }
+  const cpGradeShort = g => (cpGroups().find(x => x.grade === g) || {}).short || g;
+  function cpCourses() {
+    if (cp.q.trim()) return C.searchCatalog ? C.searchCatalog(cp.q) : [];
+    const g = cpGroups().find(x => x.grade === cp.grade);
+    return g ? g.courses.map(c => Object.assign({ grades: [g.grade] }, c)) : [];
+  }
+  const cpQ = sel => cp && cp.m.querySelector(sel);
+
+  function cpRenderList(animate) {
+    const list = cpQ('#cp-list'); if (!list) return;
+    const items = cpCourses(), have = cpHave(), searching = !!cp.q.trim();
+    cpQ('.cp').classList.toggle('is-searching', searching);
+    list.innerHTML = items.length ? html`${items.map((c, i) => {
+      const k = cpKey(c.name), added = have.has(k), on = !added && cp.sel.has(k);
+      return html`<div class="cp-card ${added ? 'is-added' : ''} ${on ? 'is-on' : ''}" role="option" id="cp-o-${C.hash(k)}" data-key="${k}" aria-selected="${on ? 'true' : 'false'}" ${added ? raw('aria-disabled="true"') : ''} tabindex="-1" style="--i: ${Math.min(i, 16)}; --sc: var(--class-${CP_TINT[c.subject] || 7})">
+        <span class="cp-sym" aria-hidden="true">${c.symbol}</span>
+        <span class="cp-txt"><span class="cp-name">${c.name}</span><span class="cp-meta"><span>${c.subject}</span>${searching ? c.grades.map(g => html`<span class="cp-grade">${cpGradeShort(g)}</span>`) : ''}</span></span>
+        ${added ? html`<span class="cp-added">Added ✓</span>` : html`<span class="cp-check" aria-hidden="true"><svg><use href="#i-check"/></svg></span>`}
+      </div>`;
+    })}` : html`<div class="cp-none"><div class="cp-none-ico" aria-hidden="true">🔎</div><div class="big">No course matches “${cp.q.trim()}”</div><p>Check the spelling, or make it your own class.</p><button type="button" class="btn btn-primary btn-sm" data-cp="make-custom">＋ Create “${cp.q.trim()}”</button></div>`;
+    const opts = Array.from(list.querySelectorAll('.cp-card'));
+    const start = opts.find(o => o.dataset.key === cp.focusKey) || opts.find(o => !o.classList.contains('is-added')) || opts[0];
+    if (start) start.tabIndex = 0;
+    const g = cpGroups().find(x => x.grade === cp.grade);
+    const st = cpQ('#cp-status');
+    if (st) st.textContent = searching ? `${items.length} result${items.length === 1 ? '' : 's'} for “${cp.q.trim()}” in all grades` : `${g ? g.label : ''} · ${items.length} courses`;
+    if (animate) {
+      list.classList.remove('is-in'); void list.offsetWidth; list.classList.add('is-in');
+      const sc = cpQ('.cp-scroll'); if (sc) sc.scrollTop = 0;
+    }
+  }
+  function cpSetGrade(grade, focusTab) {
+    const groups = cpGroups(), i = groups.findIndex(g => g.grade === grade);
+    if (i < 0) return;
+    const changed = cp.grade !== grade || cp.q.trim();
+    cp.grade = grade;
+    state.ui.catalogGrade = grade; save();
+    const seg = cpQ('.cp-seg'); seg.style.setProperty('--i', i);
+    seg.querySelectorAll('.cp-seg-btn').forEach(b => { const on = b.dataset.grade === grade; b.setAttribute('aria-selected', on ? 'true' : 'false'); b.tabIndex = on ? 0 : -1; if (on && focusTab) b.focus(); });
+    if (cp.q) { cp.q = ''; cpQ('#cp-q').value = ''; }
+    if (changed) { cp.focusKey = null; cpRenderList(true); }
+  }
+  function cpUpdateFoot() {
+    const n = cp.sel.size, add = cpQ('.cp-add'), tray = cpQ('.cp-tray');
+    if (!add) return;
+    add.disabled = !n;
+    add.textContent = n ? `Add ${n} class${n === 1 ? '' : 'es'}` : 'Add classes';
+    add.classList.remove('is-bump'); if (n) { void add.offsetWidth; add.classList.add('is-bump'); }
+    const vals = Array.from(cp.sel.values());
+    tray.innerHTML = n
+      ? html`<span class="cp-tray-syms" aria-hidden="true">${vals.slice(-5).map(c => html`<span>${c.symbol}</span>`)}</span><span class="cp-tray-text"><b>${n} selected</b><span class="cp-tray-names"> · ${vals.map(c => c.name).join(', ')}</span></span><button type="button" class="btn btn-sm btn-ghost cp-clear" data-cp="clear">Clear</button>`
+      : html`<span class="cp-tray-text faint">${cp.added ? cp.added + ' added so far · pick more or close' : 'Tap every class you take this year'}</span>`;
+    const close = cpQ('.cp-cancel'); if (close) close.textContent = cp.added && !n ? 'Done' : 'Cancel';
+  }
+  function cpToggle(card) {
+    if (!card) return;
+    cp.focusKey = card.dataset.key;
+    if (card.getAttribute('aria-disabled') === 'true') {
+      card.classList.remove('is-nudge'); void card.offsetWidth; card.classList.add('is-nudge');
+      return;
+    }
+    const k = card.dataset.key, course = cpFind(k); if (!course) return;
+    if (cp.sel.has(k)) cp.sel.delete(k); else cp.sel.set(k, course);
+    const on = cp.sel.has(k);
+    card.classList.toggle('is-on', on); card.setAttribute('aria-selected', on ? 'true' : 'false');
+    card.classList.remove('is-pop'); void card.offsetWidth; card.classList.add('is-pop');
+    cpUpdateFoot();
+  }
+  /* Creating classes: ensureClass gives each a colour; the catalog symbol becomes its emoji. */
+  function cpCommit(list) {
+    const added = [];
+    for (const c of list) {
+      if (cpHave().has(cpKey(c.name))) continue;
+      let cls = null;
+      if (C.normalizeName(c.name)) cls = ensureClass(c.name);
+      else { cls = { id: 'c_' + C.hash('u:' + c.name), name: c.name, sourceName: '', color: nextColor(), emoji: '', hidden: false }; state.classes.push(cls); }
+      if (!cls) continue;
+      cls.emoji = c.symbol || '';
+      if (c.color) cls.color = c.color;
+      added.push(cls);
+    }
+    if (!added.length) return added;
+    for (const c of added) if (typeof clsFresh !== 'undefined') clsFresh.add(c.id);
+    recomputePriorities(); save(true); render();
+    const ids = added.map(c => c.id);
+    const label = c => (c.emoji ? c.emoji + ' ' : '') + c.name;
+    toast(added.length === 1 ? 'Added ' + label(added[0]) : 'Added ' + added.length + ' classes: ' + added.slice(0, 3).map(label).join(', ') + (added.length > 3 ? ' +' + (added.length - 3) + ' more' : ''), 'ok', { label: 'Undo', fn: () => cpUndo(ids) });
+    return added;
+  }
+  function cpUndo(ids) {
+    const used = new Set(state.assignments.map(a => a.classId));
+    state.classes = state.classes.filter(c => !ids.includes(c.id) || used.has(c.id));
+    state.ui.filters.classes = state.ui.filters.classes.filter(id => getClass(id));
+    save(); render();
+    if (cp) { cpRenderList(false); cpUpdateFoot(); }
+  }
+  function cpAddSelected(fallbackCard) {
+    if (!cp) return;
+    if (!cp.sel.size && fallbackCard && fallbackCard.getAttribute('aria-disabled') !== 'true') cpToggle(fallbackCard);
+    if (!cp.sel.size) return;
+    const list = Array.from(cp.sel.values());
+    cp.sel.clear();
+    closeModal();
+    cpCommit(list);
+  }
+
+  /* ---- custom class ---- */
+  function cpCustomSymbol() { return cp.symbol || cpSuggest(cpQ('#cp-name').value); }
+  function cpRenderPreview(pop) {
+    const name = cpQ('#cp-name').value.trim();
+    const sym = cpCustomSymbol(), sug = cpSuggest(name);
+    const pv = cpQ('.cp-preview-sym');
+    pv.style.setProperty('--c', 'var(--class-' + cp.color + ')');
+    pv.innerHTML = sym ? html`${sym}` : html`<span class="cp-initial">${(name.match(/[A-Za-z0-9]/) || ['?'])[0].toUpperCase()}</span>`;
+    if (pop) { pv.classList.remove('is-pop'); void pv.offsetWidth; pv.classList.add('is-pop'); }
+    const s = (C.CLASS_SYMBOLS || []).find(x => x.symbol === sug);
+    cpQ('.cp-suggest').innerHTML = !name
+      ? html`<span>Type a name and a symbol is suggested for you.</span>`
+      : sug && cp.symbol && cp.symbol !== sug
+        ? html`<span>Suggested: ${sug} ${s ? s.label : ''}</span><button type="button" class="btn btn-sm btn-ghost" data-cp="use-suggest">Use ${sug}</button>`
+        : sug ? html`<span class="cp-sug-on"><span class="dot" style="--c: var(--ok)"></span>Suggested symbol: ${sug} ${s ? s.label : ''}</span>` : html`<span>No match, so pick a symbol below (optional).</span>`;
+    cpQ('.cp-syms').querySelectorAll('.sym-opt').forEach(o => {
+      o.setAttribute('aria-selected', o.dataset.sym === sym ? 'true' : 'false');
+      o.classList.toggle('is-suggested', o.dataset.sym === sug);
+    });
+  }
+  function cpRenderSyms() {
+    const grid = cpQ('.cp-syms');
+    const syms = C.searchSymbols ? C.searchSymbols(cp.symQ) : (C.CLASS_SYMBOLS || []);
+    grid.innerHTML = syms.length
+      ? html`${syms.map(s => html`<button type="button" class="sym-opt" role="option" data-sym="${s.symbol}" aria-selected="false" aria-label="${s.label}" title="${s.label}" tabindex="-1">${s.symbol}</button>`)}`
+      : html`<div class="sym-none">No symbol matches “${cp.symQ}”.</div>`;
+    cpRenderPreview(false);
+    const opts = Array.from(grid.querySelectorAll('.sym-opt'));
+    const on = opts.find(o => o.getAttribute('aria-selected') === 'true') || opts[0];
+    if (on) on.tabIndex = 0;
+  }
+  function cpPickSymbol(sym) {
+    cp.symbol = cp.symbol === sym ? '' : sym;
+    cpRenderPreview(true);
+  }
+  function cpAddCustom() {
+    const inp = cpQ('#cp-name');
+    const name = inp.value.trim().slice(0, 80);
+    if (!name) {
+      inp.setAttribute('aria-invalid', 'true');
+      inp.classList.remove('is-shake'); void inp.offsetWidth; inp.classList.add('is-shake');
+      cpQ('.cp-suggest').innerHTML = html`<span style="color:var(--danger)">Give your class a name first.</span>`;
+      inp.focus();
+      return;
+    }
+    inp.removeAttribute('aria-invalid');
+    if (cpHave().has(cpKey(name))) { toast('You already have ' + name + '.', 'err'); inp.select(); return; }
+    const added = cpCommit([{ name, symbol: cpCustomSymbol(), color: cp.color }]);
+    if (!cp || !cp.m.isConnected) return;
+    cp.added += added.length;
+    inp.value = ''; cp.symbol = ''; cp.symQ = ''; cpQ('#cp-sym-q').value = '';
+    cp.color = nextColor();
+    const r = cpQ(`.cp-sw input[value="${cp.color}"]`); if (r) r.checked = true;
+    cpRenderSyms(); cpRenderList(false); cpUpdateFoot();
+    inp.focus();
+  }
+  function cpSetPane(pane, focus) {
+    cp.pane = pane;
+    cpQ('.cp').dataset.pane = pane;
+    const t = cpQ('.cp-custom-toggle'); t.setAttribute('aria-pressed', pane === 'custom' ? 'true' : 'false');
+    if (focus) { const el = pane === 'custom' ? cpQ('#cp-name') : cpQ('#cp-q'); if (el) el.focus(); }
+  }
+
+  function openClassPicker(opts) {
+    opts = opts || {};
+    const groups = cpGroups();
+    if (!groups.length) { toast('The class catalog is not available.', 'err'); return null; }
+    const grade = groups.some(g => g.grade === (opts.grade || state.ui.catalogGrade)) ? (opts.grade || state.ui.catalogGrade) : groups[0].grade;
+    const gi = groups.findIndex(g => g.grade === grade);
+    const color = nextColor();
+    const body = html`<div class="cp" data-pane="catalog">
+      <div class="cp-top">
+        <div class="cp-seg" role="tablist" aria-label="Grade level" style="--n: ${groups.length}; --i: ${gi}">
+          <span class="cp-seg-thumb" aria-hidden="true"></span>
+          ${groups.map(g => html`<button type="button" class="cp-seg-btn" role="tab" id="cp-tab-${g.grade}" data-grade="${g.grade}" aria-selected="${g.grade === grade ? 'true' : 'false'}" aria-controls="cp-list" tabindex="${g.grade === grade ? 0 : -1}" title="${g.label}">${g.short}</button>`)}
+        </div>
+        <div class="cp-searchrow">
+          <div class="cp-search"><svg aria-hidden="true"><use href="#i-search"/></svg><input class="input" type="search" id="cp-q" placeholder="Search all grades: chem, AP, Spanish…" aria-label="Search courses in every grade" aria-controls="cp-list" autocomplete="off" enterkeyhint="search"></div>
+          <button type="button" class="btn cp-custom-toggle" aria-pressed="false" aria-controls="cp-custom"><svg aria-hidden="true"><use href="#i-edit"/></svg>Custom</button>
+        </div>
+      </div>
+      <div class="cp-main">
+        <section class="cp-catalog" aria-label="Course catalog">
+          <div class="cp-list-head"><span id="cp-status" aria-live="polite"></span><span class="cp-keys"><span class="kbd">Space</span> select <span class="kbd">Enter</span> add</span></div>
+          <div class="cp-scroll"><div class="cp-grid" id="cp-list" role="listbox" aria-multiselectable="true" aria-labelledby="cp-status"></div></div>
+        </section>
+        <aside class="cp-custom" id="cp-custom" aria-labelledby="cp-custom-h">
+          <form class="cp-custom-form" autocomplete="off" novalidate>
+            <div class="cp-custom-headrow"><h3 id="cp-custom-h">Custom class</h3><button type="button" class="btn btn-sm btn-ghost cp-back" data-cp="back"><svg aria-hidden="true"><use href="#i-chev-l"/></svg>Catalog</button></div>
+            <div class="cp-preview"><span class="cp-preview-sym" aria-hidden="true"></span><div class="field grow"><label for="cp-name">Class name</label><input class="input" id="cp-name" maxlength="80" placeholder="e.g. Marine Biology, Period 4" enterkeyhint="done"></div></div>
+            <div class="cp-suggest" aria-live="polite"></div>
+            <div class="field"><label for="cp-sym-q">Symbol</label><div class="cp-search cp-search-sm"><svg aria-hidden="true"><use href="#i-search"/></svg><input class="input" id="cp-sym-q" type="search" placeholder="Search symbols: music, lab, flag…" autocomplete="off"></div></div>
+            <div class="cp-syms sym-grid" role="listbox" aria-label="Symbols"></div>
+            <fieldset class="cp-colors"><legend class="label">Colour</legend><div class="cp-swatches">${PALETTE.map(i => html`<label class="cp-sw" style="--sc: var(--class-${i})" title="${CP_COLOR_NAMES[i - 1]}"><input type="radio" name="cp-color" value="${i}" ${i === color ? 'checked' : ''} aria-label="${CP_COLOR_NAMES[i - 1]}"><span></span></label>`)}</div></fieldset>
+            <button type="submit" class="btn btn-primary cp-custom-add"><svg aria-hidden="true"><use href="#i-plus"/></svg>Add custom class</button>
+          </form>
+        </aside>
+      </div>
+    </div>`;
+    const footer = html`<div class="cp-tray" aria-live="polite"></div><button type="button" class="btn cp-cancel" data-cp="cancel">Cancel</button><button type="button" class="btn btn-primary cp-add" data-cp="add" disabled>Add classes</button>`;
+    const m = openModal({ title: 'Add classes', body, footer, wide: true, onClose: () => { cp = null; } });
+    m.classList.add('cp-modal');
+    cp = { m, grade, q: '', sel: new Map(), symbol: '', symQ: '', color, pane: 'catalog', added: 0, focusKey: null };
+    state.ui.catalogGrade = grade;
+    cpRenderList(true); cpRenderSyms(); cpUpdateFoot();
+
+    m.addEventListener('click', e => {
+      const t = e.target;
+      const tab = t.closest('.cp-seg-btn'); if (tab) { cpSetGrade(tab.dataset.grade, false); return; }
+      const card = t.closest('.cp-card');
+      if (card) { const opts2 = Array.from(m.querySelectorAll('.cp-card')); opts2.forEach(o => { o.tabIndex = o === card ? 0 : -1; }); cpToggle(card); return; }
+      const sym = t.closest('.cp-syms .sym-opt'); if (sym) { cpPickSymbol(sym.dataset.sym); return; }
+      if (t.closest('.cp-custom-toggle')) { cpSetPane(cp.pane === 'custom' ? 'catalog' : 'custom', true); return; }
+      const act = t.closest('[data-cp]'); if (!act) return;
+      const a = act.dataset.cp;
+      if (a === 'add') cpAddSelected();
+      else if (a === 'cancel') closeModal();
+      else if (a === 'clear') { cp.sel.clear(); cpRenderList(false); cpUpdateFoot(); const q = cpQ('#cp-q'); if (q) q.focus(); }
+      else if (a === 'back') cpSetPane('catalog', true);
+      else if (a === 'use-suggest') { cp.symbol = ''; cpRenderPreview(true); }
+      else if (a === 'make-custom') { cpQ('#cp-name').value = cp.q.trim().slice(0, 80); cpSetPane('custom', true); cpRenderPreview(true); }
+    });
+    m.addEventListener('input', e => {
+      if (e.target.id === 'cp-q') { cp.q = e.target.value; cp.focusKey = null; cpRenderList(true); }
+      else if (e.target.id === 'cp-name') { e.target.removeAttribute('aria-invalid'); cpRenderPreview(false); }
+      else if (e.target.id === 'cp-sym-q') { cp.symQ = e.target.value; cpRenderSyms(); }
+    });
+    m.addEventListener('change', e => {
+      if (e.target.name === 'cp-color') { cp.color = parseInt(e.target.value, 10) || 1; cpRenderPreview(true); }
+    });
+    m.querySelector('.cp-custom-form').addEventListener('submit', e => { e.preventDefault(); cpAddCustom(); });
+    m.addEventListener('keydown', e => {
+      const t = e.target;
+      if (e.key === 'Tab') { e.stopPropagation(); classTrapTab(e, m); return; }
+      if (t.matches('.cp-seg-btn')) {
+        const tabs = Array.from(m.querySelectorAll('.cp-seg-btn')), i = tabs.indexOf(t);
+        let j = -1;
+        if (e.key === 'ArrowRight') j = (i + 1) % tabs.length; else if (e.key === 'ArrowLeft') j = (i - 1 + tabs.length) % tabs.length;
+        else if (e.key === 'Home') j = 0; else if (e.key === 'End') j = tabs.length - 1;
+        else if (e.key === 'ArrowDown') { e.preventDefault(); cpQ('#cp-q').focus(); return; }
+        if (j >= 0) { e.preventDefault(); cpSetGrade(tabs[j].dataset.grade, true); }
+        return;
+      }
+      if (t.id === 'cp-q') {
+        const first = m.querySelector('.cp-card[tabindex="0"]') || m.querySelector('.cp-card');
+        if (e.key === 'ArrowDown' && first) { e.preventDefault(); classRove(Array.from(m.querySelectorAll('.cp-card')), first); }
+        else if (e.key === 'Enter') { e.preventDefault(); if (cp.sel.size) cpAddSelected(); else if (first) classRove(Array.from(m.querySelectorAll('.cp-card')), first); }
+        else if (e.key === 'Escape' && t.value) { e.preventDefault(); e.stopPropagation(); t.value = ''; cp.q = ''; cpRenderList(true); }
+        return;
+      }
+      if (t.matches('.cp-card')) {
+        const cards = Array.from(m.querySelectorAll('.cp-card'));
+        if (classGridKeys(e, cards, t)) { cp.focusKey = document.activeElement.dataset.key; return; }
+        if (e.key === ' ' || e.key === 'Spacebar') { e.preventDefault(); cpToggle(t); }
+        else if (e.key === 'Enter') { e.preventDefault(); cpAddSelected(t); }
+        else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) { cpQ('#cp-q').focus(); }
+        return;
+      }
+      if (t.id === 'cp-sym-q') {
+        const opts2 = Array.from(m.querySelectorAll('.cp-syms .sym-opt'));
+        if (e.key === 'ArrowDown' && opts2.length) { e.preventDefault(); classRove(opts2, opts2.find(o => o.tabIndex === 0) || opts2[0]); }
+        else if (e.key === 'Enter') { e.preventDefault(); if (opts2.length) { cp.symbol = ''; cpPickSymbol(opts2[0].dataset.sym); } }
+        else if (e.key === 'Escape' && t.value) { e.preventDefault(); e.stopPropagation(); t.value = ''; cp.symQ = ''; cpRenderSyms(); }
+        return;
+      }
+      if (t.matches('.cp-syms .sym-opt')) classGridKeys(e, Array.from(m.querySelectorAll('.cp-syms .sym-opt')), t);
+    });
+    /* Start in the search box on keyboards; on touch screens keep the keyboard closed. Focus moves
+       into the dialog at once (so an early Tab cannot land behind it) and again after openModal's
+       own delayed focus. */
+    const focusStart = () => {
+      if (!cp || cp.m !== m) return;
+      const el = cpCoarse() ? m.querySelector('.cp-seg-btn[aria-selected="true"]') : m.querySelector('#cp-q');
+      if (el && document.activeElement !== el && !(m.contains(document.activeElement) && document.activeElement !== m.querySelector('.cp-seg-btn'))) el.focus({ preventScroll: true });
+    };
+    focusStart();
+    setTimeout(focusStart, 40);
+    return m;
+  }
+  registerAction('open-class-picker', (id, el) => openClassPicker(el && el.dataset.grade ? { grade: el.dataset.grade } : null));
   /* === FEATURE:CATALOG:JS:END === */
 
   /* ---------- views registry & rendering ---------- */
