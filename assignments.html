@@ -2029,7 +2029,8 @@ const Core = (function () {
   /* === FEATURE:LOG:CORE:START === */
   /* Bible verses (public-domain text) and pure log helpers. */
   const VERSES = [];
-  function pickVerse(seed, exceptRef) { return null; }
+  /* pickVerse(rand in [0,1), exceptRef) -> { ref, text } (never exceptRef when another exists), or null if VERSES is empty. */
+  function pickVerse(rand, exceptRef) { return null; }
   /* === FEATURE:LOG:CORE:END === */
 
   /* === FEATURE:CATALOG:CORE:START === */

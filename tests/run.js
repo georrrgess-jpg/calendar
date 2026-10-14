@@ -498,5 +498,11 @@ test('year boundary: a late-December date seen in early January is last year, no
 });
 /* === FEATURE:PASTE:TESTS:END === */
 
+/* === FEATURE:LOG:TESTS:START === */
+/* === FEATURE:LOG:TESTS:END === */
+
+/* === FEATURE:CATALOG:TESTS:START === */
+/* === FEATURE:CATALOG:TESTS:END === */
+
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
 if (failed) { console.log('Failed: ' + failures.join(', ')); process.exit(1); }
