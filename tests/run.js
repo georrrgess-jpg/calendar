@@ -711,5 +711,8 @@ test('searchSymbols filters by label and keywords', () => {
 });
 /* === FEATURE:CATALOG:TESTS:END === */
 
+/* === FEATURE:CHECKLIST:TESTS:START === */
+/* === FEATURE:CHECKLIST:TESTS:END === */
+
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
 if (failed) { console.log('Failed: ' + failures.join(', ')); process.exit(1); }

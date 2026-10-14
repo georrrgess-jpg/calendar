@@ -2012,6 +2012,12 @@ body:has(#pomo-chip) .toasts { bottom: calc(80px + var(--safe-b)); }
 @keyframes cp-sheet-in { from { transform: translateY(40px); opacity: 0.4; } }
 /* === FEATURE:CATALOG:CSS:END === */
 
+/* === FEATURE:CHECKLIST:CSS:START === */
+/* === FEATURE:CHECKLIST:CSS:END === */
+
+/* === FEATURE:ASSIGN:CSS:START === */
+/* === FEATURE:ASSIGN:CSS:END === */
+
 /* ==========================================================================
    Responsive
    ========================================================================== */
@@ -3571,6 +3577,24 @@ const Core = (function () {
   }
   /* === FEATURE:CATALOG:CORE:END === */
 
+  /* checklistDue(item, dayKey): is this checklist item scheduled on that day? */
+  function checklistDue(item, key) {
+    const d = fromDayKey(key); if (!item || !d) return false;
+    const r = item.repeat || {}, dow = d.getDay();
+    const created = item.createdAt ? startOfDay(new Date(item.createdAt)) : null;
+    if (r.type !== 'once' && created && d < created) return false;
+    switch (r.type) {
+      case 'once': return r.date === key;
+      case 'weekdays': return dow >= 1 && dow <= 5;
+      case 'weekends': return dow === 0 || dow === 6;
+      case 'weekly': return Array.isArray(r.days) && r.days.includes(dow);
+      default: return true;
+    }
+  }
+
+  /* === FEATURE:CHECKLIST:CORE:START === */
+  /* === FEATURE:CHECKLIST:CORE:END === */
+
   /* ---------- merge ---------- */
   function mergeImported(existing, incoming, now) {
     now = now || new Date();
@@ -3672,7 +3696,7 @@ const Core = (function () {
     unfoldICS, decodeICSBytes, parseICSLine, parseICSDateTime, cleanCalendarName, isNonClassCalendar, parseICS, extractClassroomUrl, dueFromEvent, eventToAssignment,
     keywordWeight, priorityScore, scoreToPriority,
     parseQuickAdd, parseTodoPaste, mergeImported, computeStreak, last7Days, demoData,
-    MOODS, EVENT_PRESETS, eventPreset, VERSES, pickVerse, CLASS_CATALOG, CLASS_SYMBOLS, suggestSymbol, searchSymbols, searchCatalog
+    checklistDue, MOODS, EVENT_PRESETS, eventPreset, VERSES, pickVerse, CLASS_CATALOG, CLASS_SYMBOLS, suggestSymbol, searchSymbols, searchCatalog
   };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = Core;
@@ -3737,6 +3761,9 @@ const App = (function () {
          { weight: number|null, mood: 'good'|'medium'|'bad'|null, note: string,
            verse: { ref, text }|null, events: [{ id, type, label, time: 'HH:MM'|'' }], updatedAt } */
       log: { days: {} },
+      /* Daily checklist. items: [{ id, title, icon, repeat: { type: 'daily'|'weekdays'|'weekends'|'weekly'|'once', days: [0-6], date: 'YYYY-MM-DD' }, createdAt, archived }]
+         done: { 'YYYY-MM-DD': [itemId, ...] } */
+      checklist: { items: [], done: {} },
       ui: { view: 'overview', filters: { classes: [], priorities: [], hideDone: true, search: '' }, lastImport: null, activeId: null, activeSince: null, monthCursor: null, weekCursor: null }
     };
   }
@@ -3764,9 +3791,14 @@ const App = (function () {
       if (a.due && !C.parseISO(a.due)) a.due = null;
       a.done = !!a.done; a.archived = !!a.archived; a.pomodoros = a.pomodoros || 0;
       a.notes = a.notes || ''; a.sourceNotes = a.sourceNotes || ''; a.url = C.safeUrl(a.url);
+      a.progress = Math.max(0, Math.min(100, Math.round(Number(a.progress) || 0)));
     }
     out.stats = Object.assign(base.stats, data.stats || {});
     out.stats.completedByDay = out.stats.completedByDay && typeof out.stats.completedByDay === 'object' ? out.stats.completedByDay : {};
+    out.checklist = { items: [], done: {} };
+    const ck = data.checklist && typeof data.checklist === 'object' ? data.checklist : {};
+    if (Array.isArray(ck.items)) out.checklist.items = ck.items.map(normalizeChecklistItem).filter(Boolean);
+    if (ck.done && typeof ck.done === 'object') for (const k in ck.done) if (C.fromDayKey(k) && Array.isArray(ck.done[k])) out.checklist.done[k] = ck.done[k].map(String);
     out.log = { days: {} };
     const days = data.log && data.log.days && typeof data.log.days === 'object' ? data.log.days : {};
     for (const k in days) { if (C.fromDayKey(k) && days[k] && typeof days[k] === 'object') out.log.days[k] = normalizeLogDay(days[k]); }
@@ -3794,6 +3826,56 @@ const App = (function () {
     };
   }
   /* ---------- daily log API (shared by the log, overview and month views) ---------- */
+  /* ---------- daily checklist API (shared by the Home checklist card, the log day editor and settings) ---------- */
+  function normalizeChecklistItem(it) {
+    if (!it || typeof it !== 'object' || typeof it.title !== 'string' || !it.title.trim()) return null;
+    const r = it.repeat && typeof it.repeat === 'object' ? it.repeat : {};
+    const type = ['daily', 'weekdays', 'weekends', 'weekly', 'once'].includes(r.type) ? r.type : 'daily';
+    return {
+      id: String(it.id || ('ck_' + C.hash(it.title + (it.createdAt || '')))), title: it.title.trim().slice(0, 140), icon: typeof it.icon === 'string' ? it.icon.slice(0, 16) : '',
+      repeat: { type, days: Array.isArray(r.days) ? r.days.map(Number).filter(d => d >= 0 && d <= 6) : [], date: C.fromDayKey(r.date) ? r.date : null },
+      createdAt: typeof it.createdAt === 'string' ? it.createdAt : C.toISO(now()), archived: !!it.archived
+    };
+  }
+  function checklistFor(key) { return state.checklist.items.filter(it => !it.archived && C.checklistDue(it, key)); }
+  function isChecked(key, id) { return (state.checklist.done[key] || []).includes(id); }
+  function toggleChecklist(key, id, on) {
+    const list = state.checklist.done[key] || [];
+    const has = list.includes(id);
+    const want = on === undefined ? !has : !!on;
+    if (want === has) return want;
+    state.checklist.done[key] = want ? list.concat([id]) : list.filter(x => x !== id);
+    if (!state.checklist.done[key].length) delete state.checklist.done[key];
+    save(); render(); emit('checklist', { key, id, on: want });
+    return want;
+  }
+  function addChecklistItem(partial) {
+    const it = normalizeChecklistItem(Object.assign({ id: 'ck_' + now().getTime().toString(36) + Math.random().toString(36).slice(2, 6), createdAt: C.toISO(now()) }, partial));
+    if (!it) return null;
+    state.checklist.items.push(it); save(); render(); emit('checklist', { item: it });
+    return it;
+  }
+  function updateChecklistItem(id, patch) {
+    const i = state.checklist.items.findIndex(x => x.id === id); if (i < 0) return null;
+    const it = normalizeChecklistItem(Object.assign({}, state.checklist.items[i], patch, { id }));
+    if (!it) return null;
+    state.checklist.items[i] = it; save(); render(); emit('checklist', { item: it });
+    return it;
+  }
+  function removeChecklistItem(id) {
+    const i = state.checklist.items.findIndex(x => x.id === id); if (i < 0) return null;
+    const [it] = state.checklist.items.splice(i, 1); save(); render(); emit('checklist', { removed: it });
+    return it;
+  }
+  /* ---------- assignment progress (0-100) ---------- */
+  function setProgress(id, pct) {
+    const a = byId(id); if (!a) return null;
+    const p = Math.max(0, Math.min(100, Math.round(Number(pct) || 0)));
+    if (a.progress === p) return a;
+    a.progress = p; touch(a); save(); render(); emit('progress', a);
+    return a;
+  }
+  function progressOf(a) { return a ? (a.done ? 100 : Math.max(0, Math.min(100, a.progress || 0))) : 0; }
   function logDay(key) { return state.log.days[key] || null; }
   function logDayOrEmpty(key) { return state.log.days[key] || normalizeLogDay({}); }
   function isLogDayEmpty(d) { return !d || (d.weight == null && !d.mood && !d.note.trim() && !d.verse && !d.events.length); }
@@ -4194,6 +4276,8 @@ const App = (function () {
       const classIds = new Set(state.classes.map(c => c.id));
       for (const c of inc.classes) if (!classIds.has(c.id)) state.classes.push(c);
       for (const k in inc.stats.completedByDay) state.stats.completedByDay[k] = Math.max(state.stats.completedByDay[k] || 0, inc.stats.completedByDay[k]);
+      { const ids = new Set(state.checklist.items.map(x => x.id)); for (const it of inc.checklist.items) if (!ids.has(it.id)) state.checklist.items.push(it);
+        for (const k in inc.checklist.done) state.checklist.done[k] = Array.from(new Set((state.checklist.done[k] || []).concat(inc.checklist.done[k]))); }
       for (const k in inc.log.days) { const cur = state.log.days[k]; if (!cur || (inc.log.days[k].updatedAt || '') > (cur.updatedAt || '')) state.log.days[k] = inc.log.days[k]; }
       for (const name of inc.settings.knownCalendars) if (!state.settings.knownCalendars.includes(name)) state.settings.knownCalendars.push(name);
       Object.assign(state.settings.calendarOverrides, inc.settings.calendarOverrides || {});
@@ -8380,6 +8464,21 @@ const App = (function () {
   registerAction('open-class-picker', (id, el) => openClassPicker(el && el.dataset.grade ? { grade: el.dataset.grade } : null));
   /* === FEATURE:CATALOG:JS:END === */
 
+  /* === FEATURE:CHECKLIST:JS:START === */
+  /* checklistCard(key) -> html for a day's checklist; openChecklistSettings() manages recurring items. */
+  function checklistCard(key) { return ''; }
+  function openChecklistSettings() { toast('The checklist is being built.', ''); }
+  /* === FEATURE:CHECKLIST:JS:END === */
+
+  /* === FEATURE:ASSIGN:JS:START === */
+  /* openAssignmentDetail(id): read-only view of everything about an assignment, with an Edit button.
+     openCreateAssignment(prefill): the Create assignment dialog with the smart prompt.
+     progressMeter(a, {editable}): compact progress bar (data-action="progress" when editable). */
+  function openAssignmentDetail(id) { openEditModal(id); }
+  function openCreateAssignment() { openEditModal(); }
+  function progressMeter(a, opts) { const p = progressOf(a); return html`<span class="progress-meter" role="img" aria-label="${p}% done"><i style="width:${p}%"></i></span>`; }
+  /* === FEATURE:ASSIGN:JS:END === */
+
   /* ---------- views registry & rendering ---------- */
   const VIEW_ORDER = ['overview', 'today', 'month', 'week', 'board', 'classes', 'log'];
   const VIEWS = {
@@ -8984,6 +9083,8 @@ const App = (function () {
 
   return {
     get state() { return state; }, html, raw, $, $$, C, VIEW_ORDER,
+    checklistFor, isChecked, toggleChecklist, addChecklistItem, updateChecklistItem, removeChecklistItem, checklistCard, openChecklistSettings,
+    setProgress, progressOf, openAssignmentDetail, openCreateAssignment, progressMeter,
     logDay, logDayOrEmpty, updateLogDay, addLogEvent, removeLogEvent, logEventsBetween, isLogDayEmpty, openLogDay, openClassPicker,
     now, setNow(d) { nowOverride = d ? new Date(d).getTime() : null; recomputePriorities(); computeNextCrossing(); render(); renderFooter(); },
     save, load, render, renderAll, renderFooter, setView, VIEWS, on, emit, onTick, registerAction, actions,
