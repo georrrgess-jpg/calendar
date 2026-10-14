@@ -20,7 +20,7 @@ const htmlPath = path.join(root, 'assignments.html');
 const html = fs.readFileSync(htmlPath, 'utf8');
 const m = /<script id="core-lib">([\s\S]*?)<\/script>/.exec(html);
 if (!m) { console.error('core-lib script block not found in assignments.html'); process.exit(1); }
-const sandbox = { module: { exports: {} }, console };
+const sandbox = { module: { exports: {} }, console, TextDecoder, Intl };
 vm.runInNewContext(m[1], sandbox, { filename: 'core-lib.js' });
 const C = sandbox.module.exports;
 const fixture = name => fs.readFileSync(path.join(__dirname, 'fixtures', name), 'utf8');
@@ -135,6 +135,20 @@ test('parseICS copes with a truncated file and missing UID', () => {
   assert.strictEqual(r.events.length, 1);
   assert.ok(r.events[0].uid.startsWith('gen-'));
   assert.ok(r.warnings.length >= 1);
+});
+
+test('decodeICSBytes unfolds before decoding, so a fold inside a multi-byte character is safe', () => {
+  const line = Buffer.from('SUMMARY:' + 'a'.repeat(66) + 'é😀 ok', 'utf8');
+  const bytes = Buffer.concat([Buffer.from('\ufeffBEGIN:VCALENDAR\r\nX-WR-CALNAME:Art\r\nBEGIN:VEVENT\r\nUID:x\r\nDTSTART;VALUE=DATE:20261101\r\n'), line.subarray(0, 75), Buffer.from('\r\n '), line.subarray(75), Buffer.from('\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n')]);
+  assert.ok(line[74] === 0xc3, 'fixture really splits é');
+  const r = C.parseICS(C.decodeICSBytes(new Uint8Array(bytes)));
+  assert.strictEqual(r.calendarName, 'Art');
+  assert.ok(r.events[0].summary.endsWith('aé😀 ok'), r.events[0].summary);
+});
+test('VALARM blocks inside an event do not leak their DESCRIPTION', () => {
+  const r = C.parseICS('BEGIN:VCALENDAR\nX-WR-CALNAME:Art\nBEGIN:VEVENT\nUID:a\nSUMMARY:Sketch\nDESCRIPTION:real\nBEGIN:VALARM\nDESCRIPTION:Reminder\nEND:VALARM\nDTSTART;VALUE=DATE:20261101\nEND:VEVENT\nEND:VCALENDAR');
+  assert.strictEqual(r.events.length, 1); assert.strictEqual(r.events[0].description, 'real');
+  assert.ok(r.events[0].start && r.events[0].start.allDay, 'properties after VALARM still read');
 });
 
 console.log('core-lib: quick add');

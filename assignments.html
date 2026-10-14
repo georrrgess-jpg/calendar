@@ -1363,6 +1363,19 @@ const Core = (function () {
   }
 
   /* ---------- iCalendar ---------- */
+  /* Google folds lines every 75 bytes, which can split a multi-byte UTF-8
+     character across the fold. Unfold the raw bytes first, then decode. */
+  function decodeICSBytes(bytes) {
+    const b = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+    const out = new Uint8Array(b.length);
+    let j = 0;
+    for (let i = 0; i < b.length; i++) {
+      if (b[i] === 13 && b[i + 1] === 10 && (b[i + 2] === 32 || b[i + 2] === 9)) { i += 2; continue; }
+      if (b[i] === 10 && (b[i + 1] === 32 || b[i + 1] === 9)) { i += 1; continue; }
+      out[j++] = b[i];
+    }
+    return new TextDecoder('utf-8').decode(out.subarray(0, j));
+  }
   function unfoldICS(text) { return String(text).replace(/\r\n?/g, '\n').replace(/\n[ \t]/g, ''); }
   function parseICSLine(line) {
     let i = 0, name = '', params = {};
@@ -2137,7 +2150,7 @@ const Core = (function () {
     pad2, isDate, startOfDay, endOfDay, addDays, addMonths, dayKey, fromDayKey, sameDay, daysBetween, startOfWeek, toISO, parseISO,
     formatTime, formatDateShort, formatDue, formatDuration,
     urgencyHue, countdown, tzOffsetMs, zonedToDate,
-    unfoldICS, parseICSLine, parseICSDateTime, cleanCalendarName, isNonClassCalendar, parseICS, extractClassroomUrl, dueFromEvent, eventToAssignment,
+    unfoldICS, decodeICSBytes, parseICSLine, parseICSDateTime, cleanCalendarName, isNonClassCalendar, parseICS, extractClassroomUrl, dueFromEvent, eventToAssignment,
     keywordWeight, priorityScore, scoreToPriority,
     parseQuickAdd, parseTodoPaste, mergeImported, computeStreak, last7Days, demoData,
     MOODS, EVENT_PRESETS, eventPreset, VERSES, pickVerse, CLASS_CATALOG, CLASS_SYMBOLS
@@ -2523,7 +2536,7 @@ const App = (function () {
       toast(zip ? 'That is the zip. Unzip it first (double-click it), then drop the .ics files inside.' : 'No .ics files found. Drop the .ics files from Google Calendar’s export.', 'err');
       return null;
     }
-    const entries = await Promise.all(ics.map(f => f.text().then(text => ({ name: f.name, text }))));
+    const entries = await Promise.all(ics.map(f => (f.arrayBuffer ? f.arrayBuffer().then(buf => C.decodeICSBytes(buf)) : f.text()).then(text => ({ name: f.name, text }))));
     const summary = importICSTexts(entries);
     showImportSummary(summary);
     return summary;
@@ -2534,6 +2547,7 @@ const App = (function () {
     const existingIds = new Set(state.assignments.map(a => a.id));
     const summary = { calendars: [], ignored: [], added: 0, updated: 0, unchanged: 0, removed: 0, skippedOld: 0, skippedCancelled: 0, warnings: [], events: 0 };
     const incoming = [];
+    const presentByClass = new Map();
     for (const entry of entries) {
       let parsed;
       try { parsed = C.parseICS(entry.text, { fallbackName: String(entry.name || '').replace(/\.ics$/i, '') }); }
@@ -2551,6 +2565,11 @@ const App = (function () {
       state.settings.hiddenCalendars = state.settings.hiddenCalendars.filter(x => x !== calName);
       const cls = ensureClass(calName, { source: 'ics' });
       let kept = 0;
+      /* Every event id in this calendar file, so assignments the teacher deleted can be dropped. */
+      if (parsed.events.length) {
+        const present = new Set(parsed.events.map(ev => C.eventToAssignment(ev, { classId: cls.id }).id));
+        presentByClass.set(cls.id, new Set([...(presentByClass.get(cls.id) || []), ...present]));
+      }
       for (const ev of parsed.events) {
         summary.events++;
         const a = C.eventToAssignment(ev, { classId: cls.id });
@@ -2580,6 +2599,16 @@ const App = (function () {
         knownIds.add(inc.id);
         summary.linked = (summary.linked || 0) + 1;
       }
+      /* Open calendar items whose event is no longer in the export were deleted
+         in Classroom; drop them instead of letting them turn falsely overdue.
+         Done items are kept as a record. */
+      const vanished = [];
+      state.assignments = state.assignments.filter(a => {
+        const present = presentByClass.get(a.classId);
+        if (!present || a.source !== 'ics' || a.done || present.has(a.id)) return true;
+        vanished.push(a.title); return false;
+      });
+      summary.vanished = vanished;
       const merged = C.mergeImported(state.assignments, incoming, n);
       state.assignments = merged.assignments;
       summary.added = merged.added; summary.updated = merged.updated; summary.unchanged = merged.unchanged; summary.removed = merged.removed;
@@ -2596,6 +2625,8 @@ const App = (function () {
     if (s.ignored.length) lines.push(html`<div class="small muted" style="margin-top:4px">Ignored as not-a-class: ${s.ignored.join(', ')}. Change this under Settings → Calendars.</div>`);
     if (s.skippedOld) lines.push(html`<div class="small muted" style="margin-top:4px">${s.skippedOld} older item${s.skippedOld === 1 ? '' : 's'} (due more than ${state.settings.importLookbackDays} days ago) skipped. Raise the look-back in Settings to include them.</div>`);
     if (s.linked) lines.push(html`<div class="small muted">${s.linked} item${s.linked === 1 ? '' : 's'} you had pasted from Classroom matched to the calendar, so nothing was duplicated.</div>`);
+    if (s.vanished && s.vanished.length) lines.push(html`<div class="small muted">${s.vanished.length} assignment${s.vanished.length === 1 ? ' is' : 's are'} no longer in the calendar (deleted in Classroom) and ${s.vanished.length === 1 ? 'was' : 'were'} removed: ${s.vanished.slice(0, 3).join(', ')}${s.vanished.length > 3 ? '…' : ''}</div>`);
+    if (!s.calendars.length && s.ignored.length) lines.push(html`<div style="margin-top:8px"><b>No class calendars were in this export.</b> Google’s Export only includes calendars you own, and Classroom class calendars usually belong to your teacher. Use <b>Paste from Classroom</b> instead: it takes about a minute. <button class="btn btn-sm btn-primary" data-action="open-import" data-tab="paste" style="margin-left:6px">Paste from Classroom</button></div>`);
     if (s.skippedCancelled) lines.push(html`<div class="small muted">${s.skippedCancelled} cancelled event${s.skippedCancelled === 1 ? '' : 's'} skipped.</div>`);
     if (s.warnings.length) lines.push(html`<div class="small" style="margin-top:4px;color:var(--warn)">${s.warnings.slice(0, 5).map(w => html`<div>${w}</div>`)}</div>`);
     if (!s.calendars.length && !s.ignored.length) lines.push(html`<div>Nothing recognisable was found in those files.</div>`);
