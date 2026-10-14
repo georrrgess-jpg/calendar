@@ -36,8 +36,8 @@ To start, download `assignments.html` and double-click it.
 
 | Key | What it does |
 |---|---|
-| `N` | Quick add |
-| `/` | Search |
+| `N` | Quick add (it slides in on Home and the Daily log) |
+| `/` | Search (opens Next Up from Home and the Daily log) |
 | `1` to `7` | Home, Next Up, Month, Week, Board, Classes, Daily log |
 | `L` | Open today's daily log |
 | `F` | Focus mode: only the next thing, the timer and today |
@@ -66,6 +66,8 @@ To start, download `assignments.html` and double-click it.
 - Your events and moods also show on the Month calendar.
 
 **Priorities are automatic** until you change one. The score comes from how soon it's due, words like test, exam, project or essay in the title, your time estimate, and how busy that class is this week. Change a priority in the edit dialog or by dragging on the Board, and it stays the way you set it.
+
+**Filters:** next to the search box, the **Filters** button opens your class and priority chips and the Hide done switch; its badge counts what is active, and active filters show as chips you can tap to remove.
 
 **Overdue work** is always shown, whatever filters you pick. To make an overdue item go away, finish it or archive it with a reason from its edit dialog.
 

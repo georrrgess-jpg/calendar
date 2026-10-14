@@ -115,8 +115,12 @@ async function check(name, fn) {
     assert.ok(await page.isVisible('.view[data-view="today"].active'));
   });
   await check('class filter chip persists across views and reload; overdue items stay visible', async () => {
+    /* Class chips live in the Filters popover. */
+    await page.click('#btn-filters');
     await page.click('#filter-classes .chip:has-text("Precalculus")');
     await page.waitForTimeout(200);
+    assert.strictEqual(await page.textContent('#filter-badge'), '1', 'Filters badge counts the active class');
+    assert.ok(await page.isVisible('#filter-active .fchip:has-text("Precalculus")'), 'active filter shown as a removable chip');
     assert.strictEqual(await page.getAttribute('#filter-classes .chip:has-text("Precalculus")', 'aria-pressed'), 'true');
     const titles = await page.$$eval('.lane:not([data-lane="overdue"]) .item .item-title', els => els.map(e => e.textContent));
     assert.ok(titles.every(t => /Problem set|Midterm/.test(t)), 'only Precalculus items: ' + titles.join(' | '));
@@ -126,7 +130,10 @@ async function check(name, fn) {
     assert.strictEqual(await page.getAttribute('#filter-classes .chip:has-text("Precalculus")', 'aria-pressed'), 'true');
     await page.reload(); await page.waitForSelector('#view-root');
     assert.strictEqual(await page.getAttribute('#filter-classes .chip:has-text("Precalculus")', 'aria-pressed'), 'true');
+    await page.click('#btn-filters');
     await page.click('#filter-classes .chip:has-text("Precalculus")');
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#filter-pop', { state: 'hidden', timeout: 2000 });
   });
 
   console.log('ICS import');
@@ -244,7 +251,9 @@ async function check(name, fn) {
     await page.reload(); await page.waitForSelector('#view-root');
     const s = await page.evaluate(() => ({ c: App.state.classes.find(c => c.sourceName === 'AP Biology - Period 3'), b: App.state.settings.dailyBudgetMin }));
     assert.strictEqual(s.c.name, 'AP Bio'); assert.strictEqual(s.c.color, 5); assert.strictEqual(s.b, 90);
+    await page.click('#btn-filters');
     assert.ok(await page.isVisible('#filter-classes .chip:has-text("AP Bio")'));
+    await page.keyboard.press('Escape');
   });
   await check('focus mode hides everything but the hero and today lane', async () => {
     await page.keyboard.press('f');
