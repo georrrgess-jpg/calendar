@@ -225,8 +225,8 @@ module.exports = async ({ page, check, assert, SHOTS, shotsDir, path }) => {
       await page.evaluate(() => { App.closeModal(); App.clearAll(); App.setView('overview'); });
       await clearToasts();
       const steps = await page.$$eval('.view.active .start-step h3', els => els.map(e => e.textContent.trim()));
-      assert.deepStrictEqual(steps, ['Add your classes', 'Import from Google', 'Try demo data', 'Start your daily log']);
-      for (const sel of ['[data-action="ov-add-class"]', '[data-action="open-import"][data-tab="paste"]', '[data-action="load-demo"]', '[data-action="ov-log"]']) {
+      assert.deepStrictEqual(steps, ['Add your classes', 'Import from Google', 'Try demo data', 'Create your first assignment', 'Start your daily log']);
+      for (const sel of ['[data-action="ov-add-class"]', '[data-action="open-import"][data-tab="paste"]', '[data-action="load-demo"]', '[data-action="ov-create"]', '[data-action="ov-log"]']) {
         assert.ok(await page.isVisible('.view.active .start-card ' + sel), sel);
       }
       await page.click('.view.active .start-card [data-action="open-import"][data-tab="paste"]');

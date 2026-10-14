@@ -503,7 +503,7 @@ body.focus-mode .lanes { gap: 14px; }
 .start-head { max-width: 640px; margin-bottom: 20px; }
 .start-head h2 { font-size: clamp(24px, 3vw, 30px); font-weight: 760; letter-spacing: -0.025em; margin: 6px 0 6px; }
 .start-head p { font-size: 14.5px; }
-.start-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; counter-reset: none; }
+.start-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; counter-reset: none; }
 .start-step {
   position: relative; display: flex; flex-direction: column; gap: 8px; min-width: 0; padding: 16px; border-radius: var(--radius);
   background: color-mix(in srgb, var(--surface-2) 82%, transparent); border: 1px solid var(--border);
@@ -522,6 +522,7 @@ body.focus-mode .lanes { gap: 14px; }
 .start-step p b { color: var(--text); font-weight: 650; }
 .start-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 4px; }
 .start-actions .btn { white-space: normal; text-align: center; }
+@media (max-width: 1320px) { .start-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 1100px) { .start-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 560px) {
   .start-card { padding: 20px 16px 16px; }
@@ -1373,13 +1374,17 @@ body:has(#pomo-chip) .toasts { bottom: calc(80px + var(--safe-b)); }
     radial-gradient(45% 60% at 18% 22%, color-mix(in srgb, var(--accent) 34%, transparent), transparent 70%),
     radial-gradient(40% 55% at 88% 90%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 70%);
   animation: ov-drift 20s ease-in-out infinite alternate;
+  /* A negative delay from a page-wide clock: a re-render picks the drift up where it was. */
+  animation-delay: var(--ov-drift-at, 0s);
 }
 :root[data-theme="light"] .ov-greet::before { opacity: 0.7; }
 @keyframes ov-drift { 0% { transform: translate(0, 0); } 100% { transform: translate(4%, -3%); } }
 .ov-greet-main { min-width: 0; }
 .ov-date { font-size: 12.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-text); margin-bottom: 6px; }
 .ov-hello { font-size: clamp(26px, 3.4vw, 36px); font-weight: 770; letter-spacing: -0.025em; line-height: 1.1; margin-bottom: 10px; }
-.ov-hello .wave { display: inline-block; transform-origin: 70% 80%; animation: ov-wave 1.6s ease-in-out 400ms 1 both; }
+.ov-hello .wave { display: inline-block; transform-origin: 70% 80%; }
+/* One-time: only on the render that enters Home, never on a data re-render. */
+.ov-enter .ov-hello .wave { animation: ov-wave 1.6s ease-in-out 400ms 1 both; }
 @keyframes ov-wave { 0%, 100% { transform: none; } 20% { transform: rotate(16deg); } 40% { transform: rotate(-8deg); } 60% { transform: rotate(12deg); } 80% { transform: rotate(-4deg); } }
 .ov-status { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; font-size: 14px; color: var(--text-2); }
 .ov-st { white-space: nowrap; }
@@ -1715,6 +1720,8 @@ body:has(#pomo-chip) .toasts { bottom: calc(80px + var(--safe-b)); }
 
 /* Day editor */
 .log-scrim { display: none; }
+/* While the phone sheet is open the page behind it stays put (logSheetSync toggles this). */
+html.log-sheet-lock, html.log-sheet-lock body { overflow: hidden; overscroll-behavior: none; }
 .log-ed {
   --mc: var(--accent);
   display: flex; flex-direction: column; min-width: 0; max-height: calc(100vh - var(--topbar-h) - 24px); overflow: hidden;
@@ -2233,7 +2240,7 @@ body:has(#pomo-chip) .toasts { bottom: calc(80px + var(--safe-b)); }
   border: 1px solid var(--border-strong); background: var(--surface-2); color: var(--text); font-size: 13px; font-weight: 600; white-space: nowrap;
   transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease), transform 120ms var(--ease);
 }
-.ck-starters .ck-starter { animation: ck-in 360ms var(--ease-out) backwards; animation-delay: calc(var(--i, 0) * 40ms); }
+.ov-enter .ck-starters .ck-starter, .log-ed.is-open .ck-starters .ck-starter { animation: ck-in 360ms var(--ease-out) backwards; animation-delay: calc(var(--i, 0) * 40ms); }
 .ck-starter:hover { border-color: var(--accent); background: var(--accent-soft); }
 .ck-starter:active { transform: scale(0.94); }
 .ck-starter-ico { font-size: 15px; line-height: 1; }
@@ -2258,6 +2265,7 @@ body:has(#pomo-chip) .toasts { bottom: calc(80px + var(--safe-b)); }
 /* Settings modal --------------------------------------------------------- */
 .cks { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
 .cks-intro { font-size: 13.5px; color: var(--text-2); }
+.cks-note { font-size: 12.5px; color: var(--text-3); margin-top: 4px; }
 .cks-editor { display: flex; flex-direction: column; gap: 12px; min-width: 0; padding: 14px; border-radius: var(--radius); background: var(--surface-2); border: 1px solid var(--border); }
 .cks-editor.is-edit { background: var(--surface-1); border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); animation: ck-banner 260ms var(--ease-out); }
 .cks-row1 { display: flex; gap: 8px; min-width: 0; }
@@ -3220,6 +3228,11 @@ const Core = (function () {
         const sym = aliasSymbol(t);
         if (sym) hits = cls.filter(c => c.sym === sym);
       }
+      if (!hits.length && t.length >= 5 && /^[a-z]+$/.test(t)) {
+        /* One typo in a 5+ letter word ("spansh", "chemestry"), only when exactly one class fits. */
+        const near = cls.filter(c => c.ws.some(w => w.length >= 5 && !CLASS_FILLER.has(w) && editDistance1(t, w)));
+        if (near.length === 1) hits = near;
+      }
       return hits;
     };
     const phrase = ts => cls.filter(c => {
@@ -3243,6 +3256,28 @@ const Core = (function () {
     }
     return null;
   }
+  /* editDistance1(a, b): true when a and b differ by exactly one insert, delete, substitution or
+     swap of neighbouring letters. */
+  function editDistance1(a, b) {
+    if (a === b) return false;
+    const la = a.length, lb = b.length;
+    if (Math.abs(la - lb) > 1) return false;
+    let i = 0;
+    while (i < la && i < lb && a[i] === b[i]) i++;
+    if (la === lb) {
+      if (a.slice(i + 1) === b.slice(i + 1)) return true;
+      return a[i] === b[i + 1] && a[i + 1] === b[i] && a.slice(i + 2) === b.slice(i + 2);
+    }
+    return la > lb ? a.slice(i + 1) === b.slice(i) : a.slice(i) === b.slice(i + 1);
+  }
+  /* "tomorow", "tommorow", "tmorrow", "tmrow": one slip away from tomorrow / tommorow / tmrw. */
+  function isTomorrowTypo(w) {
+    w = w.toLowerCase();
+    if (w === 'tomorrow' || w === 'tmrw' || w === 'tmr') return false;
+    if (w === 'tommorow' || w === 'tommorrow') return true;
+    if (w.length >= 6 && (editDistance1(w, 'tomorrow') || editDistance1(w, 'tommorow'))) return true;
+    return w.length >= 4 && w[0] === 't' && editDistance1(w, 'tmrw');
+  }
   function suggestSymbolSafe(name) { try { return typeof suggestSymbol === 'function' ? suggestSymbol(name) : ''; } catch (e) { return ''; } }
   function aliasSymbol(t) {
     if (typeof CLASS_SYMBOLS === 'undefined' || !Array.isArray(CLASS_SYMBOLS)) return '';
@@ -3256,9 +3291,21 @@ const Core = (function () {
     let s = ' ' + String(input || '').replace(/[\u0000\u0001]/g, '').replace(/\s+/g, ' ') + ' ';
     const out = { title: '', due: null, allDay: true, hasDate: false, hasTime: false, classTag: '', classId: null, classWord: '', priority: '', estimatedMin: null, progress: null };
     let m;
-    const take = (re, fn) => { m = re.exec(s); if (m) { fn(m); s = s.slice(0, m.index) + ' ' + CUT + ' ' + s.slice(m.index + m[0].length); return true; } return false; };
+    const cut = mm => { s = s.slice(0, mm.index) + ' ' + CUT + ' ' + s.slice(mm.index + mm[0].length); };
+    const take = (re, fn) => { m = re.exec(s); if (m) { fn(m); cut(m); return true; } return false; };
+    /* takeIf: like take, but skips matches that accept(match) turns down and tries the next one. */
+    const takeIf = (re, accept, fn) => {
+      const g = new RegExp(re.source, re.flags.includes('g') ? re.flags : re.flags + 'g');
+      let mm;
+      while ((mm = g.exec(s))) {
+        if (accept(mm)) { m = mm; fn(mm); cut(mm); return true; }
+        if (!mm[0]) g.lastIndex++;
+      }
+      return false;
+    };
 
-    take(/(?:^|\s)#([\w&-]+)/, mm => { out.classTag = mm[1]; });
+    /* A #tag has to start with a letter, so "#5-20" (problem numbers) stays in the title. */
+    take(/(?:^|\s)#([A-Za-z][\w&-]*)/, mm => { out.classTag = mm[1]; });
     take(/(?:^|\s)!(critical|crit|urgent|high|hi|medium|med|normal|low|lo)\b/i, mm => {
       const p = mm[1].toLowerCase();
       out.priority = /^(crit|urgent)/.test(p) ? 'critical' : /^hi/.test(p) ? 'high' : /^(med|normal)/.test(p) ? 'medium' : 'low';
@@ -3274,11 +3321,17 @@ const Core = (function () {
     const pct = n => Math.max(0, Math.min(100, Math.round(n)));
     take(/(?:^|\s)(?:progress\s*:?\s*|at\s+)(\d{1,3})\s*%(?:\s*(?:done|complete|completed|finished|through))?(?=\s|$)/i, mm => { out.progress = pct(+mm[1]); }) ||
     take(/(?:^|\s)(\d{1,3})\s*%\s*(?:done|complete|completed|finished|through)\b/i, mm => { out.progress = pct(+mm[1]); }) ||
+    take(/(?:^|\s)(\d{1,2})\s*\/\s*(\d{1,2})\s+(?:done|complete|completed|finished|through)\b/i, mm => {
+      const a = +mm[1], b = +mm[2];
+      if (b > 0 && a <= b) out.progress = pct(a / b * 100);
+    }) ||
     take(/\b(?:half\s*way|halfway|half)\s+(?:done|through|complete|finished)\b|\bhalfway\b/i, () => { out.progress = 50; }) ||
     take(/\b(?:almost|nearly)\s+(?:done|finished|complete)\b/i, () => { out.progress = 90; }) ||
     take(/\bnot\s+started\b/i, () => { out.progress = 0; });
 
-    let date = null, time = null, relative = null;
+    let date = null, time = null, relative = null, tonight = false;
+    /* One slip in "tomorrow" ("tomorow", "tommorow", "tmrow") still means tomorrow. */
+    s = s.replace(/[A-Za-z]+/g, w => isTomorrowTypo(w) ? 'tomorrow' : w);
     const setDate = d => { date = startOfDay(d); out.hasDate = true; };
     take(/\bin\s+(\d+|a|an|one|two|three|four|five|six|seven)\s+(day|days|week|weeks|wk|wks|hour|hours|hr|hrs|minute|minutes|min|mins)\b/i, mm => {
       const words = { a: 1, an: 1, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7 };
@@ -3298,16 +3351,32 @@ const Core = (function () {
 
     (date || relative != null) ||
     take(/\b(day after tomorrow)\b/i, () => setDate(addDays(now, 2))) ||
-    take(/\b(today|tonight|tmrw|tmr|tomorrow|tod)\b/i, mm => setDate(/^to(day|d|night)$/i.test(mm[1]) ? now : addDays(now, 1))) ||
-    take(/\b(next|this)?\s*\b(sunday|monday|tuesday|wednesday|thursday|friday|saturday|sun|mon|tue|tues|wed|weds|thu|thur|thurs|fri|sat)\b\.?/i, mm => {
+    take(/\b(today|tonight|tmrw|tmr|tomorrow|tod)\b/i, mm => { if (/^tonight$/i.test(mm[1])) tonight = true; setDate(/^to(day|d|night)$/i.test(mm[1]) ? now : addDays(now, 1)); }) ||
+    /* A weekday, optionally followed by its date ("Friday the 16th"). "SAT" the exam is not Saturday:
+       the abbreviation is skipped in all caps or before prep / practice / test / score / exam / tutoring. */
+    takeIf(/\b(next|this)?\s*\b(sunday|monday|tuesday|wednesday|thursday|friday|saturday|sun|mon|tue|tues|wed|weds|thu|thur|thurs|fri|sat)\b\.?(?:,?\s+(?:the\s+(\d{1,2})(?:st|nd|rd|th)?|(\d{1,2})(?:st|nd|rd|th))\b)?/i, mm => {
+      if (mm[2].toLowerCase() !== 'sat') return true;
+      if (mm[2] === 'SAT') return false;
+      return !/^\s*(?:prep|practice|test|tests|score|scores|exam|exams|tutoring)\b/i.test(s.slice(mm.index + mm[0].length));
+    }, mm => {
       const target = DAY_NAMES[mm[2].toLowerCase()];
       let off = (target - now.getDay() + 7) % 7;
       if ((mm[1] || '').toLowerCase() === 'next') off += 7;
-      setDate(addDays(now, off));
+      const n = +(mm[3] || mm[4] || 0);
+      const explicit = n ? nextDayOfMonth(now, n) : null;
+      /* An explicit day number wins when it disagrees with the weekday. */
+      setDate(explicit || addDays(now, off));
     }) ||
     take(/\b(next week)\b/i, () => setDate(addDays(now, 7))) ||
     take(/\b(\d{4})-(\d{2})-(\d{2})\b/, mm => setDate(new Date(+mm[1], +mm[2] - 1, +mm[3]))) ||
-    take(/\b(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?\b/, mm => {
+    /* "due 10-20", "on 10-20", "by 10-20": month-day with a dash, only after those words. */
+    take(/\b(?:due|on|by)\s+(1[0-2]|0?[1-9])-(3[01]|[12]\d|0?[1-9])\b(?![-\/\d])/i, mm => {
+      let d = new Date(now.getFullYear(), +mm[1] - 1, +mm[2]);
+      if (d < addDays(now, -60)) d = new Date(now.getFullYear() + 1, +mm[1] - 1, +mm[2]);
+      setDate(d);
+    }) ||
+    /* mm/dd, but not "ch 3/4" or "pg 3/4" (chapter and page ranges). */
+    takeIf(/\b(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?\b/, mm => !/(?:^|\s)(?:ch|chs|chap|chapter|chapters|pg|pgs|pp|p|page|pages)\.?\s*$/i.test(s.slice(0, mm.index)), mm => {
       let y = mm[3] ? parseInt(mm[3], 10) : now.getFullYear();
       if (mm[3] && mm[3].length === 2) y += 2000;
       let d = new Date(y, +mm[1] - 1, +mm[2]);
@@ -3335,10 +3404,15 @@ const Core = (function () {
         if (/^p/i.test(mm[3])) h += 12;
         time = { h, m: mm[2] ? parseInt(mm[2], 10) : 0 };
       }) ||
-      take(/\b(?:at\s+|@\s*)?(\d{1,2}):(\d{2})\b/, mm => { time = { h: parseInt(mm[1], 10), m: parseInt(mm[2], 10) }; }) ||
+      /* No am/pm: afternoon for 1-7 and for 11:59 (or anything "tonight"); 8:00-10:59 stay morning. */
+      take(/\b(?:at\s+|@\s*)?(\d{1,2}):(\d{2})\b/, mm => {
+        let h = parseInt(mm[1], 10); const mi = parseInt(mm[2], 10);
+        if (h < 12 && (tonight || (h >= 1 && h <= 7) || (h === 11 && mi === 59))) h += 12;
+        time = { h, m: mi };
+      }) ||
       take(/\b(?:at\s+)?(noon|midday)\b/i, () => { time = { h: 12, m: 0 }; }) ||
       take(/\b(?:at\s+)?(midnight)\b/i, () => { time = { h: 23, m: 59 }; }) ||
-      take(/\b(?:at|@)\s+(\d{1,2})\b(?![:\/\-])/i, mm => { let h = parseInt(mm[1], 10); if (h >= 1 && h <= 7) h += 12; time = { h, m: 0 }; });
+      take(/\b(?:at|@)\s+(\d{1,2})\b(?![:\/\-])/i, mm => { let h = parseInt(mm[1], 10); if (h < 12 && (tonight || (h >= 1 && h <= 7))) h += 12; time = { h, m: 0 }; });
     }
     if (time && time.h > 23) time = null;
 
@@ -3381,11 +3455,28 @@ const Core = (function () {
         const ws = words.slice(); ws.splice(hit.start, hit.count, CLS);
         /* Keep the words when they are the whole title ("Chemistry due fri"). */
         const without = finish(ws);
-        if (without) title = without;
+        if (without && QA_GENERIC_TITLES.has(without.toLowerCase())) {
+          /* "chem test" -> "Chem test", not just "test", so pills stay distinguishable. */
+          const c = opts.classes.find(x => x && x.id === hit.id);
+          title = classShortName(c ? c.name : '', out.classWord) + ' ' + without;
+        } else if (without) title = without;
       }
     }
-    out.title = title;
+    out.title = title.charAt(0).toUpperCase() + title.slice(1);
     return out;
+  }
+  /* Titles that say what kind of work it is but not which class. */
+  const QA_GENERIC_TITLES = new Set(['hw', 'test', 'quiz', 'essay', 'notes', 'worksheet', 'lab', 'project', 'homework', 'reading', 'review']);
+  /* classShortName(name, typed): the word to put in front of a generic title. The student's own
+     word when it is the start of a word in the class name ("chem") or a subject nickname
+     ("math"), else the first real word. */
+  function classShortName(name, typed) {
+    const ws = normalizeName(name).split(' ').filter(w => w && !CLASS_FILLER.has(w));
+    const t = normalizeName(typed || '');
+    const cap = w => w.charAt(0).toUpperCase() + w.slice(1);
+    if (t && !t.includes(' ') && t.length >= 3 && (ws.some(w => w.startsWith(t)) || aliasSymbol(t))) return cap(t);
+    const w = ws.find(x => x.length >= 3 && /[a-z]/.test(x)) || ws[0] || normalizeName(name) || '';
+    return cap(w);
   }
   /* parseSmartPrompt is the same parser under the name the Create dialog uses. */
   const parseSmartPrompt = parseQuickAdd;
@@ -4293,10 +4384,19 @@ const Core = (function () {
   }
   /* === FEATURE:CATALOG:CORE:END === */
 
-  /* checklistDue(item, dayKey): is this checklist item scheduled on that day? */
+  /* checklistDue(item, dayKey): is this checklist item scheduled on that day?
+     History is kept: an archived item stops only from archivedAt onward, and when its repeat
+     changed, days before repeatSince follow the rule that applied then (item.repeatHistory,
+     a list of { repeat, until } where until is the first day the rule no longer applied). */
   function checklistDue(item, key) {
     const d = fromDayKey(key); if (!item || !d) return false;
-    const r = item.repeat || {}, dow = d.getDay();
+    if (item.archived && (!item.archivedAt || key >= item.archivedAt)) return false;
+    let r = item.repeat || {};
+    if (item.repeatSince && key < item.repeatSince && Array.isArray(item.repeatHistory)) {
+      const old = item.repeatHistory.filter(h => h && h.until && key < h.until).sort((a, b) => a.until < b.until ? -1 : 1)[0];
+      if (old && old.repeat) r = old.repeat;
+    }
+    const dow = d.getDay();
     const created = item.createdAt ? startOfDay(new Date(item.createdAt)) : null;
     if (r.type !== 'once' && created && d < created) return false;
     switch (r.type) {
@@ -4614,10 +4714,22 @@ const App = (function () {
     return {
       id: String(it.id || ('ck_' + C.hash(it.title + (it.createdAt || '')))), title: it.title.trim().slice(0, 140), icon: typeof it.icon === 'string' ? it.icon.slice(0, 16) : '',
       repeat: { type, days: Array.isArray(r.days) ? r.days.map(Number).filter(d => d >= 0 && d <= 6) : [], date: C.fromDayKey(r.date) ? r.date : null },
-      createdAt: typeof it.createdAt === 'string' ? it.createdAt : C.toISO(now()), archived: !!it.archived
+      createdAt: typeof it.createdAt === 'string' ? it.createdAt : C.toISO(now()), archived: !!it.archived,
+      /* archivedAt / repeatSince are day keys; repeatHistory holds the rules that applied before. */
+      archivedAt: it.archived && C.fromDayKey(it.archivedAt) ? it.archivedAt : null,
+      repeatSince: C.fromDayKey(it.repeatSince) ? it.repeatSince : null,
+      repeatHistory: Array.isArray(it.repeatHistory) ? it.repeatHistory.filter(h => h && C.fromDayKey(h.until) && h.repeat && typeof h.repeat === 'object').map(h => {
+        const t = ['daily', 'weekdays', 'weekends', 'weekly', 'once'].includes(h.repeat.type) ? h.repeat.type : 'daily';
+        return { until: h.until, repeat: { type: t, days: Array.isArray(h.repeat.days) ? h.repeat.days.map(Number).filter(d => d >= 0 && d <= 6) : [], date: C.fromDayKey(h.repeat.date) ? h.repeat.date : null } };
+      }) : []
     };
   }
-  function checklistFor(key) { return state.checklist.items.filter(it => !it.archived && C.checklistDue(it, key)); }
+  /* checklistFor(key): the items for that day. Anything already checked on that day stays,
+     even if it was archived or rescheduled since, so past days keep their history. */
+  function checklistFor(key) {
+    const done = state.checklist.done[key] || [];
+    return state.checklist.items.filter(it => C.checklistDue(it, key) || done.includes(it.id));
+  }
   function isChecked(key, id) { return (state.checklist.done[key] || []).includes(id); }
   function toggleChecklist(key, id, on) {
     const list = state.checklist.done[key] || [];
@@ -4637,11 +4749,24 @@ const App = (function () {
   }
   function updateChecklistItem(id, patch) {
     const i = state.checklist.items.findIndex(x => x.id === id); if (i < 0) return null;
-    const it = normalizeChecklistItem(Object.assign({}, state.checklist.items[i], patch, { id }));
+    const prev = state.checklist.items[i];
+    const it = normalizeChecklistItem(Object.assign({}, prev, patch, { id }));
     if (!it) return null;
+    const today = C.dayKey(now());
+    /* Archiving hides the item from today on; earlier days keep it. */
+    if (it.archived && !prev.archived) it.archivedAt = today;
+    /* A new repeat rule applies from today on; earlier days keep the old rule. */
+    const sameRule = (a, b) => JSON.stringify(CK_RULE(a)) === JSON.stringify(CK_RULE(b));
+    const createdKey = prev.createdAt ? C.dayKey(new Date(prev.createdAt)) : today;
+    if (patch.repeat && !sameRule(prev.repeat, it.repeat) && createdKey < today) {
+      const hist = (it.repeatHistory || []).slice();
+      if (!hist.some(h => h.until === today)) hist.push({ repeat: prev.repeat, until: today });
+      it.repeatHistory = hist; it.repeatSince = today;
+    }
     state.checklist.items[i] = it; save(); render(); emit('checklist', { item: it });
     return it;
   }
+  function CK_RULE(r) { r = r || {}; return { type: r.type || 'daily', days: (r.days || []).slice().sort(), date: r.date || null }; }
   function removeChecklistItem(id) {
     const i = state.checklist.items.findIndex(x => x.id === id); if (i < 0) return null;
     const [it] = state.checklist.items.splice(i, 1); save(); render(); emit('checklist', { removed: it });
@@ -5092,8 +5217,9 @@ const App = (function () {
   }
 
   /* ---------- UI: toasts, modal, panel ---------- */
+  /* toast(...) returns { remove } so a caller can take back a toast that no longer applies. */
   function toast(message, type, action) {
-    const host = $('#toasts'); if (!host) return;
+    const host = $('#toasts'); if (!host) return { remove() {} };
     const el = document.createElement('div');
     el.className = 'toast' + (type === 'ok' ? ' is-ok' : type === 'err' ? ' is-err' : '');
     el.innerHTML = html`<span class="grow">${message}</span>${action ? html`<button class="btn btn-sm">${action.label}</button>` : ''}<button class="btn btn-icon btn-sm btn-ghost" aria-label="Dismiss"><svg><use href="#i-x"/></svg></button>`;
@@ -5104,6 +5230,7 @@ const App = (function () {
     while (host.children.length > 3) host.firstElementChild.remove();
     const timer = setTimeout(remove, action ? 7000 : 4000);
     function remove() { clearTimeout(timer); if (!el.parentNode) return; el.classList.add('is-leaving'); setTimeout(() => el.remove(), 200); }
+    return { remove };
   }
   /* Closing animation without lingering markup: the closed dialog is moved into a closed shadow
      root (styled with this page's stylesheet), plays its exit animation there and is dropped. Nothing
@@ -5129,10 +5256,57 @@ const App = (function () {
       return true;
     } catch (e) { return false; }
   }
-  let modalOnClose = null, lastFocused = null;
+  /* Where focus goes back to when the modal closes. A modal opened from another modal (Edit or
+     Delete from the detail view, a confirm) keeps the original trigger. The trigger is
+     remembered as its data-id plus its data-action / class, so it can be looked up again when a
+     re-render has replaced the node; failing that, the matching item in the active view. */
+  let modalOnClose = null, modalReturn = null, inModalClose = false, modalRefocus = null;
+  function describeFocus(el) {
+    if (!el || el === document.body || el === document.documentElement || !el.closest || el.closest('#modal-root')) return null;
+    const host = el.closest('[data-id]');
+    return { el, id: host ? host.dataset.id : null, action: el.getAttribute('data-action') || null, role: el.getAttribute('data-role') || null, cls: el.classList[0] || null };
+  }
+  function findFocusTarget(r) {
+    if (!r) return null;
+    const usable = el => el && el.isConnected && !el.closest('[hidden], [inert], #modal-root') && (el.offsetParent !== null || el.getClientRects().length > 0);
+    if (usable(r.el)) return r.el;
+    const v = $('.view.active'); if (!v) return null;
+    const FOC = 'button, a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+    if (r.id) {
+      const hosts = $$('[data-id="' + CSS.escape(r.id) + '"]', v);
+      const sel = r.action ? '[data-action="' + CSS.escape(r.action) + '"]' : r.cls ? '.' + CSS.escape(r.cls) : null;
+      if (sel) for (const h of hosts) { const x = h.matches(sel) ? h : h.querySelector(sel); if (usable(x)) return x; }
+      for (const h of hosts) { const x = h.matches(FOC) ? h : h.querySelector(FOC); if (usable(x)) return x; }
+    }
+    if (r.action && !r.id) { const x = v.querySelector('[data-action="' + CSS.escape(r.action) + '"]'); if (usable(x)) return x; }
+    return null;
+  }
+  function restoreModalFocus(r) {
+    if (!r) return;
+    const go = force => {
+      if (modalOpen()) return;
+      const act = document.activeElement;
+      if (!force && act && act !== document.body && act.isConnected) return;
+      let t = findFocusTarget(r);
+      if (!t) {
+        /* The item is gone (deleted, done and filtered out): land on the active view, not <body>. */
+        const v = $('.view.active'); if (!v) return;
+        if (!v.hasAttribute('tabindex')) v.setAttribute('tabindex', '-1');
+        t = v;
+      }
+      try { t.focus({ preventScroll: true }); } catch (e) { /* ignore */ }
+    };
+    go(true);
+    /* The action that closed the modal usually re-renders right after; look the trigger up again then. */
+    modalRefocus = { go, until: Date.now() + 1000 };
+    setTimeout(() => { if (modalRefocus && modalRefocus.go === go) go(false); }, 0);
+  }
+  on('render', () => { const m = modalRefocus; if (m && Date.now() < m.until) Promise.resolve().then(() => m.go(false)); });
   function openModal(opts) {
-    closeModal(true);
-    lastFocused = document.activeElement;
+    const nested = modalOpen() || inModalClose;
+    if (!nested) modalReturn = describeFocus(document.activeElement);
+    modalRefocus = null;
+    closeModal(true, true);
     const root = $('#modal-root');
     root.innerHTML = html`<div class="modal-backdrop"><div class="modal ${opts.wide ? 'modal-wide' : ''}" role="dialog" aria-modal="true" aria-labelledby="modal-title">
       <div class="modal-head"><h2 id="modal-title">${opts.title}</h2><button class="btn btn-icon btn-ghost right" data-action="close-modal" aria-label="Close"><svg><use href="#i-x"/></svg></button></div>
@@ -5145,13 +5319,16 @@ const App = (function () {
     if (first) setTimeout(() => { if (modal.isConnected && !modal.contains(document.activeElement)) first.focus(); }, 30);
     return modal;
   }
-  function closeModal(instant) {
+  function closeModal(instant, replacing) {
     const root = $('#modal-root'); if (!root || !root.firstElementChild) return;
     if (instant !== true) ghostOut([root.firstElementChild]);
     root.innerHTML = '';
     const fn = modalOnClose; modalOnClose = null;
-    if (fn) fn();
-    if (lastFocused && lastFocused.focus) { try { lastFocused.focus(); } catch (e) { /* ignore */ } }
+    /* replacing: another modal is taking this one's place, so onClose must not reopen anything. */
+    if (fn) { inModalClose = true; try { fn(replacing === true); } finally { inModalClose = false; } }
+    if (replacing === true || modalOpen()) return;
+    const r = modalReturn; modalReturn = null;
+    restoreModalFocus(r);
   }
   function modalOpen() { return !!$('#modal-root .modal'); }
   function openPanel(opts) {
@@ -5353,7 +5530,7 @@ const App = (function () {
       <div class="capacity-bar"><div class="capacity-fill" style="width:${pct}%"></div></div>
     </div>`;
   }
-  /* First run: four obvious next steps. Used by Home and by Next Up while there is nothing to list. */
+  /* First run: five obvious next steps. Used by Home and by Next Up while there is nothing to list. */
   function emptyState(extraClass, i) {
     const todayKey = C.dayKey(now());
     const steps = [
@@ -5363,14 +5540,16 @@ const App = (function () {
         actions: html`<button class="btn btn-primary" data-action="open-import" data-tab="paste"><span aria-hidden="true">📋</span> Paste from Classroom</button><button class="btn btn-ghost btn-sm" data-action="open-import"><svg><use href="#i-upload"/></svg> .ics files</button>` },
       { n: 3, ico: '✨', title: 'Try demo data', text: 'Look around with a sample week of assignments first. Remove it any time in Settings.', done: false,
         actions: html`<button class="btn" data-action="load-demo">Try demo data</button>` },
-      { n: 4, ico: '📓', title: 'Start your daily log', text: 'A ten-second check-in: how the day felt, events and a verse.', done: !!(logDay(todayKey) && !isLogDayEmpty(logDay(todayKey))),
+      { n: 4, ico: '✏️', title: 'Create your first assignment', text: 'Type it the way you would say it: “chem test fri 3pm”. The date and class fill themselves in.', done: state.assignments.some(a => a.source === 'manual' && !/^demo_/.test(a.id)),
+        actions: html`<button class="btn btn-primary" data-action="ov-create"><svg><use href="#i-plus"/></svg> Create assignment</button>` },
+      { n: 5, ico: '📓', title: 'Start your daily log', text: 'A ten-second check-in: how the day felt, events and a verse.', done: !!(logDay(todayKey) && !isLogDayEmpty(logDay(todayKey))),
         actions: html`<button class="btn" data-action="ov-log" data-day="${todayKey}">Open daily log</button>` }
     ];
     return html`<section class="hero start-card ${extraClass || ''}" style="--i:${i || 0}" aria-labelledby="start-h">
       <div class="start-head">
         <div class="vh-eyebrow"><span class="vh-dot"></span>Get started · about two minutes</div>
         <h2 id="start-h">Let’s set up your planner</h2>
-        <p class="muted">Four quick steps, in any order. Everything stays in this browser; nothing is sent anywhere.</p>
+        <p class="muted">Five quick steps, in any order. Everything stays in this browser; nothing is sent anywhere.</p>
       </div>
       <ol class="start-steps">${steps.map(st => html`<li class="start-step ${st.done ? 'is-done' : ''}">
         <div class="start-step-top"><span class="start-ico" aria-hidden="true">${st.ico}</span><span class="start-n" aria-hidden="true">${st.done ? raw('<svg><use href="#i-check"/></svg>') : st.n}</span></div>
@@ -7872,7 +8051,8 @@ const App = (function () {
     } else parts.push(html`<span class="ov-st">No assignments yet</span>`);
     if (D.ckTotal) parts.push(html`<span class="ov-st ${D.ckDone === D.ckTotal ? 'is-good' : ''}">checklist <b class="num">${D.ckDone}/${D.ckTotal}</b></span>`);
     parts.push(D.streak ? html`<span class="ov-st is-hot"><span aria-hidden="true">🔥</span> <b class="num">${D.streak}</b>-day streak</span>` : html`<span class="ov-st">start a streak today</span>`);
-    return html`<section class="ov-greet ov-anim" data-slot="greet" style="--i:0" aria-labelledby="ov-hello">
+    const driftAt = -((typeof performance !== 'undefined' ? performance.now() : Date.now()) / 1000 % 40);
+    return html`<section class="ov-greet ov-anim" data-slot="greet" style="--i:0;--ov-drift-at:${driftAt.toFixed(2)}s" aria-labelledby="ov-hello">
       <div class="ov-greet-main">
         <div class="ov-date">${dateText}</div>
         <h1 class="ov-hello" id="ov-hello">${g.text} <span class="wave" aria-hidden="true">${g.icon}</span></h1>
@@ -7916,7 +8096,7 @@ const App = (function () {
               ${top.estimatedMin ? html`<span aria-hidden="true">·</span><span>~${C.formatDuration(top.estimatedMin)}</span>` : ''}
               ${priorityBadge(top)}
             </div>
-            <div class="ov-next-progress">${progressMeter(top)}</div>
+            <div class="ov-next-progress">${progressMeter(top, { editable: true })}</div>
           </div>
           <div class="ov-next-cd"><div class="ov-label">${overdue ? 'Past due' : due ? 'Due in' : 'Whenever'}</div>${countdownEl(top)}</div>
           <div class="ov-next-actions">
@@ -8220,6 +8400,40 @@ const App = (function () {
     setView('log');
     logAnnounce(key);
   }
+  /* Phone sheet (logMode() 'sheet'): the editor covers the page over a scrim, so it is a modal
+     dialog. It gets role="dialog" + aria-modal, Tab stays inside it, and the page behind does
+     not scroll while it is open. logSheetSync runs after every render and on resize. */
+  function logSheetEl() {
+    if (state.ui.view !== 'log' || !state.ui.logOpen || logMode() !== 'sheet') return null;
+    const ed = document.getElementById('log-ed');
+    return ed && ed.isConnected ? ed : null;
+  }
+  function logSheetSync() {
+    const ed = document.getElementById('log-ed');
+    const sheet = logSheetEl();
+    if (ed) {
+      if (sheet) { ed.setAttribute('role', 'dialog'); ed.setAttribute('aria-modal', 'true'); ed.setAttribute('aria-labelledby', 'log-ed-title'); }
+      else { ed.removeAttribute('role'); ed.removeAttribute('aria-modal'); }
+    }
+    document.documentElement.classList.toggle('log-sheet-lock', !!sheet);
+  }
+  on('render', logSheetSync);
+  window.addEventListener('resize', () => logSheetSync());
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Tab' || e.defaultPrevented) return;
+    const ed = logSheetEl(); if (!ed) return;
+    const act = document.activeElement;
+    if (act && act.closest && act.closest('#modal-root, .pm-pop')) return;
+    const list = Array.from(ed.querySelectorAll('button:not([disabled]), input:not([disabled]):not([type=hidden]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'))
+      .filter(el => el.offsetParent !== null || el.getClientRects().length);
+    if (!list.length) return;
+    const first = list[0], last = list[list.length - 1];
+    const inside = ed.contains(act);
+    if (!inside || (e.shiftKey && (act === first || act === ed.querySelector('#log-ed-title'))) || (!e.shiftKey && act === last)) {
+      e.preventDefault();
+      (e.shiftKey ? last : first).focus();
+    }
+  }, true);
   function logClose() {
     if (!state.ui.logOpen) return;
     logFlushAll();
@@ -9654,6 +9868,7 @@ const App = (function () {
       const list = active(), arch = archived(), starters = ckStarters();
       return html`
         <p class="cks-intro">Little things to tick off each day. They show on Home and on each day of your daily log.</p>
+        <p class="cks-note">Archiving hides an item from today on and keeps its past days. Archived items can be restored any time from the Archived list below.</p>
         ${editor('add')}
         <div class="cks-sec"><h3>Your items</h3><span class="count-badge">${list.length}</span></div>
         ${list.length ? html`<ul class="cks-list">${list.map((it, i) => rowHtml(it, i, list.length))}</ul>`
@@ -9884,9 +10099,20 @@ const App = (function () {
     pmSyncPop(p);
     pmPlace();
     if (p === 100 && before < 100 && !a.done) {
-      toast('100% on “' + a.title + '”. Mark it as done?', 'ok', { label: 'Mark done', fn: () => { closeProgressPop(); completeAssignment(id); } });
+      pmDropDoneToast();
+      const handle = toast('100% on “' + a.title + '”. Mark it as done?', 'ok', { label: 'Mark done', fn: () => {
+        /* Only when it is still at 100%: the student may have dialled it back since. */
+        if (progressOf(byId(id)) < 100) return;
+        closeProgressPop(); completeAssignment(id);
+      } });
+      pmDoneToast = { id, handle };
     }
   }
+  /* The one "Mark it as done?" toast on screen: replaced by a newer one, and taken back as soon
+     as that item's progress drops below 100 from any surface. */
+  let pmDoneToast = null;
+  function pmDropDoneToast() { if (pmDoneToast) { pmDoneToast.handle.remove(); pmDoneToast = null; } }
+  on('progress', a => { if (pmDoneToast && a && a.id === pmDoneToast.id && progressOf(a) < 100) pmDropDoneToast(); });
   function closeProgressPop(refocus) {
     const pop = pmPop.el; if (!pop) return;
     const id = pmPop.id, near = pmPop.anchorRect;
@@ -10037,8 +10263,12 @@ const App = (function () {
     head.insertBefore(main, h2); main.appendChild(h2);
     const q = s => m.querySelector(s);
     q('[data-role="close"]').addEventListener('click', () => closeModal());
-    q('[data-role="edit"]').addEventListener('click', () => openEditModal(a.id));
-    q('[data-role="delete"]').addEventListener('click', async () => { if (await confirmModal({ title: 'Delete assignment?', message: '“' + a.title + '” will be removed. You can undo right after.', ok: 'Delete', danger: true })) deleteAssignment(a.id); });
+    /* Edit and Delete come back here when cancelled. */
+    q('[data-role="edit"]').addEventListener('click', () => openEditModal(a.id, { backTo: a.id }));
+    q('[data-role="delete"]').addEventListener('click', async () => {
+      if (await confirmModal({ title: 'Delete assignment?', message: '“' + a.title + '” will be removed. You can undo right after.', ok: 'Delete', danger: true })) deleteAssignment(a.id);
+      else if (byId(a.id) && !modalOpen()) openAssignmentDetail(a.id);
+    });
     if (q('[data-role="start"]')) q('[data-role="start"]').addEventListener('click', () => { closeModal(); startAssignment(a.id); toast('Started: ' + a.title, 'ok'); });
     if (q('[data-role="done"]')) q('[data-role="done"]').addEventListener('click', () => { closeModal(); completeAssignment(a.id); });
     if (q('[data-role="undone"]')) q('[data-role="undone"]').addEventListener('click', () => { closeModal(); uncompleteAssignment(a.id); });
@@ -10049,6 +10279,9 @@ const App = (function () {
   /* ---------- Create assignment: smart prompt + structured fields ---------- */
   const CA_PRI = [['auto', 'Auto'], ['low', 'Low'], ['medium', 'Medium'], ['high', 'High'], ['critical', 'Critical']];
   const CA_EXAMPLES = ['Unit 1 test psych est time 15 min due on the 10th', 'Chem lab report fri 11:59pm !high 45m', 'Essay draft for english due next week 2h', 'Bio worksheet tomorrow 3pm half done'];
+  /* Phones get a short prompt placeholder so neither it nor the Enter hint is cut off. */
+  const CA_SHORT_EXAMPLE = 'e.g. chem test fri 3pm';
+  function caNarrow() { return !!(window.matchMedia && window.matchMedia('(max-width: 520px)').matches); }
   function titleCaseTag(t) { return String(t || '').replace(/[-_]+/g, ' ').replace(/\b\w/g, ch => ch.toUpperCase()); }
   function openCreateAssignment(prefill) {
     prefill = prefill || {};
@@ -10066,7 +10299,7 @@ const App = (function () {
       <div class="ca-smart">
         <label class="ca-smart-label" for="ca-prompt"><span class="ca-spark" aria-hidden="true">✨</span><span>Describe it</span><span class="ca-smart-sub">and the details fill themselves in</span></label>
         <div class="ca-prompt-wrap">
-          <input class="input ca-prompt" id="ca-prompt" placeholder="${'e.g. ' + CA_EXAMPLES[0]}" aria-describedby="ca-understood" spellcheck="false" maxlength="300">
+          <input class="input ca-prompt" id="ca-prompt" placeholder="${caNarrow() ? CA_SHORT_EXAMPLE : 'e.g. ' + CA_EXAMPLES[0]}" aria-describedby="ca-understood" spellcheck="false" maxlength="300">
           <span class="ca-prompt-kbd kbd" aria-hidden="true">Enter</span>
         </div>
         <div class="ca-understood" id="ca-understood" aria-live="polite"></div>
@@ -10498,8 +10731,13 @@ const App = (function () {
   /* ---------- edit modal ---------- */
   function dateInputValue(d) { return d ? C.dayKey(d) : ''; }
   function timeInputValue(d) { return d ? C.pad2(d.getHours()) + ':' + C.pad2(d.getMinutes()) : ''; }
-  function openEditModal(id) {
+  /* openEditModal(id, { backTo }): with backTo, closing without saving (Cancel, Esc, ×) or
+     cancelling Delete / Archive reopens that assignment's detail view. */
+  function openEditModal(id, opts) {
+    opts = opts || {};
     const a = id ? byId(id) : null;
+    let acted = false;
+    const goBack = () => { if (!acted && opts.backTo && byId(opts.backTo) && !modalOpen()) openAssignmentDetail(opts.backTo); };
     const n = now();
     const due = a ? C.parseISO(a.due) : null;
     const isNew = !a;
@@ -10534,17 +10772,17 @@ const App = (function () {
       <span class="right"></span>
       <button class="btn" data-role="cancel">Cancel</button>
       <button class="btn btn-primary" data-role="save" type="submit" form="edit-form">${isNew ? 'Add' : 'Save'}</button>`;
-    const m = openModal({ title: isNew ? 'New assignment' : 'Edit assignment', body, footer });
+    const m = openModal({ title: isNew ? 'New assignment' : 'Edit assignment', body, footer, onClose: replaced => { if (!replaced) goBack(); } });
     const q = s => m.querySelector(s);
     q('#ed-class').addEventListener('change', e => { const nw = q('#ed-class-new'); nw.hidden = e.target.value !== '__new'; if (!nw.hidden) nw.focus(); });
     q('#ed-allday').addEventListener('change', e => { q('#ed-time').disabled = e.target.checked; if (!e.target.checked && !q('#ed-time').value) q('#ed-time').value = '23:59'; });
     q('#ed-date').addEventListener('change', e => { if (e.target.value && !q('#ed-allday').checked && !q('#ed-time').value) q('#ed-time').value = '23:59'; });
     q('[data-role="cancel"]').addEventListener('click', closeModal);
     q('#ed-progress').addEventListener('input', e => { const v = +e.target.value; e.target.style.setProperty('--p', v + '%'); e.target.setAttribute('aria-valuetext', v + '% done'); q('#ed-prog-val').textContent = v + '%'; });
-    if (q('[data-role="delete"]')) q('[data-role="delete"]').addEventListener('click', async () => { if (await confirmModal({ title: 'Delete assignment?', message: '“' + a.title + '” will be removed. You can undo right after.', ok: 'Delete', danger: true })) deleteAssignment(a.id); });
-    if (q('[data-role="archive"]')) q('[data-role="archive"]').addEventListener('click', async () => { const r = await confirmModal({ title: 'Archive overdue item', message: 'Archiving hides it everywhere without marking it done. Say why, so future you knows.', input: 'Reason', placeholder: 'e.g. teacher excused it / turned in late', ok: 'Archive' }); if (r !== null) archiveAssignment(a.id, r); });
-    if (q('[data-role="done"]')) q('[data-role="done"]').addEventListener('click', () => { closeModal(); completeAssignment(a.id); });
-    if (q('[data-role="undone"]')) q('[data-role="undone"]').addEventListener('click', () => { closeModal(); uncompleteAssignment(a.id); });
+    if (q('[data-role="delete"]')) q('[data-role="delete"]').addEventListener('click', async () => { if (await confirmModal({ title: 'Delete assignment?', message: '“' + a.title + '” will be removed. You can undo right after.', ok: 'Delete', danger: true })) deleteAssignment(a.id); else goBack(); });
+    if (q('[data-role="archive"]')) q('[data-role="archive"]').addEventListener('click', async () => { const r = await confirmModal({ title: 'Archive overdue item', message: 'Archiving hides it everywhere without marking it done. Say why, so future you knows.', input: 'Reason', placeholder: 'e.g. teacher excused it / turned in late', ok: 'Archive' }); if (r !== null) archiveAssignment(a.id, r); else goBack(); });
+    if (q('[data-role="done"]')) q('[data-role="done"]').addEventListener('click', () => { acted = true; closeModal(); completeAssignment(a.id); });
+    if (q('[data-role="undone"]')) q('[data-role="undone"]').addEventListener('click', () => { acted = true; closeModal(); uncompleteAssignment(a.id); });
     q('#edit-form').addEventListener('submit', e => {
       e.preventDefault();
       const title = q('#ed-title').value.trim();
@@ -10561,6 +10799,7 @@ const App = (function () {
       const prog = +q('#ed-progress').value;
       if (!(draft.done && prog === 100)) patch.progress = Math.max(0, Math.min(100, Math.round(prog || 0)));
       if (pv === 'auto') patch.priorityAuto = true; else { patch.priority = pv; patch.priorityAuto = false; }
+      acted = true;
       closeModal();
       if (isNew) addAssignment(patch); else updateAssignment(a.id, patch);
       if (!isNew) toast('Saved', 'ok');

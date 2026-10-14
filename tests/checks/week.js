@@ -112,6 +112,8 @@ module.exports = async ({ page, check, assert, SHOTS, shotsDir, path }) => {
     await page.click('#modal-root [data-role="edit"]');
     await page.waitForSelector('#modal-root .modal #ed-title');
     assert.strictEqual(await page.inputValue('#ed-title'), 'WK afternoon item');
+    await page.keyboard.press('Escape'); /* back to the detail view */
+    await page.waitForSelector('#modal-root .ad-modal');
     await page.keyboard.press('Escape');
     await page.focus(`.wk-block[data-id="${ids.morning}"]`);
     await page.keyboard.press('Enter');
@@ -119,6 +121,8 @@ module.exports = async ({ page, check, assert, SHOTS, shotsDir, path }) => {
     await page.click('#modal-root [data-role="edit"]');
     await page.waitForSelector('#modal-root .modal #ed-title');
     assert.strictEqual(await page.inputValue('#ed-title'), 'WK morning item');
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#modal-root .ad-modal');
     await page.keyboard.press('Escape');
     assert.ok(!(await page.$('#modal-root .modal')));
     const label = await page.getAttribute(`.wk-block[data-id="${ids.morning}"]`, 'aria-label');

@@ -284,7 +284,7 @@ test('due forms: "due 10/20", "due friday", "due tomorrow at 3pm", "due next wee
 });
 test('bare class words: chem, bio, apush, "us history", "ap psych", math nickname', () => {
   let p = sp('chem lab report fri');
-  assert.strictEqual(p.classId, 'chem'); assert.strictEqual(p.title, 'lab report');
+  assert.strictEqual(p.classId, 'chem'); assert.strictEqual(p.title, 'Lab report');
   p = sp('Enzyme worksheet for bio');
   assert.strictEqual(p.classId, 'bio'); assert.strictEqual(p.title, 'Enzyme worksheet');
   p = sp('apush DBQ due thursday');
@@ -294,7 +294,7 @@ test('bare class words: chem, bio, apush, "us history", "ap psych", math nicknam
   p = sp('Unit 2 quiz in ap psych');
   assert.strictEqual(p.classId, 'psy'); assert.strictEqual(p.title, 'Unit 2 quiz');
   p = sp('math homework 4.3');
-  assert.strictEqual(p.classId, 'pre'); assert.strictEqual(p.title, 'homework 4.3');
+  assert.strictEqual(p.classId, 'pre'); assert.strictEqual(p.title, 'Homework 4.3');
 });
 test('never strips a word that names no class, or that names two', () => {
   let p = sp('Unit 1 test tomorrow');
@@ -304,13 +304,13 @@ test('never strips a word that names no class, or that names two', () => {
   p = sp('AP review packet', CLASSES); /* "AP" alone is in three class names */
   assert.strictEqual(p.classId, null); assert.strictEqual(p.title, 'AP review packet');
   p = sp('bio test', [{ id: 'a', name: 'Biology' }, { id: 'b', name: 'AP Biology' }]);
-  assert.strictEqual(p.classId, null, 'ambiguous'); assert.strictEqual(p.title, 'bio test');
+  assert.strictEqual(p.classId, null, 'ambiguous'); assert.strictEqual(p.title, 'Bio test');
   p = sp('biology test', [{ id: 'a', name: 'Biology' }, { id: 'b', name: 'AP Biology' }]);
   assert.strictEqual(p.classId, 'a', 'an exact name wins');
   p = sp('Chemistry due fri');
   assert.strictEqual(p.classId, 'chem'); assert.strictEqual(p.title, 'Chemistry', 'keeps the word when it is the whole title');
   p = sp('psych essay', []);
-  assert.strictEqual(p.classId, null); assert.strictEqual(p.title, 'psych essay');
+  assert.strictEqual(p.classId, null); assert.strictEqual(p.title, 'Psych essay');
 });
 test('a #tag wins over bare words, and the existing example is unchanged with classes', () => {
   const p = sp('Chem lab report fri 11:59pm #chem !high 45m');
@@ -322,9 +322,9 @@ test('priority words: !high, high priority, urgent, important', () => {
   let p = sp('Essay high priority fri');
   assert.strictEqual(p.priority, 'high'); assert.strictEqual(p.title, 'Essay');
   p = sp('urgent permission slip');
-  assert.strictEqual(p.priority, 'critical'); assert.strictEqual(p.title, 'permission slip');
+  assert.strictEqual(p.priority, 'critical'); assert.strictEqual(p.title, 'Permission slip');
   p = sp('Important reading quiz');
-  assert.strictEqual(p.priority, 'high'); assert.strictEqual(p.title, 'reading quiz');
+  assert.strictEqual(p.priority, 'high'); assert.strictEqual(p.title, 'Reading quiz');
   assert.strictEqual(sp('Essay low priority').priority, 'low');
   assert.strictEqual(sp('Essay priority: critical').priority, 'critical');
   assert.strictEqual(sp('Essay draft').priority, '');
@@ -344,6 +344,90 @@ test('glue words next to removed pieces are trimmed, others are kept', () => {
   assert.strictEqual(sp('Turn it in').title, 'Turn it in');
   assert.strictEqual(sp('The Great Gatsby essay due fri').title, 'The Great Gatsby essay');
   assert.strictEqual(sp('Notes on the reading est 20m').title, 'Notes on the reading');
+});
+/* Round 3 parser fixes (reviewer's clock: Wed Oct 14 2026 3:30pm). */
+const NOW3 = local(2026, 10, 14, 15, 30);
+const CLASSES3 = ['AP Psychology', 'Chemistry', 'English 11', 'Precalculus', 'US History', 'Spanish 2'].map((n, i) => ({ id: 'c' + i, name: n }));
+const r3 = s => C.parseQuickAdd(s, { now: NOW3, classes: CLASSES3 });
+test('HH:MM without am/pm: 11:59 and "tonight" are evening, 1-7 afternoon, 8:00 stays morning', () => {
+  let p = r3('chem test due at 11:59 tonight');
+  assert.strictEqual(p.due.getTime(), local(2026, 10, 14, 23, 59).getTime());
+  assert.ok(p.due > NOW3, 'not overdue on creation');
+  assert.strictEqual(r3('essay due friday 11:59').due.getTime(), local(2026, 10, 16, 23, 59).getTime());
+  assert.strictEqual(r3('essay due tonight at 11:59').due.getTime(), local(2026, 10, 14, 23, 59).getTime());
+  assert.strictEqual(r3('quiz tomorrow 3:15').due.getTime(), local(2026, 10, 15, 15, 15).getTime());
+  assert.strictEqual(r3('call at 8:00 tomorrow').due.getTime(), local(2026, 10, 15, 8, 0).getTime());
+  assert.strictEqual(r3('read at 10:30 tomorrow').due.getTime(), local(2026, 10, 15, 10, 30).getTime());
+  assert.strictEqual(r3('essay due friday at 11').due.getTime(), local(2026, 10, 16, 11, 0).getTime());
+  assert.strictEqual(r3('game tonight at 9').due.getTime(), local(2026, 10, 14, 21, 0).getTime());
+});
+test('"SAT" the exam is not Saturday; saturday and "on sat" still are', () => {
+  let p = r3('SAT prep 1h saturday');
+  assert.strictEqual(p.title, 'SAT prep'); assert.strictEqual(p.estimatedMin, 60);
+  assert.strictEqual(p.due.getTime(), local(2026, 10, 17, 23, 59).getTime());
+  assert.strictEqual(r3('sat practice test').due, null);
+  assert.strictEqual(r3('Take the SAT').due, null);
+  p = r3('essay on sat');
+  assert.strictEqual(p.title, 'Essay'); assert.strictEqual(p.due.getTime(), local(2026, 10, 17, 23, 59).getTime());
+  assert.strictEqual(r3('poster due saturday').due.getTime(), local(2026, 10, 17, 23, 59).getTime());
+});
+test('a #tag must start with a letter: "#5-20" is problem numbers', () => {
+  const p = r3('do 2.3 #5-20 precalc due tmrw');
+  assert.strictEqual(p.classTag, ''); assert.strictEqual(p.classId, 'c3');
+  assert.strictEqual(p.title, 'Do 2.3 #5-20');
+  assert.strictEqual(p.due.getTime(), local(2026, 10, 15, 23, 59).getTime());
+  assert.strictEqual(r3('Lab #chem').classTag, 'chem');
+});
+test('"1/2 done" and "3/4 done" are progress, not dates', () => {
+  let p = r3('spanish worksheet 1/2 done');
+  assert.strictEqual(p.progress, 50); assert.strictEqual(p.due, null); assert.strictEqual(p.classId, 'c5');
+  assert.strictEqual(p.title, 'Spanish worksheet');
+  p = r3('lab report 3/4 done');
+  assert.strictEqual(p.progress, 75); assert.strictEqual(p.due, null); assert.strictEqual(p.title, 'Lab report');
+  assert.strictEqual(r3('essay half done').progress, 50);
+});
+test('mm-dd after due / on / by; "ch 3/4" and "pg 3/4" are not dates', () => {
+  let p = r3('chem hw due 10-20');
+  assert.strictEqual(p.due.getTime(), local(2026, 10, 20, 23, 59).getTime()); assert.strictEqual(p.title, 'Chem hw');
+  assert.strictEqual(r3('poster by 11-3').due.getTime(), local(2026, 11, 3, 23, 59).getTime());
+  assert.strictEqual(r3('problems 10-20').due, null, 'no due/on/by: a range, not a date');
+  p = r3('read ch 3/4 english');
+  assert.strictEqual(p.due, null); assert.strictEqual(p.title, 'Read ch 3/4'); assert.strictEqual(p.classId, 'c2');
+  p = r3('reading pg 3/4 due fri');
+  assert.strictEqual(p.title, 'Reading pg 3/4'); assert.strictEqual(p.due.getTime(), local(2026, 10, 16, 23, 59).getTime());
+  assert.strictEqual(r3('read chapter 10/11').due, null);
+  assert.strictEqual(r3('quiz 10/20').due.getTime(), local(2026, 10, 20, 23, 59).getTime());
+});
+test('"Friday the 16th" consumes the date; an explicit date wins over a mismatched weekday', () => {
+  let p = r3('lab report chem due Friday the 16th');
+  assert.strictEqual(p.title, 'Lab report'); assert.strictEqual(p.classId, 'c1');
+  assert.strictEqual(p.due.getTime(), local(2026, 10, 16, 23, 59).getTime());
+  p = r3('essay due fri 23rd');
+  assert.strictEqual(p.title, 'Essay'); assert.strictEqual(p.due.getTime(), local(2026, 10, 23, 23, 59).getTime());
+});
+test('typos: tomorow / tommorow / tmrow, and one-edit class names when unambiguous', () => {
+  for (const w of ['tomorow', 'tommorow', 'tomorrw', 'tmrow', 'tmrw', 'tomorrow']) {
+    const p = r3('essay due ' + w);
+    assert.strictEqual(p.due.getTime(), local(2026, 10, 15, 23, 59).getTime(), w); assert.strictEqual(p.title, 'Essay', w);
+  }
+  assert.strictEqual(C.parseQuickAdd('essay tomorow', { now: NOW3 }).title, 'Essay');
+  assert.strictEqual(r3('spansh vocab due fri').classId, 'c5');
+  let p = r3('chemestry test');
+  assert.strictEqual(p.classId, 'c1'); assert.strictEqual(p.title, 'Chemistry test');
+  /* Ambiguous typo: "histery" is one edit from both History classes. */
+  p = C.parseQuickAdd('histery notes', { now: NOW3, classes: [{ id: 'a', name: 'US History' }, { id: 'b', name: 'World History' }] });
+  assert.strictEqual(p.classId, null);
+  assert.strictEqual(r3('storm essay').classId, null, 'short or unrelated words are not fuzzed');
+});
+test('smart titles: capitalised, and a lone generic word keeps the class short name', () => {
+  assert.strictEqual(r3('chem test fri').title, 'Chem test');
+  assert.strictEqual(r3('chem quiz wed').title, 'Chem quiz');
+  assert.strictEqual(r3('psych reading due the 30th').title, 'Psych reading');
+  assert.strictEqual(r3('math hw due the 31st').title, 'Math hw');
+  assert.strictEqual(r3('us history notes').title, 'History notes');
+  assert.strictEqual(r3('chem lab report fri').title, 'Lab report', 'two words are specific enough');
+  assert.strictEqual(r3('Chemistry due fri').title, 'Chemistry');
+  assert.strictEqual(r3('poster for english').title, 'Poster');
 });
 test('matchClassWords and nextDayOfMonth are exported for the app', () => {
   assert.deepStrictEqual(JSON.parse(JSON.stringify(C.matchClassWords('test psych', CLASSES))), { id: 'psy', start: 1, count: 1 });

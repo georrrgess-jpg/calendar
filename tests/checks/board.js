@@ -215,6 +215,8 @@ module.exports = async ({ page, check, assert, SHOTS, shotsDir, path }) => {
     await page.click('#modal-root [data-role="edit"]');
     await page.waitForSelector('#modal-root .modal #ed-title');
     assert.strictEqual(await page.inputValue('#ed-title'), await page.evaluate(id => App.byId(id).title, id));
+    await page.keyboard.press('Escape'); /* Esc in Edit goes back to the detail view, a second Esc closes it */
+    await page.waitForSelector('#modal-root .ad-modal');
     await page.keyboard.press('Escape');
     assert.ok(!(await page.$('#modal-root .modal')));
   });
