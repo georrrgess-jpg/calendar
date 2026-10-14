@@ -46,26 +46,28 @@ module.exports = async ({ page, check, assert, SHOTS, shotsDir, path }) => {
     assert.ok(!(await page.$('.view[data-view="log"].active')));
   });
 
-  await check('overview: quick mood and quick events write the log and Undo reverts them', async () => {
-    assert.strictEqual(await page.$$eval('.ov-mood', els => els.length), 3);
-    await page.click('.ov-mood[data-mood="good"]');
-    assert.strictEqual(await page.evaluate(d => App.state.log.days[d] && App.state.log.days[d].mood, TODAY), 'good');
-    assert.strictEqual(await page.getAttribute('.ov-mood[data-mood="good"]', 'aria-pressed'), 'true');
-    assert.ok((await page.textContent('.ov-summary')).includes('Good day'), 'summary shows the mood');
-    await undoToast('Logged');
-    assert.strictEqual(await page.evaluate(d => App.state.log.days[d] || null, TODAY), null, 'undo removed the mood (day empty again)');
-    assert.strictEqual(await page.getAttribute('.ov-mood[data-mood="good"]', 'aria-pressed'), 'false');
-
-    assert.strictEqual(await page.$$eval('.ov-ev', els => els.length), 6, 'six quick events');
-    const type = await page.getAttribute('.ov-ev >> nth=0', 'data-type');
-    await page.click('.ov-ev >> nth=0');
-    const evs = await page.evaluate(d => App.state.log.days[d].events, TODAY);
-    assert.strictEqual(evs.length, 1); assert.strictEqual(evs[0].type, type);
-    assert.ok(await page.isVisible('.ov-summary .ov-syms'), 'event symbol in today summary');
+  await check('overview: no Today’s log card; header has Create assignment, Daily log and the checklist sits in the side column', async () => {
+    assert.ok(!(await page.$('#ov-h-log')), 'today’s log card is gone');
+    assert.strictEqual(await page.$$eval('.ov-mood, .ov-ev', els => els.length), 0, 'no quick mood / quick event buttons on Home');
+    assert.ok(await page.isVisible('.ov-greet .ov-create'), 'primary Create assignment button');
+    assert.ok(await page.isVisible('.ov-greet .ov-logbtn'), 'compact Daily log button');
+    for (const a of ['ov-add-class', 'open-import', 'ov-add']) assert.ok(await page.isVisible(`.ov-greet [data-action="${a}"]`), a);
+    assert.ok(await page.isVisible(`.ov-side .ck-card[data-day="${TODAY}"]`), 'checklist card for today');
+    // Main column order: Next up then the week; side column: checklist first, then the verse.
+    const main = await page.$$eval('.ov-main > [data-slot]', els => els.map(e => e.dataset.slot));
+    assert.deepStrictEqual(main.slice(0, 2), ['next', 'week']);
+    const side = await page.$$eval('.ov-side > [data-slot]', els => els.map(e => e.dataset.slot));
+    assert.deepStrictEqual(side.slice(0, 2), ['check', 'verse']);
+    // A log event still shows on the week strip and in Coming up.
+    await page.evaluate(d => App.addLogEvent(d, { type: 'sports', label: 'Practice match' }), TODAY);
     assert.ok(await page.isVisible(`.ov-day[data-day="${TODAY}"] .ov-dsyms`), 'week strip shows the symbol');
-    assert.ok((await page.textContent('.ov-evlist')).length > 0, 'shows in coming up');
-    await undoToast('added to today');
-    assert.strictEqual(await page.evaluate(d => App.state.log.days[d] || null, TODAY), null, 'undo removed the event');
+    assert.ok((await page.textContent('.ov-evlist')).includes('Practice match'), 'shows in coming up');
+    await page.evaluate(d => App.updateLogDay(d, { events: [] }), TODAY);
+    // Create assignment opens the create dialog.
+    await page.click('.ov-greet .ov-create');
+    await page.waitForSelector('#modal-root .modal');
+    await page.keyboard.press('Escape');
+    await page.waitForFunction(() => !document.querySelector('#modal-root .modal'));
   });
 
   await check('overview: verse card hides its button without verses and saves a picked verse', async () => {
@@ -101,6 +103,7 @@ module.exports = async ({ page, check, assert, SHOTS, shotsDir, path }) => {
     assert.strictEqual(top, expectTop);
     assert.ok(await page.$('.ov-next-top [data-due]'), 'countdown carries data-due for the ticker');
     assert.ok((await page.$$('.ov-list .ov-row')).length <= 4);
+    assert.ok(await page.$('.ov-next-top .ov-next-progress'), 'progress meter under the title');
     // XSS-safe title
     assert.strictEqual(await page.$$eval('#ov-mount img', els => els.length), 0, 'no injected img');
     assert.ok((await page.textContent('#ov-mount')).includes(xss), 'title rendered as text');
@@ -161,8 +164,7 @@ module.exports = async ({ page, check, assert, SHOTS, shotsDir, path }) => {
     await page.evaluate(() => { App.state.ui.filters.classes = []; App.setView('overview'); });
   });
 
-  await check('overview: upcoming events and weight trend', async () => {
-    assert.ok(!(await page.$('#ov-h-weight')), 'weight card hidden with fewer than 2 weights');
+  await check('overview: upcoming events open their day; no weight card (the log holds weight)', async () => {
     await page.evaluate(() => {
       App.state.settings.weightUnit = 'kg';
       App.updateLogDay('2026-10-17', { events: [{ id: 'ovt1', type: 'sports', label: 'Final <game>', time: '19:00' }] });
@@ -171,9 +173,7 @@ module.exports = async ({ page, check, assert, SHOTS, shotsDir, path }) => {
     });
     const row = await page.textContent('.ov-evlist');
     assert.ok(row.includes('Final <game>') && row.includes('7:00 PM'), row);
-    assert.ok(await page.isVisible('#ov-h-weight'));
-    const wt = await page.textContent('.ov-wt');
-    assert.ok(wt.includes('60.1') && wt.includes('kg'), wt);
+    assert.ok(!(await page.$('#ov-h-weight')), 'weight card dropped from Home');
     await page.click('.ov-evrow >> nth=0');
     await page.waitForSelector('.view[data-view="log"].active');
     assert.strictEqual(await page.evaluate(() => App.state.ui.logCursor), '2026-10-17');
@@ -202,9 +202,9 @@ module.exports = async ({ page, check, assert, SHOTS, shotsDir, path }) => {
       await page.evaluate(() => { App.clearAll(); App.setNow(new Date(2026, 9, 14, 18, 30, 0)); App.setView('overview'); });
       assert.ok(await page.isVisible('.view[data-view="overview"].active [data-action="load-demo"]'));
       assert.ok(await page.isVisible('.view[data-view="overview"].active .hero [data-action="open-import"]'));
-      assert.ok(await page.isVisible('.ov-mood[data-mood="medium"]'), 'log card shows in the empty state');
-      await page.click('.ov-mood[data-mood="medium"]');
-      assert.strictEqual(await page.evaluate(d => App.state.log.days[d].mood, TODAY), 'medium');
+      assert.ok(await page.isVisible('.view[data-view="overview"].active .start-card'), 'first-run steps');
+      assert.ok(await page.isVisible('.view[data-view="overview"].active .ck-card .ck-starter'), 'checklist starters in the empty state');
+      assert.ok(!(await page.$('#ov-h-log')), 'no today’s log card');
       await page.click('.ov-logbtn');
       await page.waitForSelector('.view[data-view="log"].active');
       assert.strictEqual(await page.evaluate(() => App.state.ui.logCursor), TODAY);

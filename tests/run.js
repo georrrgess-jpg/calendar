@@ -842,6 +842,81 @@ test('searchSymbols filters by label and keywords', () => {
 /* === FEATURE:CATALOG:TESTS:END === */
 
 /* === FEATURE:CHECKLIST:TESTS:START === */
+console.log('core-lib: daily checklist');
+{
+  const CK = C.checklistDue.ck;
+  const J = x => JSON.parse(JSON.stringify(x)); // values from the vm realm
+
+  const item = (repeat, createdAt) => ({ id: 'x', title: 'T', repeat, createdAt: createdAt || local(2026, 1, 1).toISOString() });
+  // Oct 12 2026 is a Monday ... Oct 18 is a Sunday.
+  const week = ['2026-10-12', '2026-10-13', '2026-10-14', '2026-10-15', '2026-10-16', '2026-10-17', '2026-10-18'];
+  const dueOn = it => week.filter(k => C.checklistDue(it, k));
+  test('checklistDue: daily applies every day', () => {
+    assert.deepStrictEqual(dueOn(item({ type: 'daily' })), week);
+    assert.deepStrictEqual(dueOn(item({})), week, 'missing type behaves as daily');
+  });
+  test('checklistDue: weekdays and weekends', () => {
+    assert.deepStrictEqual(dueOn(item({ type: 'weekdays' })), week.slice(0, 5));
+    assert.deepStrictEqual(dueOn(item({ type: 'weekends' })), ['2026-10-17', '2026-10-18']);
+  });
+  test('checklistDue: weekly only on the chosen days', () => {
+    assert.deepStrictEqual(dueOn(item({ type: 'weekly', days: [1, 3] })), ['2026-10-12', '2026-10-14']);
+    assert.deepStrictEqual(dueOn(item({ type: 'weekly', days: [0] })), ['2026-10-18']);
+    assert.deepStrictEqual(dueOn(item({ type: 'weekly', days: [] })), []);
+  });
+  test('checklistDue: once only on its date, even before createdAt', () => {
+    assert.deepStrictEqual(dueOn(item({ type: 'once', date: '2026-10-15' })), ['2026-10-15']);
+    assert.deepStrictEqual(dueOn(item({ type: 'once', date: '2026-10-13' }, local(2026, 10, 14, 9).toISOString())), ['2026-10-13']);
+    assert.deepStrictEqual(dueOn(item({ type: 'once', date: null })), []);
+  });
+  test('checklistDue: repeating items do not apply before the day they were created', () => {
+    const it = item({ type: 'daily' }, local(2026, 10, 14, 18, 30).toISOString());
+    assert.deepStrictEqual(dueOn(it), week.slice(2), 'from the creation day (any time that day) onwards');
+    assert.deepStrictEqual(dueOn(item({ type: 'weekly', days: [1, 3] }, local(2026, 10, 13).toISOString())), ['2026-10-14']);
+    assert.strictEqual(C.checklistDue(null, '2026-10-14'), false);
+    assert.strictEqual(C.checklistDue(item({ type: 'daily' }), 'not-a-day'), false);
+  });
+  test('repeatLabel: short labels for every repeat type', () => {
+    assert.strictEqual(CK.repeatLabel({ type: 'daily' }), 'Every day');
+    assert.strictEqual(CK.repeatLabel({ type: 'weekdays' }), 'Weekdays');
+    assert.strictEqual(CK.repeatLabel({ type: 'weekends' }), 'Weekends');
+    assert.strictEqual(CK.repeatLabel({ type: 'weekly', days: [5, 1, 3] }), 'Mon, Wed, Fri', 'Monday-first order');
+    assert.strictEqual(CK.repeatLabel({ type: 'weekly', days: [0, 6] }), 'Weekends');
+    assert.strictEqual(CK.repeatLabel({ type: 'weekly', days: [1, 2, 3, 4, 5] }), 'Weekdays');
+    assert.strictEqual(CK.repeatLabel({ type: 'weekly', days: [0, 1, 2, 3, 4, 5, 6] }), 'Every day');
+    assert.strictEqual(CK.repeatLabel({ type: 'weekly', days: [0] }), 'Sun');
+    assert.strictEqual(CK.repeatLabel({ type: 'weekly', days: [] }), 'No days picked');
+    assert.strictEqual(CK.repeatLabel({ type: 'once', date: '2026-10-20' }), 'Once on Oct 20');
+    assert.strictEqual(CK.repeatLabel({ type: 'once' }), 'Once');
+    assert.strictEqual(CK.repeatLabel(null), 'Every day');
+  });
+  test('repeatSentence: the preview line', () => {
+    assert.strictEqual(CK.repeatSentence({ type: 'weekly', days: [1, 3, 5] }), 'Repeats every Mon, Wed, Fri');
+    assert.strictEqual(CK.repeatSentence({ type: 'daily' }), 'Repeats every day');
+    assert.ok(/weekday/.test(CK.repeatSentence({ type: 'weekdays' })));
+    assert.strictEqual(CK.repeatSentence({ type: 'once', date: '2026-10-20' }), 'Just once, on Tue, Oct 20');
+  });
+  test('normalizeRepeat folds named day sets and drops stray fields', () => {
+    assert.deepStrictEqual(J(CK.normalizeRepeat({ type: 'weekly', days: [3, 1, 3, 9] })), { type: 'weekly', days: [1, 3], date: null });
+    assert.deepStrictEqual(J(CK.normalizeRepeat({ type: 'weekly', days: [1, 2, 3, 4, 5] })).type, 'weekdays');
+    assert.deepStrictEqual(J(CK.normalizeRepeat({ type: 'weekly', days: [6, 0] })).type, 'weekends');
+    assert.deepStrictEqual(J(CK.normalizeRepeat({ type: 'weekly', days: [0, 1, 2, 3, 4, 5, 6] })).type, 'daily');
+    assert.deepStrictEqual(J(CK.normalizeRepeat({ type: 'once', date: '2026-10-20', days: [1] })), { type: 'once', days: [], date: '2026-10-20' });
+    assert.deepStrictEqual(J(CK.normalizeRepeat({ type: 'bogus' })), { type: 'daily', days: [], date: null });
+  });
+  test('splitIcon pulls a leading emoji off a title', () => {
+    assert.deepStrictEqual(J(CK.splitIcon('💧 Drink water')), { icon: '💧', title: 'Drink water' });
+    assert.deepStrictEqual(J(CK.splitIcon('🛏️Make bed')), { icon: '🛏️', title: 'Make bed' });
+    assert.deepStrictEqual(J(CK.splitIcon('  Call grandma ')), { icon: '', title: 'Call grandma' });
+    assert.deepStrictEqual(J(CK.splitIcon('3 laps')), { icon: '', title: '3 laps' }, 'digits are not icons');
+    assert.deepStrictEqual(J(CK.splitIcon('🎉')), { icon: '', title: '🎉' }, 'an emoji alone stays the title');
+  });
+  test('checklist icon picker and starters', () => {
+    assert.strictEqual(CK.CK_ICONS.length, 24);
+    assert.strictEqual(new Set(CK.CK_ICONS).size, 24);
+    assert.deepStrictEqual(J(CK.CK_STARTERS.map(s => s.title)), ['Drink water', 'Read 20 min', 'Exercise', 'Make bed', 'Pray', 'Pack bag']);
+  });
+}
 /* === FEATURE:CHECKLIST:TESTS:END === */
 
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
