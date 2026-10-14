@@ -3,9 +3,12 @@
 A calendar for your Google Classroom assignments that lives in **one file**, `assignments.html`.
 
 - Works offline straight from your desktop: no internet, no server, no install, no sign-in.
-- Fills itself from Google Calendar's own export, which works inside a locked-down school account.
+- Fills itself from your own Google data, with nothing installed: Google Calendar's export, or a copy-paste of Classroom's To-do page.
 - Remembers everything (check-offs, priorities, notes, streaks) in your browser.
 - Shows countdowns, auto-priorities, a month calendar with a workload heat map, a week timeline, a drag-and-drop priority board, per-class progress and a built-in Pomodoro timer.
+- Opens on a **Home** overview with a little of everything: what to do next, today's log, this week, your stats and classes.
+- Has a **Daily log** for your mood, weight, a verse of the day, notes and events such as games, birthdays and vacations.
+- Comes with a **class catalog** for 9th to 12th grade and college, so adding your classes takes seconds.
 
 To start, download `assignments.html` and double-click it.
 
@@ -17,7 +20,9 @@ To start, download `assignments.html` and double-click it.
 2. Double-click the zip to unzip it (built into Windows/macOS/ChromeOS — nothing to install). Inside are `.ics` files, one per calendar; your classes are named after your Classroom classes.
 3. Open `assignments.html` in any browser and drag those `.ics` files onto the drop zone. Done — repeat whenever you want a refresh (your check-offs and priorities are kept).
 
-**If Export is greyed out or missing (your admin turned it off):**
+**If your classes are missing from the export:** Google's Export only includes calendars listed under "My calendars". Classroom class calendars usually belong to your teacher, so for many students they aren't in the zip. The app tells you when that happens. Use Paste from Classroom below instead; it takes about a minute.
+
+**If Export is greyed out, missing, or your classes weren't included:**
 
 1. Open Google Classroom → ☰ menu → **To-do**.
 2. Press Ctrl/Cmd + A, then Ctrl/Cmd + C.
@@ -33,7 +38,8 @@ To start, download `assignments.html` and double-click it.
 |---|---|
 | `N` | Quick add |
 | `/` | Search |
-| `1` to `5` | Next Up, Month, Week, Board, Classes |
+| `1` to `7` | Home, Next Up, Month, Week, Board, Classes, Daily log |
+| `L` | Open today's daily log |
 | `F` | Focus mode: only the next thing, the timer and today |
 | `I` | Import |
 | `,` | Settings |
@@ -47,6 +53,17 @@ To start, download `assignments.html` and double-click it.
 - Class: `#chem` matches the first class whose name starts with "chem".
 - Priority: `!low`, `!med`, `!high`, `!crit`.
 - Estimate: `45m`, `2h`, `1h30m`.
+
+**Adding classes:** open Classes and choose **Add classes**. Pick your grade (9th, 10th, 11th, 12th or College), tap every class you take, and press Add. Can't find one? Type it under Custom class; a matching symbol is suggested for you. Tap a class's symbol later to change it.
+
+**The daily log** (key `L`, or the Daily log button on Home):
+
+- Tap 😊 😐 or 😞 for a good, medium or bad day.
+- Enter your weight in lb or kg. The log shows the change since last time and a trend line.
+- Press **Get a verse** for a random Bible verse (King James Version) that stays with that day. Press **New verse** to draw another.
+- Write an optional description of the day. It saves as you type.
+- Tap a symbol to add an event: 🏆 Sports game, 🎂 Birthday, 🏖️ Vacation, ✈️ Trip and more. Or type it, like `Basketball game 7pm`, and the symbol and time are filled in for you. Vacations can repeat over several days.
+- Your events and moods also show on the Month calendar.
 
 **Priorities are automatic** until you change one. The score comes from how soon it's due, words like test, exam, project or essay in the title, your time estimate, and how busy that class is this week. Change a priority in the edit dialog or by dragging on the Board, and it stays the way you set it.
 
