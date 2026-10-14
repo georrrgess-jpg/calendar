@@ -1081,6 +1081,7 @@ body:has(#pomo-chip) .footer { padding-bottom: 84px; }
   .modal { border-radius: 20px 20px 0 0; max-height: 92vh; display: flex; flex-direction: column; }
   .modal-body { overflow: auto; }
   .footer { padding-bottom: 90px; }
+  .toasts { bottom: 84px; }
 }
 @media (max-width: 400px) {
   body { font-size: 14px; }
@@ -2215,7 +2216,7 @@ const App = (function () {
     const norm = C.normalizeName(clean);
     let c = state.classes.find(x => C.normalizeName(x.sourceName || '') === norm) || state.classes.find(x => C.normalizeName(x.name) === norm);
     if (!c) {
-      c = { id: 'c_' + C.hash(norm), name: clean, sourceName: opts.source === 'ics' ? clean : '', color: nextColor(), emoji: '', hidden: false };
+      c = { id: 'c_' + C.hash(norm), name: clean, sourceName: (opts.source === 'ics' || opts.source === 'paste') ? clean : '', color: nextColor(), emoji: '', hidden: false };
       state.classes.push(c);
     } else if (opts.source === 'ics' && !c.sourceName) c.sourceName = clean;
     return c;
@@ -2238,15 +2239,16 @@ const App = (function () {
   const byId = id => state.assignments.find(a => a.id === id) || null;
   function classHidden(id) { const c = getClass(id); return !!(c && c.hidden); }
   function isOverdue(a, n) { if (!a || a.done || a.archived || !a.due) return false; const d = C.parseISO(a.due); return !!d && d < (n || now()); }
-  function allOpen() { return state.assignments.filter(a => !a.done && !a.archived && !classHidden(a.classId)); }
+  function allOpen() { const n = now(); return state.assignments.filter(a => !a.done && !a.archived && (!classHidden(a.classId) || isOverdue(a, n))); }
   function visible(opts) {
     opts = opts || {};
     const f = state.ui.filters, n = now();
     const q = (f.search || '').trim().toLowerCase();
     return state.assignments.filter(a => {
       if (a.archived) return false;
-      if (classHidden(a.classId)) return false;
+      /* Overdue work is never hidden by filters or hidden classes (spec section 4). */
       if (!a.done && isOverdue(a, n)) return true;
+      if (classHidden(a.classId)) return false;
       if (a.done && f.hideDone && !opts.includeDone) return false;
       if (f.classes.length && !f.classes.includes(a.classId)) return false;
       if (f.priorities.length && !f.priorities.includes(a.priority)) return false;
@@ -2338,8 +2340,10 @@ const App = (function () {
     updateStreak();
     if (state.ui.activeId === id) { state.ui.activeId = null; state.ui.activeSince = null; emit('stop', a); }
     emit('complete', a);
-    const el = opts.el || $(`[data-id="${CSS.escape(id)}"]`);
-    const rect = el ? el.getBoundingClientRect() : null;
+    const sel = `[data-id="${CSS.escape(id)}"]`;
+    const el = opts.el || $('#panel-root ' + sel) || $('.view.active ' + sel) || $(sel);
+    let rect = el ? el.getBoundingClientRect() : null;
+    if (rect && !rect.width && !rect.height) rect = null;
     confetti(rect ? rect.left + rect.width / 2 : window.innerWidth / 2, rect ? rect.top + rect.height / 2 : window.innerHeight / 3);
     save();
     const finish = () => {
@@ -2439,6 +2443,24 @@ const App = (function () {
       summary.calendars.push({ name: calName, count: kept, classId: cls.id });
     }
     if (summary.calendars.length || summary.ignored.length) {
+      /* An item first added by a paste import is the same assignment as the
+         calendar event with the same class, title and due day: re-key it to the
+         calendar UID so the merge updates it and keeps the student's edits. */
+      const knownIds = new Set(state.assignments.map(a => a.id));
+      const tnorm = (C.parseTodoPaste && C.parseTodoPaste.norm) || C.normalizeName;
+      for (const inc of incoming) {
+        if (inc.cancelled || knownIds.has(inc.id)) continue;
+        const day = inc.due ? C.dayKey(new Date(inc.due)) : '';
+        const t = tnorm(inc.title);
+        const p = state.assignments.find(a => a.source === 'paste' && a.classId === inc.classId && tnorm(a.title) === t && (!a.due || !day || C.dayKey(new Date(a.due)) === day));
+        if (!p) continue;
+        const oldId = p.id;
+        p.id = inc.id; p.source = 'ics';
+        if (state.ui.activeId === oldId) state.ui.activeId = inc.id;
+        if (state.ui.pomodoro && state.ui.pomodoro.id === oldId) state.ui.pomodoro.id = inc.id;
+        knownIds.add(inc.id);
+        summary.linked = (summary.linked || 0) + 1;
+      }
       const merged = C.mergeImported(state.assignments, incoming, n);
       state.assignments = merged.assignments;
       summary.added = merged.added; summary.updated = merged.updated; summary.unchanged = merged.unchanged; summary.removed = merged.removed;
@@ -2454,6 +2476,7 @@ const App = (function () {
     if (s.calendars.length) lines.push(html`<div class="small muted" style="margin-top:4px">${s.calendars.map(c => c.name + ' (' + c.count + ')').join(' · ')}</div>`);
     if (s.ignored.length) lines.push(html`<div class="small muted" style="margin-top:4px">Ignored as not-a-class: ${s.ignored.join(', ')}. Change this under Settings → Calendars.</div>`);
     if (s.skippedOld) lines.push(html`<div class="small muted" style="margin-top:4px">${s.skippedOld} older item${s.skippedOld === 1 ? '' : 's'} (due more than ${state.settings.importLookbackDays} days ago) skipped. Raise the look-back in Settings to include them.</div>`);
+    if (s.linked) lines.push(html`<div class="small muted">${s.linked} item${s.linked === 1 ? '' : 's'} you had pasted from Classroom matched to the calendar, so nothing was duplicated.</div>`);
     if (s.skippedCancelled) lines.push(html`<div class="small muted">${s.skippedCancelled} cancelled event${s.skippedCancelled === 1 ? '' : 's'} skipped.</div>`);
     if (s.warnings.length) lines.push(html`<div class="small" style="margin-top:4px;color:var(--warn)">${s.warnings.slice(0, 5).map(w => html`<div>${w}</div>`)}</div>`);
     if (!s.calendars.length && !s.ignored.length) lines.push(html`<div>Nothing recognisable was found in those files.</div>`);
@@ -2479,6 +2502,8 @@ const App = (function () {
     try { data = JSON.parse(text); } catch (e) { toast('That file is not valid JSON.', 'err'); return false; }
     if (!data || typeof data !== 'object' || !Array.isArray(data.assignments)) { toast('That file does not look like an Assignments backup.', 'err'); return false; }
     const inc = migrate(data);
+    /* Merging into an empty browser is a restore: take settings and view state too. */
+    if (mode !== 'replace' && !state.assignments.length && !state.classes.length) mode = 'replace';
     if (mode === 'replace') {
       state = inc;
     } else {
@@ -2785,7 +2810,7 @@ const App = (function () {
       const d = C.parseISO(a.due);
       if (!d) lanes.none.push(a);
       else if (!a.done && d < n) lanes.overdue.push(a);
-      else if (d < tomorrowStart) lanes.today.push(a);
+      else if (d < tomorrowStart) { if (d >= todayStart || !a.done) lanes.today.push(a); }
       else if (d < dayAfter) lanes.tomorrow.push(a);
       else if (d < weekEnd) lanes.week.push(a);
       else lanes.later.push(a);
@@ -3568,6 +3593,8 @@ const App = (function () {
   }
 
   function renderBoard(root) {
+    /* A Pomodoro phase or a passing deadline can re-render mid-drag; finish the drag first. */
+    if (board.drag && board.drag.since && performance.now() - board.drag.since < 30000) { board.renderPending = true; return; }
     boardWire(root);
     boardEndDrag();
     boardCancelPress();
@@ -3799,6 +3826,7 @@ const App = (function () {
   }
   function boardEndDrag() {
     const d = board.drag; board.drag = null;
+    if (board.renderPending) { board.renderPending = false; setTimeout(() => { if (state.ui.view === 'board') render(); }, 0); }
     if (board.placeholder) { board.placeholder.remove(); board.placeholder = null; }
     if (!d) return null;
     if (d.over) d.over.classList.remove('is-over');
@@ -3829,7 +3857,7 @@ const App = (function () {
     if (!card) return;
     /* Touch and pen use the pointer path below; a pointer drag in progress wins too. */
     if (board.drag || board.press || board.lastPointerType !== 'mouse') { e.preventDefault(); return; }
-    board.drag = { mode: 'html5', id: card.dataset.id, from: card.dataset.col, card, h: card.offsetHeight, over: null };
+    board.drag = { mode: 'html5', id: card.dataset.id, from: card.dataset.col, card, h: card.offsetHeight, over: null, since: performance.now() };
     try {
       e.dataTransfer.effectAllowed = 'move';
       e.dataTransfer.setData('text/plain', (byId(card.dataset.id) || {}).title || '');
@@ -3923,6 +3951,7 @@ const App = (function () {
       mode: 'pointer', id: card.dataset.id, from: card.dataset.col, card, ghost, h: rect.height, over: null,
       offX: e.clientX - rect.left, offY: e.clientY - rect.top, x: e.clientX, y: e.clientY, pointerId: e.pointerId, moved: false, raf: 0
     };
+    d.since = performance.now();
     board.drag = d;
     /* No native HTML5 drag may start underneath us: Chrome would fire pointercancel. */
     card.setAttribute('draggable', 'false');
@@ -4004,7 +4033,7 @@ const App = (function () {
     try { if (typeof Intl !== 'undefined' && Intl.Segmenter) { const it = new Intl.Segmenter().segment(v)[Symbol.iterator]().next(); return it.done ? '' : it.value.segment.slice(0, 16); } } catch (e) { /* fall through */ }
     return v.slice(0, 4);
   }
-  /* Groups every non-archived assignment by class (hidden classes skipped) and
+  /* Groups every non-archived assignment by class (hidden classes skipped unless overdue) and
      computes term progress and open-item stats. Pure read of state. */
   function classGroups(n) {
     const termStart = classTermStart(n);
@@ -4012,11 +4041,13 @@ const App = (function () {
     const defEst = Number(state.settings.defaultEstimateMin) || 0;
     const groups = new Map();
     const mk = (key, cls) => ({ key, cls, termDone: 0, termTotal: 0, open: [], overdue: 0, week: 0, estMin: 0, unestimated: 0, next: null });
-    for (const c of state.classes) if (!c.hidden) groups.set(c.id, mk(c.id, c));
+    /* A hidden class still gets a card while it has overdue work (spec section 4). */
+    const hiddenWithOverdue = new Set(state.assignments.filter(a => isOverdue(a, n)).map(a => a.classId));
+    for (const c of state.classes) if (!c.hidden || hiddenWithOverdue.has(c.id)) groups.set(c.id, mk(c.id, c));
     for (const a of state.assignments) {
       if (a.archived) continue;
       const cls = getClass(a.classId);
-      if (cls && cls.hidden) continue;
+      if (cls && cls.hidden && !hiddenWithOverdue.has(cls.id)) continue;
       const key = cls ? cls.id : CLS_NONE;
       let g = groups.get(key);
       if (!g) { g = mk(key, null); groups.set(key, g); }
@@ -4793,10 +4824,10 @@ const App = (function () {
     const clean = String(name || '').trim(), norm = C.parseTodoPaste.norm;
     const n = norm(clean);
     if (!n) return null;
-    if (n === C.normalizeName(clean)) return ensureClass(clean);
+    if (n === C.normalizeName(clean)) return ensureClass(clean, { source: 'paste' });
     let c = state.classes.find(x => norm(x.sourceName || '') === n) || state.classes.find(x => norm(x.name) === n);
     if (!c) {
-      c = { id: 'c_' + C.hash(n), name: clean, sourceName: '', color: nextColor(), emoji: '', hidden: false };
+      c = { id: 'c_' + C.hash(n), name: clean, sourceName: clean, color: nextColor(), emoji: '', hidden: false };
       state.classes.push(c);
     }
     return c;
@@ -4923,6 +4954,7 @@ const App = (function () {
   };
   function setView(name) {
     if (!VIEWS[name]) return;
+    if (state.settings.focusMode && name !== 'today') { state.settings.focusMode = false; applyFocusMode(); }
     state.ui.view = name; save(); render();
     const root = $(`.view[data-view="${name}"]`);
     if (root) root.scrollIntoView({ block: 'nearest' });
@@ -5171,7 +5203,7 @@ const App = (function () {
       <div class="settings-section">
         <h3>Classes</h3>
         ${state.classes.length ? state.classes.map(c => html`<div class="class-row" data-class="${c.id}">
-          <input class="input emoji-input" data-field="emoji" value="${c.emoji || ''}" placeholder="🙂" maxlength="4" aria-label="Emoji for ${c.name}">
+          <input class="input emoji-input" data-field="emoji" value="${c.emoji || ''}" placeholder="🙂" maxlength="16" aria-label="Emoji for ${c.name}">
           <div class="col" style="gap:4px"><input class="input" data-field="name" value="${c.name}" aria-label="Class name" maxlength="80">${c.sourceName && c.sourceName !== c.name ? html`<span class="tiny faint">Calendar: ${c.sourceName}</span>` : ''}</div>
           <div class="swatches" role="radiogroup" aria-label="Colour for ${c.name}">${PALETTE.map(i => html`<button type="button" class="swatch ${c.color === i ? 'active' : ''}" data-field="color" data-color="${i}" style="--c: var(--class-${i})" role="radio" aria-checked="${c.color === i ? 'true' : 'false'}" aria-label="Colour ${i}"></button>`)}</div>
           <label class="switch" title="Show this class"><input type="checkbox" data-field="shown" ${c.hidden ? '' : 'checked'}><span class="track"></span></label>
@@ -5199,7 +5231,7 @@ const App = (function () {
     m.querySelectorAll('.class-row').forEach(row => {
       const c = getClass(row.dataset.class); if (!c) return;
       row.querySelector('[data-field="name"]').addEventListener('change', e => { const v = e.target.value.trim(); if (v) { c.name = v; save(); render(); } else e.target.value = c.name; });
-      row.querySelector('[data-field="emoji"]').addEventListener('change', e => { c.emoji = e.target.value.trim().slice(0, 4); save(); render(); });
+      row.querySelector('[data-field="emoji"]').addEventListener('change', e => { c.emoji = Array.from(e.target.value.trim()).slice(0, 8).join(''); save(); render(); });
       row.querySelector('[data-field="shown"]').addEventListener('change', e => { c.hidden = !e.target.checked; save(); render(); });
       row.querySelectorAll('[data-field="color"]').forEach(b => b.addEventListener('click', () => { c.color = parseInt(b.dataset.color, 10); row.querySelectorAll('.swatch').forEach(x => { x.classList.toggle('active', x === b); x.setAttribute('aria-checked', x === b ? 'true' : 'false'); }); save(); render(); }));
     });
@@ -5324,7 +5356,7 @@ const App = (function () {
         if (focusables.length) { const first = focusables[0], last = focusables[focusables.length - 1]; if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); } else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); } }
         return;
       }
-      if (typing || e.metaKey || e.ctrlKey || e.altKey || modalOpen()) return;
+      if (typing || e.metaKey || e.ctrlKey || e.altKey || modalOpen() || panelOpen()) return;
       const k = e.key;
       if (k === 'n' || k === 'N') { e.preventDefault(); $('#quickadd').focus(); }
       else if (k === '/') { e.preventDefault(); $('#filter-search').focus(); }
