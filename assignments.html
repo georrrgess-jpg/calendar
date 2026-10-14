@@ -1055,6 +1055,239 @@ body:has(#pomo-chip) .footer { padding-bottom: 84px; }
 /* === FEATURE:PASTE:CSS:END === */
 
 /* === VIEW:OVERVIEW:CSS:START === */
+/* Overview (Home): glassy dashboard of summary cards. All selectors are prefixed ov-. */
+.ov { --ov-glass: color-mix(in srgb, var(--surface-1) 82%, transparent); --ov-gap: 16px; }
+.ov-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--ov-gap); align-items: stretch; }
+.ov-grid > * { min-width: 0; }
+.ov-s12 { grid-column: span 12; } .ov-s8 { grid-column: span 8; } .ov-s7 { grid-column: span 7; } .ov-s6 { grid-column: span 6; }
+.ov-s5 { grid-column: span 5; } .ov-s4 { grid-column: span 4; }
+.ov-col { display: flex; flex-direction: column; gap: var(--ov-gap); min-width: 0; }
+.ov-col > .ov-card { flex: 1 1 auto; }
+.ov-welcome { display: flex; flex-direction: column; gap: 14px; }
+.ov-welcome > .hero { margin-bottom: 0; }
+
+/* Cards ------------------------------------------------------------------- */
+.ov-card {
+  position: relative; display: flex; flex-direction: column; min-width: 0;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--surface-2) 70%, transparent), var(--ov-glass));
+  -webkit-backdrop-filter: blur(16px) saturate(140%); backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid var(--border); border-radius: 18px;
+  box-shadow: var(--shadow-1), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: transform 220ms var(--ease), box-shadow 220ms var(--ease), border-color 220ms var(--ease);
+}
+.ov-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-2), inset 0 1px 0 rgba(255, 255, 255, 0.07); border-color: var(--border-strong); }
+.ov-card:focus-within { border-color: var(--border-strong); }
+.ov-enter .ov-anim { animation: ov-rise 460ms var(--ease) both; animation-delay: calc(var(--i, 0) * 55ms); }
+@keyframes ov-rise { from { opacity: 0; transform: translateY(14px) scale(0.985); } to { opacity: 1; transform: none; } }
+.ov-head { display: flex; align-items: center; gap: 10px; padding: 14px 16px 10px; }
+.ov-head h3 { display: flex; align-items: center; gap: 9px; font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-2); min-width: 0; }
+.ov-ico { width: 28px; height: 28px; border-radius: 9px; display: grid; place-items: center; font-size: 15px; flex: none; background: var(--accent-soft); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent); letter-spacing: 0; }
+.ov-link { margin-left: auto; flex: none; display: inline-flex; align-items: center; gap: 4px; padding: 5px 9px; border: 0; border-radius: 8px; background: transparent; color: var(--accent-text); font-size: 12.5px; font-weight: 650; white-space: nowrap; transition: background var(--dur) var(--ease), transform var(--dur) var(--ease); }
+.ov-link:hover { background: var(--accent-soft); }
+.ov-link .arr { display: inline-block; transition: transform var(--dur) var(--ease); }
+.ov-link:hover .arr { transform: translateX(3px); }
+.ov-body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; flex: 1 1 auto; }
+.ov-empty { padding: 16px 12px; border-radius: 12px; background: color-mix(in srgb, var(--surface-3) 40%, transparent); border: 1px dashed var(--border-strong); color: var(--text-2); font-size: 13.5px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.ov-empty .e-big { font-size: 24px; line-height: 1; }
+.ov-label { font-size: 11.5px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-3); }
+.ov .btn:active, .ov-tap:active { transform: scale(0.95); }
+
+/* Greeting ---------------------------------------------------------------- */
+.ov-greet { position: relative; overflow: hidden; isolation: isolate; border-radius: 22px; padding: 24px 26px; border: 1px solid var(--border-strong); background: var(--ov-glass); box-shadow: var(--accent-glow); display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 18px 24px; align-items: center; }
+.ov-greet::before {
+  content: ""; position: absolute; inset: -40%; z-index: -1; opacity: 0.55; pointer-events: none;
+  background:
+    radial-gradient(40% 50% at 22% 32%, rgba(139, 92, 246, 0.55), transparent 70%),
+    radial-gradient(35% 45% at 76% 22%, rgba(94, 234, 212, 0.32), transparent 70%),
+    radial-gradient(40% 50% at 60% 85%, rgba(244, 114, 182, 0.28), transparent 70%);
+  animation: ov-drift 18s ease-in-out infinite alternate;
+}
+:root[data-theme="light"] .ov-greet::before { opacity: 0.38; }
+@keyframes ov-drift { 0% { transform: translate(0, 0) rotate(0deg); } 50% { transform: translate(4%, -3%) rotate(8deg); } 100% { transform: translate(-3%, 3%) rotate(-6deg); } }
+.ov-date { font-size: 12.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-text); margin-bottom: 6px; }
+.ov-hello { font-size: clamp(24px, 3.4vw, 34px); font-weight: 760; letter-spacing: -0.025em; line-height: 1.1; margin-bottom: 12px; }
+.ov-hello .wave { display: inline-block; transform-origin: 70% 80%; animation: ov-wave 1.6s ease-in-out 400ms 1 both; }
+@keyframes ov-wave { 0%, 100% { transform: none; } 20% { transform: rotate(16deg); } 40% { transform: rotate(-8deg); } 60% { transform: rotate(12deg); } 80% { transform: rotate(-4deg); } }
+.ov-status { display: flex; flex-wrap: wrap; gap: 6px; }
+.ov-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; border-radius: 999px; font-size: 13px; font-weight: 600; background: color-mix(in srgb, var(--surface-3) 70%, transparent); border: 1px solid var(--border); color: var(--text-2); white-space: nowrap; }
+.ov-chip.is-bad { color: var(--danger); background: var(--danger-soft); border-color: color-mix(in srgb, var(--danger) 35%, transparent); }
+.ov-chip.is-good { color: var(--ok); background: var(--ok-soft); border-color: color-mix(in srgb, var(--ok) 35%, transparent); }
+.ov-chip.is-hot { color: var(--warn); background: var(--warn-soft); border-color: color-mix(in srgb, var(--warn) 35%, transparent); }
+.ov-greet-side { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+.ov-logbtn { padding: 13px 24px; font-size: 16px; border-radius: 14px; gap: 9px; background: linear-gradient(135deg, var(--accent), var(--accent-strong)); box-shadow: 0 10px 28px rgba(124, 58, 237, 0.38); transition: transform 180ms var(--ease), box-shadow 180ms var(--ease), filter 180ms var(--ease); }
+.ov-logbtn:hover { transform: translateY(-2px); box-shadow: 0 14px 34px rgba(124, 58, 237, 0.48); filter: brightness(1.06); }
+.ov-logbtn:active { transform: scale(0.97); }
+.ov-logbtn .emo { font-size: 18px; line-height: 1; }
+.ov-quick { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.ov-quick .btn { background: color-mix(in srgb, var(--surface-2) 70%, transparent); }
+
+/* Next up ----------------------------------------------------------------- */
+.ov-next-top { position: relative; padding: 16px; border-radius: 14px; background: radial-gradient(420px 160px at 0% 0%, color-mix(in srgb, var(--c, var(--accent)) 20%, transparent), transparent 70%), color-mix(in srgb, var(--surface-2) 80%, transparent); border: 1px solid var(--border); border-left: 4px solid var(--pc, var(--accent)); display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 16px; align-items: center; }
+.ov-eyebrow { display: flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-text); margin-bottom: 4px; }
+.ov-eyebrow .dot { background: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.ov-eyebrow.is-bad { color: var(--danger); }
+.ov-eyebrow.is-bad .dot { background: var(--danger); box-shadow: 0 0 0 3px var(--danger-soft); }
+.ov-next-title { all: unset; cursor: pointer; display: block; font-size: 20px; font-weight: 720; letter-spacing: -0.015em; line-height: 1.25; overflow-wrap: anywhere; color: var(--text); }
+.ov-next-title:hover { color: var(--accent-text); }
+.ov-next-title:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.ov-next-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 6px; font-size: 13px; color: var(--text-2); }
+.ov-next-cd { text-align: right; }
+.ov-next-cd .countdown { font-size: 24px; font-weight: 760; letter-spacing: -0.01em; }
+.ov-next-cd .tag-overdue { font-size: 12.5px; padding: 4px 10px; }
+.ov-next-cd .ov-label { margin-bottom: 4px; }
+.ov-next-actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; }
+.ov-list { display: flex; flex-direction: column; gap: 6px; }
+.ov-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; }
+.ov-row .pill { padding: 7px 9px; font-size: 13px; border-radius: 9px; }
+.ov-row .countdown, .ov-row .tag-overdue { font-size: 12px; }
+
+/* Today's log ------------------------------------------------------------- */
+.ov-moods { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.ov-mood { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 6px; border-radius: 14px; border: 1px solid var(--border); background: color-mix(in srgb, var(--surface-2) 75%, transparent); color: var(--text-2); font-size: 12px; font-weight: 600; transition: transform 160ms var(--ease), background var(--dur) var(--ease), border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease); }
+.ov-mood .emo { font-size: 26px; line-height: 1; transition: transform 200ms var(--ease); }
+.ov-mood:hover { background: var(--surface-3); border-color: var(--border-strong); color: var(--text); }
+.ov-mood:hover .emo { transform: scale(1.12) rotate(-4deg); }
+.ov-mood[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-text); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
+.ov-mood[aria-pressed="true"] .emo { animation: ov-pop 320ms var(--ease); }
+@keyframes ov-pop { 0% { transform: scale(0.7); } 60% { transform: scale(1.18); } 100% { transform: none; } }
+.ov-summary { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 12px; background: color-mix(in srgb, var(--surface-3) 40%, transparent); border: 1px solid var(--border); font-size: 13.5px; }
+.ov-summary-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+.ov-syms { display: inline-flex; flex-wrap: wrap; gap: 3px; font-size: 16px; line-height: 1.2; }
+.ov-snip { color: var(--text-2); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
+.ov-snip b { color: var(--text); font-weight: 650; }
+.ov-events { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+.ov-ev { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 2px 6px; border-radius: 12px; border: 1px solid var(--border); background: color-mix(in srgb, var(--surface-2) 75%, transparent); font-size: 10.5px; font-weight: 600; color: var(--text-3); min-width: 0; transition: transform 160ms var(--ease), background var(--dur) var(--ease), border-color var(--dur) var(--ease), color var(--dur) var(--ease); }
+.ov-ev .emo { font-size: 20px; line-height: 1; transition: transform 200ms var(--ease); }
+.ov-ev .lbl { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 2px; }
+.ov-ev:hover { background: var(--surface-3); border-color: var(--border-strong); color: var(--text); }
+.ov-ev:hover .emo { transform: translateY(-2px) scale(1.1); }
+.ov-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: auto; }
+
+/* Verse ------------------------------------------------------------------- */
+.ov-verse { position: relative; margin: 0; padding: 14px 16px 14px 46px; border-radius: 14px; background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 12%, transparent), transparent 70%), color-mix(in srgb, var(--surface-2) 70%, transparent); border: 1px solid var(--border); }
+.ov-verse::before { content: "\201C"; position: absolute; left: 12px; top: 4px; font-size: 50px; line-height: 1; font-family: Georgia, serif; color: var(--accent); opacity: 0.65; }
+.ov-verse p { font-family: Georgia, "Iowan Old Style", "Times New Roman", serif; font-size: 16px; line-height: 1.55; color: var(--text); overflow-wrap: anywhere; }
+.ov-verse cite { display: block; margin-top: 8px; font-style: normal; font-size: 12.5px; font-weight: 700; letter-spacing: 0.04em; color: var(--accent-text); }
+
+/* Week strip -------------------------------------------------------------- */
+.ov-week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
+.ov-day { position: relative; min-width: 0; display: flex; flex-direction: column; }
+.ov-day-btn { width: 100%; flex: 1 1 auto; min-height: 108px; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 10px; border-radius: 14px; border: 1px solid var(--border); text-align: left; color: var(--text); background: linear-gradient(rgba(var(--heat), var(--ha, 0)), rgba(var(--heat), var(--ha, 0))), color-mix(in srgb, var(--surface-2) 80%, transparent); transition: transform 160ms var(--ease), border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease); }
+.ov-day-btn:hover { transform: translateY(-2px); border-color: var(--border-strong); box-shadow: var(--shadow-1); }
+.ov-day.is-today .ov-day-btn { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 8px 24px rgba(124, 58, 237, 0.22); }
+.ov-day.is-past .ov-day-btn { opacity: 0.6; }
+.ov-wd { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); }
+.ov-day.is-today .ov-wd { color: var(--accent-text); }
+.ov-dn { font-size: 22px; font-weight: 750; letter-spacing: -0.02em; line-height: 1; font-variant-numeric: tabular-nums; }
+.ov-dcount { font-size: 12px; font-weight: 650; color: var(--text); }
+.ov-dcount.is-zero { color: var(--text-3); font-weight: 500; }
+.ov-dsyms { display: flex; align-items: center; gap: 4px; font-size: 13px; line-height: 1.2; min-height: 16px; overflow: hidden; white-space: nowrap; max-width: 100%; margin-top: auto; }
+.ov-mooddot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.ov-mooddot.m-good { background: var(--ok); box-shadow: 0 0 0 3px var(--ok-soft); }
+.ov-mooddot.m-medium { background: var(--warn); box-shadow: 0 0 0 3px var(--warn-soft); }
+.ov-mooddot.m-bad { background: var(--danger); box-shadow: 0 0 0 3px var(--danger-soft); }
+.ov-daylog { position: absolute; top: 6px; right: 6px; width: 26px; height: 26px; padding: 0; border-radius: 8px; border: 1px solid transparent; background: transparent; color: var(--text-3); display: grid; place-items: center; transition: background var(--dur) var(--ease), color var(--dur) var(--ease), transform 160ms var(--ease); }
+.ov-daylog svg { width: 15px; height: 15px; }
+.ov-daylog:hover { background: var(--accent-soft); color: var(--accent-text); }
+.ov-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--text-3); }
+.ov-legend .sw { display: inline-block; width: 22px; height: 8px; border-radius: 4px; vertical-align: middle; margin-right: 4px; background: linear-gradient(90deg, rgba(var(--heat), 0.08), rgba(var(--heat), 0.45)); }
+
+/* Stats ------------------------------------------------------------------- */
+.ov-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--ov-gap); }
+.ov-stat { padding: 16px; gap: 8px; }
+.ov-stat .ov-label { display: flex; align-items: center; gap: 6px; }
+.ov-stat-n { font-size: 34px; font-weight: 780; letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+.ov-stat.is-bad .ov-stat-n { color: var(--danger); }
+.ov-stat.is-bad { border-color: color-mix(in srgb, var(--danger) 35%, transparent); }
+.ov-stat.is-good .ov-stat-n { color: var(--ok); }
+.ov-stat-sub { font-size: 12.5px; color: var(--text-2); min-height: 18px; }
+.ov-bar { height: 6px; border-radius: 999px; background: var(--surface-3); overflow: hidden; }
+.ov-bar > i { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--ok), var(--accent)); transition: width 500ms var(--ease); }
+.ov-bar.is-over > i { background: linear-gradient(90deg, var(--warn), var(--danger)); }
+.ov-spark { display: flex; align-items: flex-end; gap: 4px; height: 26px; }
+.ov-spark i { flex: 1; min-height: 3px; border-radius: 3px 3px 1px 1px; background: var(--accent); opacity: 0.5; transform-origin: bottom; }
+.ov-enter .ov-spark i { animation: ov-grow 600ms var(--ease) both; animation-delay: calc(300ms + var(--j, 0) * 40ms); }
+@keyframes ov-grow { from { transform: scaleY(0); } to { transform: none; } }
+.ov-spark i.today { opacity: 1; }
+.ov-spark i.zero { background: var(--text-3); opacity: 0.3; }
+
+/* Classes ----------------------------------------------------------------- */
+.ov-classes { display: flex; flex-direction: column; gap: 2px; }
+.ov-cls { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center; width: 100%; padding: 7px 10px; border-radius: 12px; border: 1px solid transparent; background: transparent; color: var(--text); text-align: left; transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease), transform 160ms var(--ease); }
+.ov-cls:hover { background: color-mix(in srgb, var(--surface-3) 70%, transparent); border-color: var(--border); }
+.ov-ring { width: 38px; height: 38px; flex: none; transform: rotate(-90deg); }
+.ov-ring circle { fill: none; stroke-width: 4; }
+.ov-ring .trk { stroke: var(--border-strong); }
+.ov-ring .val { stroke: var(--c); stroke-linecap: round; transition: stroke-dashoffset 700ms var(--ease); }
+.ov-cls-name { display: block; font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ov-cls-sub { display: block; font-size: 12px; color: var(--text-3); }
+.ov-cls-open { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 12.5px; padding: 2px 9px; border-radius: 999px; background: color-mix(in srgb, var(--c) 22%, transparent); color: var(--text); white-space: nowrap; }
+.ov-cls-open.is-zero { background: var(--surface-3); color: var(--text-3); }
+
+/* Upcoming events --------------------------------------------------------- */
+.ov-evlist { display: flex; flex-direction: column; gap: 4px; }
+.ov-evrow { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; width: 100%; padding: 6px 8px; border-radius: 12px; border: 1px solid transparent; background: transparent; color: var(--text); text-align: left; transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease); }
+.ov-evrow:hover { background: color-mix(in srgb, var(--surface-3) 70%, transparent); border-color: var(--border); }
+.ov-evsym { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; font-size: 17px; background: color-mix(in srgb, var(--surface-3) 80%, transparent); border: 1px solid var(--border); }
+.ov-evlabel { display: block; font-weight: 600; font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ov-evwhen { font-size: 12px; color: var(--text-3); text-align: right; white-space: nowrap; }
+.ov-evwhen b { display: block; color: var(--text-2); font-weight: 650; }
+
+/* Weight ------------------------------------------------------------------ */
+.ov-wt { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.ov-wt-n { font-size: 30px; font-weight: 760; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.ov-wt-u { font-size: 14px; font-weight: 600; color: var(--text-3); margin-left: 2px; }
+.ov-wt-d { font-size: 13px; font-weight: 600; color: var(--text-2); }
+.ov-wsvg { width: 100%; height: 72px; display: block; overflow: visible; }
+.ov-wsvg .ln { fill: none; stroke: var(--accent); stroke-width: 2.2; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.ov-wsvg .ar { stroke: none; }
+.ov-wsvg .gstop { stop-color: var(--accent); }
+.ov-wsvg .pt { fill: var(--accent); stroke: var(--surface-1); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.ov-enter .ov-wsvg .ln { stroke-dasharray: 1200; animation: ov-draw 1100ms var(--ease) both 250ms; }
+@keyframes ov-draw { from { stroke-dashoffset: 1200; } to { stroke-dashoffset: 0; } }
+
+/* Responsive: 12 columns on desktop, 2 on tablet, 1 on phones ------------- */
+@media (max-width: 1023px) {
+  .ov-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ov-grid > * { grid-column: span 1; }
+  .ov-grid > .ov-s12, .ov-grid > .ov-tw { grid-column: 1 / -1; }
+  .ov-col.ov-tw { flex-direction: row; }
+  .ov-col.ov-tw > .ov-card { flex: 1 1 0; min-width: 0; }
+  .ov-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 760px) {
+  .ov-greet { grid-template-columns: minmax(0, 1fr); padding: 20px 18px; }
+  .ov-greet-side { align-items: stretch; }
+  .ov-quick { justify-content: flex-start; }
+  .ov-logbtn { width: 100%; }
+}
+@media (max-width: 640px) {
+  .ov { --ov-gap: 12px; }
+  .ov-grid { grid-template-columns: minmax(0, 1fr); }
+  .ov-grid > *, .ov-grid > .ov-s12 { grid-column: 1 / -1; }
+  .ov-col.ov-tw { flex-direction: column; }
+  .ov-head { padding: 12px 14px 8px; }
+  .ov-body { padding: 0 14px 14px; }
+  .ov-week { gap: 4px; }
+  .ov-day-btn { min-height: 84px; padding: 8px 2px; align-items: center; text-align: center; border-radius: 11px; gap: 3px; }
+  .ov-wd { font-size: 10px; letter-spacing: 0.02em; }
+  .ov-dn { font-size: 17px; }
+  .ov-dcount { font-size: 10.5px; }
+  .ov-dcount .w { display: none; }
+  .ov-dsyms { font-size: 10px; justify-content: center; gap: 2px; }
+  .ov-daylog { position: static; width: 100%; height: 26px; margin-top: 4px; border: 1px solid var(--border); background: color-mix(in srgb, var(--surface-2) 70%, transparent); }
+  .ov-next-top { grid-template-columns: minmax(0, 1fr); padding: 14px; }
+  .ov-next-cd { text-align: left; }
+  .ov-next-title { font-size: 18px; }
+  .ov-events { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .ov-stats { gap: 10px; }
+  .ov-stat-n { font-size: 28px; }
+  .ov-stat { padding: 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ov-greet::before, .ov-hello .wave, .ov-enter .ov-anim, .ov-enter .ov-spark i, .ov-enter .ov-wsvg .ln, .ov-mood[aria-pressed="true"] .emo { animation: none !important; }
+  .ov-card:hover, .ov-day-btn:hover, .ov-logbtn:hover { transform: none; }
+}
 /* === VIEW:OVERVIEW:CSS:END === */
 
 /* === VIEW:LOG:CSS:START === */
@@ -1185,6 +1418,7 @@ body:has(#pomo-chip) .footer { padding-bottom: 84px; }
   <main id="view-root">
     <section class="view active" data-view="overview" aria-label="Overview">
       <!-- === VIEW:OVERVIEW:HTML:START === -->
+      <div id="ov-mount" class="ov"></div>
       <!-- === VIEW:OVERVIEW:HTML:END === -->
     </section>
     <section class="view" data-view="today" aria-label="Next up"></section>
@@ -5096,7 +5330,382 @@ const App = (function () {
   /* === FEATURE:PASTE:JS:END === */
 
   /* === VIEW:OVERVIEW:JS:START === */
-  function renderOverview(root) { root.innerHTML = state.assignments.length ? comingSoon('Overview') : emptyState(); }
+  /* Overview (Home): the landing dashboard. A grid of glassy summary cards, each
+     linking to its full view: greeting + Daily log button, Next up, today's log
+     (one-tap mood and events), verse, this week, stats, classes, upcoming log
+     events and the weight trend. Renders into #ov-mount; markup is cleared when
+     another view is shown so ids and data-due tickers never run twice. */
+  let ovPrevView = null, ovCountToken = 0;
+  const OV_RING = 2 * Math.PI * 15;
+  function ovMount(root) {
+    root = root || $('.view[data-view="overview"]');
+    return root ? ($('#ov-mount', root) || root) : null;
+  }
+  on('render', p => {
+    if (p && p.view !== 'overview') { const m = ovMount(); if (m && m.firstChild) m.innerHTML = ''; }
+    ovPrevView = p ? p.view : null;
+  });
+  function ovGreeting(n) {
+    const h = n.getHours();
+    if (h < 5) return { text: 'Good night', icon: '✨' };
+    if (h < 12) return { text: 'Good morning', icon: '☀️' };
+    if (h < 17) return { text: 'Good afternoon', icon: '👋' };
+    return { text: 'Good evening', icon: '🌙' };
+  }
+  const ovPlural = (n, one, many) => n + ' ' + (n === 1 ? one : (many || one + 's'));
+  const ovMinutes = a => a.estimatedMin || Number(state.settings.defaultEstimateMin) || 0;
+  const ovMood = key => C.MOODS.find(m => m.key === key) || null;
+  function ovClip(s, max) { s = String(s || '').replace(/\s+/g, ' ').trim(); return s.length > max ? s.slice(0, max - 1).trimEnd() + '…' : s; }
+  function ovTime(hhmm) {
+    if (!/^\d{2}:\d{2}$/.test(hhmm || '')) return '';
+    const d = new Date(2000, 0, 1, +hhmm.slice(0, 2), +hhmm.slice(3, 5));
+    return C.formatTime(d);
+  }
+  function ovVersesAvailable() { return typeof C.pickVerse === 'function' && Array.isArray(C.VERSES) && C.VERSES.length > 0; }
+  /* The six quick-event presets the student uses most (today's taps excluded so the buttons never jump under a finger). */
+  function ovTopEvents(todayKey) {
+    const counts = {};
+    for (const k in state.log.days) { if (k === todayKey) continue; for (const e of state.log.days[k].events) counts[e.type] = (counts[e.type] || 0) + 1; }
+    return C.EVENT_PRESETS.filter(p => p.type !== 'other')
+      .map((p, i) => ({ p, i, c: counts[p.type] || 0 }))
+      .sort((a, b) => b.c - a.c || a.i - b.i).slice(0, 6).map(x => x.p);
+  }
+  function ovWeights() {
+    return Object.keys(state.log.days).sort().filter(k => state.log.days[k].weight != null).slice(-30).map(k => ({ key: k, w: state.log.days[k].weight }));
+  }
+  function ovHead(id, icon, title, extra) {
+    return html`<div class="ov-head"><h3 id="${id}"><span class="ov-ico" aria-hidden="true">${icon}</span>${title}</h3>${extra || ''}</div>`;
+  }
+  const ovViewAll = (view, label) => html`<button class="ov-link" data-action="set-view" data-view="${view}" aria-label="${label}">View all <span class="arr" aria-hidden="true">→</span></button>`;
+
+  /* ---------- data ---------- */
+  function ovData() {
+    const n = now(), todayKey = C.dayKey(n), t0 = C.startOfDay(n), t1 = C.addDays(t0, 1);
+    const list = visible();
+    const open = list.filter(a => !a.done);
+    const overdue = open.filter(a => isOverdue(a, n));
+    const dueToday = open.filter(a => { const d = C.parseISO(a.due); return d && d >= n && d < t1; });
+    const in48 = new Date(n.getTime() + 48 * C.HOUR);
+    const next48 = open.filter(a => { const d = C.parseISO(a.due); return d && d >= n && d < in48; });
+    const load48 = next48.reduce((s, a) => s + ovMinutes(a), 0);
+    const budget48 = (Number(state.settings.dailyBudgetMin) || 120) * 2;
+    const ws = Number(state.settings.weekStartsOn) || 0;
+    const weekStart = C.startOfWeek(n, ws);
+    const weekKeys = []; for (let i = 0; i < 7; i++) weekKeys.push(C.dayKey(C.addDays(weekStart, i)));
+    const doneWeek = weekKeys.reduce((s, k) => s + (Number(state.stats.completedByDay[k]) || 0), 0);
+    updateStreak();
+    return { n, todayKey, t0, list, open, overdue, dueToday, next48, load48, budget48, ws, weekStart, weekKeys, doneWeek, streak: state.stats.streakDays || 0 };
+  }
+
+  /* ---------- cards ---------- */
+  function ovGreetCard(D, hasAny) {
+    const g = ovGreeting(D.n);
+    const dateText = C.WEEKDAYS_LONG[D.n.getDay()] + ', ' + C.MONTHS_LONG[D.n.getMonth()] + ' ' + D.n.getDate() + ', ' + D.n.getFullYear();
+    const chips = [];
+    if (hasAny) {
+      chips.push(html`<span class="ov-chip ${D.dueToday.length ? 'is-hot' : ''}">📌 ${D.dueToday.length} due today</span>`);
+      chips.push(html`<span class="ov-chip ${D.overdue.length ? 'is-bad' : 'is-good'}">${D.overdue.length ? '⏰ ' + D.overdue.length + ' overdue' : '✓ nothing overdue'}</span>`);
+    } else chips.push(html`<span class="ov-chip">📚 No assignments yet</span>`);
+    chips.push(html`<span class="ov-chip ${D.streak ? 'is-hot' : ''}">${D.streak ? '🔥 ' + D.streak + '-day streak' : '🌱 start a streak today'}</span>`);
+    const statusText = (hasAny ? D.dueToday.length + ' due today · ' + D.overdue.length + ' overdue · ' : '') + (D.streak ? D.streak + '-day streak' : 'no streak yet');
+    return html`<section class="ov-greet ov-anim ov-s12" style="--i:0" aria-labelledby="ov-hello">
+      <div>
+        <div class="ov-date">${dateText}</div>
+        <h1 class="ov-hello" id="ov-hello">${g.text} <span class="wave" aria-hidden="true">${g.icon}</span></h1>
+        <div class="ov-status" role="status" aria-label="${statusText}">${chips}</div>
+      </div>
+      <div class="ov-greet-side">
+        <button class="btn btn-primary ov-logbtn" data-action="ov-log" data-day="${D.todayKey}" aria-label="Open today's daily log"><span class="emo" aria-hidden="true">📓</span> Daily log</button>
+        <div class="ov-quick" role="group" aria-label="Quick actions">
+          <button class="btn btn-sm" data-action="ov-add"><svg><use href="#i-plus"/></svg> Add assignment</button>
+          <button class="btn btn-sm" data-action="open-import"><svg><use href="#i-upload"/></svg> Import</button>
+          <button class="btn btn-sm" data-action="ov-add-class"><svg><use href="#i-classes"/></svg> Add class</button>
+        </div>
+      </div>
+    </section>`;
+  }
+
+  function ovNextCard(D, i) {
+    const ranked = sortByScore(D.open);
+    const top = ranked[0] || null;
+    const f = state.ui.filters;
+    const filtered = !!(f.classes.length || f.priorities.length || (f.search || '').trim());
+    let body;
+    if (!top) {
+      body = html`<div class="ov-empty"><span class="e-big" aria-hidden="true">🎉</span><b>All caught up.</b><span>${filtered ? 'Nothing open matches your filters.' : 'Nothing open right now. Enjoy it, or plan ahead.'}</span>${filtered ? html`<button class="btn btn-sm" data-action="clear-filters">Clear filters</button>` : ''}</div>`;
+    } else {
+      const n = D.n, cls = getClass(top.classId), due = C.parseISO(top.due);
+      const overdue = isOverdue(top, n), active = state.ui.activeId === top.id;
+      const rest = sortByDue(D.open.filter(a => a !== top && C.parseISO(a.due))).slice(0, 4);
+      body = html`
+        <div class="ov-next-top" data-id="${top.id}" style="--c: ${cls ? raw(classColorVar(cls)) : 'var(--text-3)'}; --pc: var(--pri-${top.priority})">
+          <div style="min-width:0">
+            <div class="ov-eyebrow ${overdue ? 'is-bad' : ''}"><span class="dot"></span>${active ? 'In progress' : overdue ? 'Overdue · do this first' : 'Most important'}</div>
+            <button class="ov-next-title" data-action="edit" data-id="${top.id}" title="Open">${top.title}</button>
+            <div class="ov-next-meta">
+              <span class="row" style="gap:6px"><span class="dot" style="--c: ${cls ? raw(classColorVar(cls)) : 'var(--text-3)'}"></span>${classLabel(top.classId)}</span>
+              <span aria-hidden="true">·</span><span>${C.formatDue(due, top.allDay, n)}</span>
+              ${top.estimatedMin ? html`<span aria-hidden="true">·</span><span>~${C.formatDuration(top.estimatedMin)}</span>` : ''}
+              ${priorityBadge(top)}
+            </div>
+          </div>
+          <div class="ov-next-cd"><div class="ov-label">${overdue ? 'Past due' : due ? 'Due in' : 'Whenever'}</div>${countdownEl(top)}</div>
+          <div class="ov-next-actions">
+            ${active
+              ? html`<button class="btn btn-ok" data-action="done" data-id="${top.id}"><svg><use href="#i-check"/></svg> I’m done</button><button class="btn" data-action="stop" data-id="${top.id}">Stop</button>`
+              : html`<button class="btn btn-primary" data-action="start" data-id="${top.id}"><svg><use href="#i-play"/></svg> Start</button><button class="btn" data-action="done" data-id="${top.id}"><svg><use href="#i-check"/></svg> Done</button>`}
+          </div>
+        </div>
+        ${rest.length ? html`<div class="ov-label">Then</div><div class="ov-list">${rest.map(a => html`<div class="ov-row">${pill(a, { showTime: true })}${countdownEl(a)}</div>`)}</div>`
+          : html`<div class="small faint">Nothing else with a due date. 🙌</div>`}`;
+    }
+    return html`<section class="ov-card ov-anim ov-s7" style="--i:${i}" aria-labelledby="ov-h-next">
+      ${ovHead('ov-h-next', '⚡', 'Next up', ovViewAll('today', 'View all in Next Up'))}
+      <div class="ov-body">${body}</div>
+    </section>`;
+  }
+
+  function ovLogCard(D, i, span) {
+    const key = D.todayKey, d = logDay(key);
+    const has = d && !isLogDayEmpty(d);
+    const unit = state.settings.weightUnit === 'kg' ? 'kg' : 'lb';
+    const mood = d && ovMood(d.mood);
+    let summary = '';
+    if (has) {
+      const syms = d.events.map(e => { const p = C.eventPreset(e.type); return html`<span title="${e.label || p.label}${e.time ? ' · ' + ovTime(e.time) : ''}" role="img" aria-label="${e.label || p.label}">${p.icon}</span>`; });
+      summary = html`<div class="ov-summary" aria-label="Today so far">
+        ${mood || d.weight != null || d.events.length ? html`<div class="ov-summary-row">
+          ${mood ? html`<span class="strong"><span aria-hidden="true">${mood.icon}</span> ${mood.label}</span>` : ''}
+          ${d.weight != null ? html`<span class="muted">⚖️ <b class="num">${d.weight}</b> ${unit}</span>` : ''}
+          ${d.events.length ? html`<span class="ov-syms">${syms}</span>` : ''}
+        </div>` : ''}
+        ${d.verse ? html`<div class="ov-snip">📖 <b>${d.verse.ref}</b> ${ovClip(d.verse.text, 110)}</div>` : ''}
+        ${d.note.trim() ? html`<div class="ov-snip">✏️ ${ovClip(d.note, 140)}</div>` : ''}
+      </div>`;
+    }
+    const weights = ovWeights();
+    return html`<section class="ov-card ov-anim ${span}" style="--i:${i}" aria-labelledby="ov-h-log">
+      ${ovHead('ov-h-log', '📓', 'Today’s log', html`<button class="ov-link" data-action="ov-log" data-day="${key}" aria-label="Open today's log">Open <span class="arr" aria-hidden="true">→</span></button>`)}
+      <div class="ov-body">
+        ${summary}
+        <div class="ov-label" id="ov-mood-l">${mood ? 'Mood today' : 'How’s today going?'}</div>
+        <div class="ov-moods" role="group" aria-labelledby="ov-mood-l">${C.MOODS.map(m => html`<button class="ov-mood ov-tap" data-action="ov-mood" data-mood="${m.key}" aria-pressed="${d && d.mood === m.key ? 'true' : 'false'}" aria-label="${m.label}"><span class="emo" aria-hidden="true">${m.icon}</span>${m.label.replace(/ day$/, '')}</button>`)}</div>
+        <div class="ov-label" id="ov-ev-l">Quick add an event</div>
+        <div class="ov-events" role="group" aria-labelledby="ov-ev-l">${ovTopEvents(key).map(p => html`<button class="ov-ev ov-tap" data-action="ov-event" data-type="${p.type}" title="Add “${p.label}” to today" aria-label="Add ${p.label} to today"><span class="emo" aria-hidden="true">${p.icon}</span><span class="lbl">${p.label}</span></button>`)}</div>
+        <div class="ov-foot">
+          <button class="btn" data-action="ov-log" data-day="${key}"><span aria-hidden="true">📓</span> Open daily log</button>
+          ${weights.length < 2 && !(d && d.weight != null) ? html`<button class="btn btn-ghost btn-sm" data-action="ov-log" data-day="${key}"><span aria-hidden="true">⚖️</span> Log your weight</button>` : ''}
+        </div>
+      </div>
+    </section>`;
+  }
+
+  function ovVerseCard(D, i) {
+    const d = logDay(D.todayKey);
+    let body;
+    if (d && d.verse) body = html`<blockquote class="ov-verse"><p>${d.verse.text}</p><cite>${d.verse.ref}</cite></blockquote>`;
+    else if (ovVersesAvailable()) body = html`<div class="ov-empty"><span class="e-big" aria-hidden="true">🕊️</span><span>A few words to carry with you today.</span><button class="btn btn-primary btn-sm" data-action="ov-verse"><span aria-hidden="true">✨</span> Get today’s verse</button></div>`;
+    else body = html`<div class="ov-empty"><span class="e-big" aria-hidden="true">🌿</span><span>Take a quiet minute for yourself today.</span></div>`;
+    return html`<section class="ov-card ov-anim" style="--i:${i}" aria-labelledby="ov-h-verse">
+      ${ovHead('ov-h-verse', '📖', 'Verse of the day', html`<button class="ov-link" data-action="ov-log" data-day="${D.todayKey}" aria-label="Open today's log">Log <span class="arr" aria-hidden="true">→</span></button>`)}
+      <div class="ov-body">${body}</div>
+    </section>`;
+  }
+
+  function ovWeekCard(D, i) {
+    const n = D.n, budget = Number(state.settings.dailyBudgetMin) || 120;
+    const byDay = {};
+    for (const a of D.open) { const d = C.parseISO(a.due); if (!d) continue; const k = C.dayKey(d); (byDay[k] = byDay[k] || []).push(a); }
+    const end = C.addDays(D.weekStart, 6);
+    const range = C.MONTHS[D.weekStart.getMonth()] + ' ' + D.weekStart.getDate() + ' – ' + (end.getMonth() !== D.weekStart.getMonth() ? C.MONTHS[end.getMonth()] + ' ' : '') + end.getDate();
+    const days = D.weekKeys.map(k => {
+      const dt = C.fromDayKey(k), items = byDay[k] || [], mins = items.reduce((s, a) => s + ovMinutes(a), 0);
+      const alpha = items.length ? Math.min(0.45, 0.08 + (mins / budget) * 0.32) : 0;
+      const lg = logDay(k), mood = lg && ovMood(lg.mood);
+      const syms = lg ? lg.events.map(e => C.eventPreset(e.type).icon) : [];
+      const isToday = k === D.todayKey, past = dt < D.t0;
+      const label = C.WEEKDAYS_LONG[dt.getDay()] + ' ' + C.MONTHS[dt.getMonth()] + ' ' + dt.getDate() + ': ' + (items.length ? ovPlural(items.length, 'assignment') + ' due' + (mins ? ', about ' + C.formatDuration(mins) : '') : 'nothing due') + (syms.length ? ', ' + ovPlural(syms.length, 'event') : '') + (mood ? ', ' + mood.label.toLowerCase() : '') + '. Open in week view';
+      return html`<div class="ov-day ${isToday ? 'is-today' : ''} ${past ? 'is-past' : ''}" data-day="${k}">
+        <button class="ov-day-btn ov-tap" data-action="ov-week-day" data-day="${k}" style="--ha:${alpha.toFixed(3)}" aria-label="${label}" ${isToday ? raw('aria-current="date"') : ''}>
+          <span class="ov-wd">${isToday ? 'Today' : C.WEEKDAYS[dt.getDay()]}</span>
+          <span class="ov-dn">${dt.getDate()}</span>
+          <span class="ov-dcount ${items.length ? '' : 'is-zero'}">${items.length ? html`${items.length}<span class="w"> due</span>` : '—'}</span>
+          <span class="ov-dsyms" aria-hidden="true">${mood ? html`<span class="ov-mooddot m-${mood.key}" title="${mood.label}"></span>` : ''}${syms.slice(0, 3).join('')}${syms.length > 3 ? '+' + (syms.length - 3) : ''}</span>
+        </button>
+        <button class="ov-daylog ov-tap" data-action="ov-log" data-day="${k}" aria-label="Open the daily log for ${C.WEEKDAYS_LONG[dt.getDay()]} ${C.MONTHS[dt.getMonth()]} ${dt.getDate()}" title="Daily log"><svg aria-hidden="true"><use href="#i-log"/></svg></button>
+      </div>`;
+    });
+    return html`<section class="ov-card ov-anim ov-s12" style="--i:${i}" aria-labelledby="ov-h-week">
+      ${ovHead('ov-h-week', '🗓️', html`This week <span class="faint" style="text-transform:none;letter-spacing:0;font-weight:550">· ${range}</span>`, ovViewAll('week', 'View all in Week view'))}
+      <div class="ov-body">
+        <div class="ov-week">${days}</div>
+        <div class="ov-legend"><span><span class="sw" aria-hidden="true"></span>Shade = workload vs your ${C.formatDuration(budget)} daily budget</span><span>Tap a day for its week · <svg style="width:12px;height:12px;vertical-align:-1px" aria-hidden="true"><use href="#i-log"/></svg> opens its log</span></div>
+      </div>
+    </section>`;
+  }
+
+  function ovStats(D, i) {
+    const days = C.last7Days(state.stats.completedByDay, D.n);
+    const max = Math.max(1, ...days.map(d => d.count));
+    const pct = D.budget48 ? Math.min(100, Math.round(D.load48 / D.budget48 * 100)) : 0;
+    const over = D.load48 > D.budget48;
+    const tile = (key, cls, icon, label, value, sub, extra, idx) => html`<section class="ov-card ov-stat ov-anim ${cls}" style="--i:${idx}" data-stat="${key}" aria-label="${label}: ${value}">
+      <div class="ov-label"><span aria-hidden="true">${icon}</span>${label}</div>
+      <div class="ov-stat-n" data-count="${value}">${value}</div>
+      <div class="ov-stat-sub">${sub}</div>${extra || ''}
+    </section>`;
+    return html`<div class="ov-stats ov-s12" role="group" aria-label="Stats">
+      ${tile('done', D.doneWeek ? 'is-good' : '', '✅', 'Done this week', D.doneWeek, 'since ' + C.WEEKDAYS_LONG[D.ws], '', i)}
+      ${tile('overdue', D.overdue.length ? 'is-bad' : '', '⏰', 'Overdue', D.overdue.length, D.overdue.length ? 'catch up in Next Up' : 'nothing late. nice!', '', i + 1)}
+      ${tile('next48', '', '⏳', 'Due in 48h', D.next48.length, html`${C.formatDuration(D.load48) || '0m'} of ${C.formatDuration(D.budget48)} budget${over ? ' · over' : ''}`, html`<div class="ov-bar ${over ? 'is-over' : ''}" role="progressbar" aria-label="Workload against budget" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></div>`, i + 2)}
+      ${tile('streak', D.streak ? '' : '', D.streak ? '🔥' : '🌱', 'Day streak', D.streak, days.reduce((s, d) => s + d.count, 0) + ' done in the last 7 days', html`<div class="ov-spark" aria-hidden="true">${days.map((d, j) => html`<i class="${d.count ? '' : 'zero'} ${j === 6 ? 'today' : ''}" style="height:${Math.max(3, Math.round(d.count / max * 26))}px; --j:${j}" title="${d.key}: ${d.count} done"></i>`)}</div>`, i + 3)}
+    </div>`;
+  }
+
+  function ovClassesCard(D, i, span) {
+    const classes = state.classes.filter(c => !c.hidden);
+    const rows = classes.map(c => {
+      const all = state.assignments.filter(a => a.classId === c.id && !a.archived);
+      const done = all.filter(a => a.done).length, open = all.length - done;
+      return { c, all: all.length, done, open };
+    });
+    const shown = rows.slice(0, 6);
+    const body = rows.length
+      ? html`<div class="ov-classes">${shown.map(r => {
+          const frac = r.all ? r.done / r.all : 0;
+          return html`<button class="ov-cls ov-tap" data-action="ov-class" data-class="${r.c.id}" style="--c: ${raw(classColorVar(r.c))}" aria-label="Show only ${r.c.name} in Next Up: ${r.open} open, ${r.done} of ${r.all} done">
+            <svg class="ov-ring" viewBox="0 0 38 38" aria-hidden="true"><circle class="trk" cx="19" cy="19" r="15"/><circle class="val" cx="19" cy="19" r="15" stroke-dasharray="${OV_RING.toFixed(2)}" stroke-dashoffset="${(OV_RING * (1 - frac)).toFixed(2)}"/></svg>
+            <span style="min-width:0"><span class="ov-cls-name">${r.c.emoji ? r.c.emoji + ' ' : ''}${r.c.name}</span><span class="ov-cls-sub">${r.all ? Math.round(frac * 100) + '% done · ' + r.done + '/' + r.all : 'no assignments yet'}</span></span>
+            <span class="ov-cls-open ${r.open ? '' : 'is-zero'}">${r.open} open</span>
+          </button>`;
+        })}</div>${rows.length > shown.length ? html`<button class="ov-link" style="margin:0" data-action="set-view" data-view="classes">+${rows.length - shown.length} more classes</button>` : ''}`
+      : html`<div class="ov-empty"><span class="e-big" aria-hidden="true">🎓</span><span>No classes yet. Add the classes you take, or import your calendars.</span></div>`;
+    return html`<section class="ov-card ov-anim ${span}" style="--i:${i}" aria-labelledby="ov-h-classes">
+      ${ovHead('ov-h-classes', '🎓', 'Classes', ovViewAll('classes', 'View all classes'))}
+      <div class="ov-body">${body}<div class="ov-foot"><button class="btn btn-sm" data-action="ov-add-class"><svg><use href="#i-plus"/></svg> Add class</button></div></div>
+    </section>`;
+  }
+
+  function ovEventsCard(D, i, span) {
+    const evs = logEventsBetween(D.t0, C.addDays(D.t0, 13));
+    const shown = evs.slice(0, 6);
+    const body = evs.length
+      ? html`<div class="ov-evlist">${shown.map(e => {
+          const p = C.eventPreset(e.type), dt = C.fromDayKey(e.day);
+          const label = e.label || p.label;
+          return html`<button class="ov-evrow ov-tap" data-action="ov-log" data-day="${e.day}" aria-label="${label}, ${C.formatDateShort(dt, D.n)}${e.time ? ' at ' + ovTime(e.time) : ''}. Open that day's log">
+            <span class="ov-evsym" aria-hidden="true">${p.icon}</span>
+            <span style="min-width:0"><span class="ov-evlabel">${label}</span>${e.label && e.label !== p.label ? html`<span class="ov-cls-sub">${p.label}</span>` : ''}</span>
+            <span class="ov-evwhen"><b>${C.formatDateShort(dt, D.n)}</b>${e.time ? ovTime(e.time) : 'all day'}</span>
+          </button>`;
+        })}</div>${evs.length > shown.length ? html`<div class="small faint">+${evs.length - shown.length} more in the next two weeks</div>` : ''}`
+      : html`<div class="ov-empty"><span class="e-big" aria-hidden="true">📅</span><span>No events in the next two weeks. Games, birthdays and trips you log show up here.</span></div>`;
+    return html`<section class="ov-card ov-anim ${span}" style="--i:${i}" aria-labelledby="ov-h-events">
+      ${ovHead('ov-h-events', '📅', 'Coming up', html`<button class="btn btn-sm right" data-action="ov-log" data-day="${D.todayKey}" aria-label="Add an event in today's log"><svg><use href="#i-plus"/></svg> Add event</button>`)}
+      <div class="ov-body">${body}</div>
+    </section>`;
+  }
+
+  function ovWeightCard(D, i) {
+    const pts = ovWeights();
+    if (pts.length < 2) return '';
+    const unit = state.settings.weightUnit === 'kg' ? 'kg' : 'lb';
+    const ws = pts.map(p => p.w), lo = Math.min(...ws), hi = Math.max(...ws), span = hi - lo || 1;
+    const W = 200, H = 60, pad = 6;
+    const xy = pts.map((p, j) => [(j / (pts.length - 1)) * W, pad + (1 - (p.w - lo) / span) * (H - pad * 2)]);
+    const line = xy.map(q => q[0].toFixed(1) + ',' + q[1].toFixed(1)).join(' ');
+    const area = 'M0,' + H + ' L' + xy.map(q => q[0].toFixed(1) + ',' + q[1].toFixed(1)).join(' L') + ' L' + W + ',' + H + ' Z';
+    const last = pts[pts.length - 1], first = pts[0];
+    const delta = Math.round((last.w - first.w) * 10) / 10;
+    return html`<section class="ov-card ov-anim" style="--i:${i}" aria-labelledby="ov-h-weight">
+      ${ovHead('ov-h-weight', '⚖️', 'Weight', html`<button class="ov-link" data-action="ov-log" data-day="${D.todayKey}" aria-label="Log today's weight">Log <span class="arr" aria-hidden="true">→</span></button>`)}
+      <div class="ov-body">
+        <div class="ov-wt"><span class="ov-wt-n">${last.w}<span class="ov-wt-u">${unit}</span></span><span class="ov-wt-d">${delta === 0 ? 'steady' : (delta < 0 ? '▼ ' : '▲ ') + Math.abs(delta) + ' ' + unit} over ${ovPlural(pts.length, 'entry', 'entries')}</span></div>
+        <svg class="ov-wsvg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Weight trend from ${first.w} to ${last.w} ${unit}">
+          <defs><linearGradient id="ov-wgrad" x1="0" y1="0" x2="0" y2="1"><stop class="gstop" offset="0" stop-opacity="0.32"/><stop class="gstop" offset="1" stop-opacity="0"/></linearGradient></defs>
+          <path class="ar" d="${area}" fill="url(#ov-wgrad)"/>
+          <polyline class="ln" points="${line}"/>
+        </svg>
+        <div class="row between tiny faint"><span>${C.formatDateShort(C.fromDayKey(first.key), D.n)}</span><span>${C.formatDateShort(C.fromDayKey(last.key), D.n)}</span></div>
+      </div>
+    </section>`;
+  }
+
+  /* ---------- count-up (purely cosmetic: final numbers are in the markup) ---------- */
+  function ovCountUp(scope) {
+    const els = $$('[data-count]', scope);
+    const token = ++ovCountToken;
+    if (!els.length || reducedMotion()) return;
+    const start = performance.now(), DUR = 700;
+    const finish = () => { for (const el of els) if (el.isConnected) el.textContent = el.dataset.count; };
+    for (const el of els) if (Number(el.dataset.count) > 0) el.textContent = '0';
+    const step = t => {
+      if (token !== ovCountToken) return;
+      const p = Math.min(1, (t - start) / DUR), e = 1 - Math.pow(1 - p, 3);
+      for (const el of els) if (el.isConnected) el.textContent = String(Math.round(Number(el.dataset.count) * e));
+      if (p < 1) requestAnimationFrame(step); else finish();
+    };
+    requestAnimationFrame(step);
+    setTimeout(() => { if (token === ovCountToken) finish(); }, DUR + 250);
+  }
+
+  function renderOverview(root) {
+    const mount = ovMount(root);
+    const entering = ovPrevView !== 'overview';
+    const D = ovData();
+    const hasAny = state.assignments.length > 0;
+    const stack = (span, i) => html`<div class="ov-col ${span}">${ovVerseCard(D, i)}${ovWeightCard(D, i + 1)}</div>`;
+    let inner;
+    if (!hasAny) {
+      inner = html`${ovGreetCard(D, false)}
+        <div class="ov-welcome ov-s12 ov-anim" style="--i:1">${emptyState()}</div>
+        ${ovLogCard(D, 2, 'ov-s7')}
+        ${stack('ov-s5', 3)}
+        ${ovWeekCard(D, 4)}
+        ${ovEventsCard(D, 5, 'ov-s6')}
+        ${ovClassesCard(D, 6, 'ov-s6')}`;
+    } else {
+      inner = html`${ovGreetCard(D, true)}
+        ${ovNextCard(D, 1)}
+        ${ovLogCard(D, 2, 'ov-s5')}
+        ${ovStats(D, 3)}
+        ${ovWeekCard(D, 7)}
+        ${ovClassesCard(D, 8, 'ov-s4')}
+        ${ovEventsCard(D, 9, 'ov-s4')}
+        ${stack('ov-s4 ov-tw', 10)}`;
+    }
+    mount.innerHTML = html`<div class="ov-grid ${entering ? 'ov-enter' : ''}">${inner}</div>`;
+    if (entering) ovCountUp(mount);
+  }
+
+  /* ---------- actions ---------- */
+  registerAction('ov-log', (id, el) => openLogDay((el && el.dataset.day) || C.dayKey(now())));
+  registerAction('ov-add', () => { const q = $('#quickadd'); if (q) { q.focus(); q.scrollIntoView({ block: 'nearest' }); } });
+  registerAction('ov-add-class', () => openClassPicker());
+  registerAction('ov-mood', (id, el) => {
+    const key = C.dayKey(now()), m = ovMood(el.dataset.mood); if (!m) return;
+    const prev = logDay(key) ? logDay(key).mood : null;
+    if (prev === m.key) return;
+    updateLogDay(key, { mood: m.key });
+    toast(m.icon + ' Logged: ' + m.label.toLowerCase(), 'ok', { label: 'Undo', fn: () => updateLogDay(key, { mood: prev }) });
+  });
+  registerAction('ov-event', (id, el) => {
+    const key = C.dayKey(now()), p = C.eventPreset(el.dataset.type);
+    const e = addLogEvent(key, { type: p.type });
+    toast(p.icon + ' ' + p.label + ' added to today', 'ok', { label: 'Undo', fn: () => removeLogEvent(key, e.id) });
+  });
+  registerAction('ov-verse', () => {
+    const v = ovVersesAvailable() ? C.pickVerse(Math.random()) : null;
+    if (!v) { render(); return; }
+    updateLogDay(C.dayKey(now()), { verse: v });
+  });
+  registerAction('ov-week-day', (id, el) => { if (!el.dataset.day) return; state.ui.weekCursor = el.dataset.day; setView('week'); });
+  registerAction('ov-class', (id, el) => {
+    const c = getClass(el.dataset.class); if (!c) return;
+    state.ui.filters.classes = [c.id];
+    setView('today');
+    toast('Showing only ' + c.name, '', { label: 'Show all', fn: () => { state.ui.filters.classes = []; save(); render(); } });
+  });
   /* === VIEW:OVERVIEW:JS:END === */
 
   /* === VIEW:LOG:JS:START === */
